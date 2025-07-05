@@ -110,6 +110,7 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
 
     /// Returns `true` if the [`DynamicArray`] is empty, `false` otherwise.
     #[inline(always)]
+    #[must_use]
     pub const fn is_empty(&self) -> bool {
         self.length.value() == 0
     }

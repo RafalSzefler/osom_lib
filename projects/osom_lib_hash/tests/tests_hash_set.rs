@@ -1,3 +1,4 @@
+#![cfg(feature = "std_alloc")]
 // use osom_lib_hash::hash_set::HashSet;
 // use osom_lib_hash::hash_set::operation_results::{TryInsertResult, TryRemoveResult};
 

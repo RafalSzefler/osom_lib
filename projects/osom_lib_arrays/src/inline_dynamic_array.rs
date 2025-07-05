@@ -256,6 +256,7 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
     /// Returns `true` if the [`InlineDynamicArray`] is empty,
     /// otherwise `false`.
     #[inline(always)]
+    #[must_use]
     pub const fn is_empty(&self) -> bool {
         self.length.value() == 0
     }
