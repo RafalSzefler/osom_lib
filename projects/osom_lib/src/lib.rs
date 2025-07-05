@@ -17,3 +17,4 @@ pub use osom_lib_arrays as arrays;
 pub use osom_lib_macros as macros;
 pub use osom_lib_primitives as primitives;
 pub use osom_lib_strings as strings;
+pub use osom_lib_hash as hash;
