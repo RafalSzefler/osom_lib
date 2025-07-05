@@ -14,12 +14,7 @@ use super::operation_results::{TryInsertResult, TryRemoveResult};
 
 use super::quadratic_index_sequence::QuadraticIndexSequence;
 
-#[repr(u8)]
-enum Bucket<T> {
-    Empty,
-    Deleted,
-    Occupied { value: T, hash: usize },
-}
+use super::hash_set_bucket::Bucket;
 
 #[must_use]
 pub struct HashSet<
@@ -79,6 +74,11 @@ where
     pub const fn is_empty(&self) -> bool {
         self.occupied_count == 0
     }
+
+    #[cfg(test)]
+    pub(self) const fn data(&self) -> &InlineDynamicArray<INLINE_SIZE, Bucket<T>, TAllocator> {
+        &self.data
+    }
 }
 
 impl<const INLINE_SIZE: usize, T, TBuildHasher, TAllocator> HashSet<INLINE_SIZE, T, TBuildHasher, TAllocator>
@@ -107,5 +107,17 @@ where
 {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(all(feature = "std_alloc", test))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty_hash_set() {
+        let hash_set = HashSet::<4, i32>::new();
+        let data = hash_set.data().as_slice();
+        assert_eq!(data, &[Bucket::Empty, Bucket::Empty, Bucket::Empty, Bucket::Empty]);
     }
 }

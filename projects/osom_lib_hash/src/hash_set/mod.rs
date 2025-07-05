@@ -7,6 +7,7 @@ mod equivalent;
 pub use equivalent::*;
 
 mod hash_set;
+mod hash_set_bucket;
 pub use hash_set::*;
 
 pub mod errors;
