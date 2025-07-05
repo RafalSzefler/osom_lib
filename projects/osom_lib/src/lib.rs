@@ -12,9 +12,17 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
 
-pub use osom_lib_alloc as alloc;
-pub use osom_lib_arrays as arrays;
-pub use osom_lib_macros as macros;
-pub use osom_lib_primitives as primitives;
-pub use osom_lib_strings as strings;
-pub use osom_lib_hash as hash;
+macro_rules! reexport {
+    ($crate_name:ident) => {
+        paste::paste! {
+            pub use [<osom_lib_ $crate_name>] as $crate_name;
+        }
+    };
+}
+
+reexport!(alloc);
+reexport!(arrays);
+reexport!(macros);
+reexport!(primitives);
+reexport!(strings);
+reexport!(hash);

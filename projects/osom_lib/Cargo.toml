@@ -30,4 +30,3 @@ std_alloc = [
     "osom_lib_strings/std_alloc",
     "osom_lib_hash/std_alloc",
 ]
-
