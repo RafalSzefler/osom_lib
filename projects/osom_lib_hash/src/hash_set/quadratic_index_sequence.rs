@@ -16,7 +16,7 @@ impl QuadraticIndexSequence {
     #[inline(always)]
     pub const fn new(hash: u64, data_len: NonZero<u32>) -> Self {
         let data_len = data_len.get();
-        debug_assert!(data_len <= i32::MAX as u32);
+        debug_assert!(data_len < i32::MAX as u32);
         let modulus = data_len.next_power_of_two();
         Self {
             hash,
@@ -71,6 +71,11 @@ mod tests {
 
     #[rstest]
     #[case(1, 1, &[0])]
+    #[case(0, 3, &[ 0, 1, 2])]
+    #[case(1, 3, &[ 1, 2, 0])]
+    #[case(2, 3, &[ 2, 1, 0])]
+    #[case(730, 3, &[ 2, 1, 0])]
+    #[case(3, 3, &[ 0, 2, 1])]
     #[case(1, 10, &[1, 2, 4, 7, 0, 6, 5, 8, 3, 9])]
     #[case(15, 10, &[0, 2, 5, 9, 4, 3, 6, 1, 8, 7])]
     #[case(1, 11, &[1, 2, 4, 7, 0, 6, 5, 8, 3, 10, 9])]
@@ -84,15 +89,23 @@ mod tests {
         for _ in 0..data_len {
             array.push(sequence.next()).unwrap();
         }
+        // Check that values are expected.
         assert_eq!(array.as_slice(), expected);
-
         assert_eq!(array.len().value() as u32, data_len);
 
+        // We didn't actually verified those const arrays,
+        // so just in case verify that these are correct, i.e.
+        // that the smallest number is `0`, highets `data_len - 1`,
+        // and that there are no duplicates.
         let slice_mut = array.as_slice_mut();
         slice_mut.sort();
         let len = slice_mut.len();
         for i in 0..(len - 1) {
-            assert_ne!(slice_mut[i], slice_mut[i + 1]);
+            let left = slice_mut[i] as i64;
+            let right = slice_mut[i + 1] as i64;
+            assert_eq!(right - left, 1);
         }
+        assert_eq!(slice_mut[0], 0);
+        assert_eq!(slice_mut[len - 1], data_len - 1);
     }
 }
