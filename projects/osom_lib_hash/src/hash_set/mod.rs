@@ -1,3 +1,4 @@
+//! This module contains the implementation of the [`HashSet`] type.
 #![allow(clippy::module_inception)]
 
 mod quadratic_index_sequence;
