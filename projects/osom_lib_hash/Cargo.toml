@@ -17,7 +17,11 @@ crate-type = ["lib"]
 osom_lib_alloc = { path = "../osom_lib_alloc", version = "0.1", default-features = false }
 osom_lib_arrays = { path = "../osom_lib_arrays", version = "0.1", default-features = false }
 osom_lib_macros = { path = "../osom_lib_macros", version = "0.1", default-features = false }
+osom_lib_primitives = { path = "../osom_lib_primitives", version = "0.1" }
 
 [features]
 default = ["std_alloc"]
-std_alloc = []
+std_alloc = [
+    "osom_lib_alloc/std_alloc",
+    "osom_lib_arrays/std_alloc",
+]

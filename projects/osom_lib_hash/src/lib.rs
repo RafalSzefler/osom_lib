@@ -12,3 +12,6 @@
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
+
+pub mod hash_set;
+pub mod hashers;
