@@ -11,7 +11,7 @@ use core::mem::ManuallyDrop;
 use core::ops::Deref;
 
 use osom_lib_alloc::{AllocatedMemory, AllocationError, Allocator};
-use osom_lib_primitives::Length;
+use osom_lib_primitives::{DoesNotHaveToBeUsed, Length};
 
 #[cfg(feature = "std_alloc")]
 use osom_lib_alloc::StdAllocator;
@@ -297,12 +297,12 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
     /// # Notes
     ///
     /// This method does not reallocate the underlying memory.
-    pub fn fill<F: FnMut() -> T>(&mut self, mut constructor: F) -> Length {
+    pub fn fill<F: FnMut() -> T>(&mut self, mut constructor: F) -> DoesNotHaveToBeUsed<Length> {
         let capacity: usize = self.capacity.into();
         let len: usize = self.len().into();
         let diff = capacity - len;
         if diff == 0 {
-            return Length::ZERO;
+            return Length::ZERO.into();
         }
 
         unsafe {
@@ -312,7 +312,7 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
                 ptr = ptr.add(1);
             }
             self.length = Length::new_unchecked(capacity as i32);
-            Length::new_unchecked(diff as i32)
+            Length::new_unchecked(diff as i32).into()
         }
     }
 }

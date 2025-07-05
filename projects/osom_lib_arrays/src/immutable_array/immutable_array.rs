@@ -77,7 +77,7 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArray<T, TAllocator> {
         self.internal.capacity()
     }
 
-    /// Returns a reference to the allocator of the [`InlineDynamicArray`].
+    /// Returns a reference to the allocator of the [`ImmutableArray`].
     #[inline(always)]
     pub const fn allocator(&self) -> &TAllocator {
         self.internal.allocator()
