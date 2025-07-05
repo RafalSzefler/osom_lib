@@ -1,0 +1,31 @@
+[package]
+name = "osom_lib"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+categories.workspace = true
+description = "Osom lib for osom projects. Contains reimplementation of several std structures and algorithms. And also contains several useful macros."
+keywords = ["osom", "lib", "tools"]
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+paste = { workspace = true }
+osom_lib_alloc = { path = "../osom_lib_alloc", version = "0.1", default-features = false }
+osom_lib_primitives = { path = "../osom_lib_primitives", version = "0.1" }
+osom_lib_arrays = { path = "../osom_lib_arrays", version = "0.1", default-features = false }
+osom_lib_strings = { path = "../osom_lib_strings", version = "0.1", default-features = false }
+osom_lib_macros = { path = "../osom_lib_macros", version = "0.1" }
+
+[features]
+default = ["std_alloc"]
+std_alloc = [
+    "osom_lib_alloc/std_alloc",
+    "osom_lib_arrays/std_alloc",
+    "osom_lib_strings/std_alloc",
+]
+

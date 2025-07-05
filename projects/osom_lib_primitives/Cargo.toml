@@ -1,0 +1,17 @@
+[package]
+name = "osom_lib_primitives"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+categories.workspace = true
+description = "Osom lib (re)defining various primitives like Length."
+keywords = ["osom", "lib", "tools", "primitives"]
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+

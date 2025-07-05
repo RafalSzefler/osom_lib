@@ -1,0 +1,17 @@
+[package]
+name = "osom_lib_test_macros"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+categories = ["rust-patterns"]
+description = "Osom macros for osom projects. This project is not meant to be used directly. Some macros will be re-exported in other projects."
+keywords = ["osom", "tools", "macros", "tests"]
+
+[lib]
+crate-type = ["lib"]
+
+[dev-dependencies]
+rstest = { workspace = true }

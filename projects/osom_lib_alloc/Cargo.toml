@@ -1,0 +1,21 @@
+[package]
+name = "osom_lib_alloc"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+categories.workspace = true
+description = "Osom lib defining Allocator trait and optionally implementing it when std is enabled."
+keywords = ["osom", "lib", "tools", "alloc"]
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+osom_lib_macros = { path = "../osom_lib_macros", version = "0.1" }
+
+[features]
+default = ["std_alloc"]
+std_alloc = []

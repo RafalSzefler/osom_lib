@@ -1,0 +1,24 @@
+[workspace]
+members = [
+    "projects/osom_lib_strings",
+    "projects/osom_lib_arrays",
+    "projects/osom_lib_primitives",
+    "projects/osom_lib_macros",
+    "projects/osom_lib_test_macros",
+    "projects/osom_lib_alloc",
+    "projects/osom_lib",
+]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+authors = ["Rafal Szefler <rafael.szefler@gmail.com>"]
+rust-version = "1.85"
+license = "MIT"
+repository = "https://github.com/RafalSzefler/osom_lib"
+categories = ["data-structures", "no-std", "algorithms", "memory-management", "rust-patterns"]
+
+[workspace.dependencies]
+# tests
+rstest = "0.25"
+paste = "1"
