@@ -80,7 +80,7 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArray<T, TAllocator> {
     /// Returns a reference to the allocator of the [`InlineDynamicArray`].
     #[inline(always)]
     pub const fn allocator(&self) -> &TAllocator {
-        &self.internal.allocator()
+        self.internal.allocator()
     }
 
     /// Creates a new weak reference out of the [`ImmutableArray`].

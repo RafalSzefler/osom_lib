@@ -222,11 +222,21 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
         }
     }
 
+    /// Creates a new empty [`InlineDynamicArray`] with the given capacity.
+    ///
+    /// # Errors
+    ///
+    /// For details see [`InlineDynamicArrayConstructionError`].
     #[inline(always)]
     pub fn with_capacity(capacity: Length) -> Result<Self, InlineDynamicArrayConstructionError> {
         Self::with_capacity_and_allocator(capacity, TAllocator::default())
     }
 
+    /// Creates a new empty [`InlineDynamicArray`] with the given capacity and allocator.
+    ///
+    /// # Errors
+    ///
+    /// For details see [`InlineDynamicArrayConstructionError`].
     #[inline(always)]
     pub fn with_capacity_and_allocator(
         capacity: Length,
@@ -281,15 +291,18 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
         }
     }
 
-    pub fn try_fill<F: FnMut() -> T>(
-        &mut self,
-        mut constructor: F,
-    ) -> Result<Length, InlineDynamicArrayConstructionError> {
+    /// Fills the [`InlineDynamicArray`] up to its capacity, by invoking
+    /// `constructor` for each missing element.
+    ///
+    /// # Notes
+    ///
+    /// This method does not reallocate the underlying memory.
+    pub fn fill<F: FnMut() -> T>(&mut self, mut constructor: F) -> Length {
         let capacity: usize = self.capacity.into();
         let len: usize = self.len().into();
         let diff = capacity - len;
         if diff == 0 {
-            return Ok(Length::ZERO);
+            return Length::ZERO;
         }
 
         unsafe {
@@ -299,7 +312,7 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
                 ptr = ptr.add(1);
             }
             self.length = Length::new_unchecked(capacity as i32);
-            Ok(Length::new_unchecked(diff as i32))
+            Length::new_unchecked(diff as i32)
         }
     }
 }

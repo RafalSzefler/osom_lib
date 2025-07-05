@@ -1,14 +1,14 @@
 //! This module contains the implementation of the [`HashSet`] type.
 #![allow(clippy::module_inception)]
 
-mod quadratic_index_sequence;
+pub mod quadratic_index_sequence;
 
-mod equivalent;
-pub use equivalent::*;
+// mod equivalent;
+// pub use equivalent::*;
 
-mod hash_set;
-mod hash_set_bucket;
-pub use hash_set::*;
+// mod hash_set;
+// mod hash_set_bucket;
+// pub use hash_set::*;
 
-pub mod errors;
-pub mod operation_results;
+// pub mod errors;
+// pub mod operation_results;

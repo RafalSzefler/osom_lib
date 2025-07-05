@@ -30,6 +30,7 @@ impl Fnv1aHasher {
     }
 
     #[inline(always)]
+    #[must_use]
     pub const fn current_state(&self) -> u64 {
         self.state
     }
