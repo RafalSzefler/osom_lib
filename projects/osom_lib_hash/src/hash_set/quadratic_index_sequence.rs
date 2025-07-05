@@ -26,8 +26,19 @@ impl QuadraticIndexSequence {
         }
     }
 
+    /// Returns the next index in the sequence.
+    ///
+    /// # Notes
+    ///
+    /// This generates a permutation of `0..data_len` sequence.
+    ///
+    /// # Safety
+    ///
+    /// As long as the caller calls it less than `data_len` times, it will
+    /// be fine. Otherwise calculations may overflow, and result in garbage
+    /// values.
     #[inline(always)]
-    pub const fn next(&mut self) -> u32 {
+    pub const unsafe fn next(&mut self) -> u32 {
         let data_len = self.data_len;
         let modulus = self.modulus;
         let hash = self.hash;
@@ -49,12 +60,17 @@ impl QuadraticIndexSequence {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_possible_truncation, clippy::manual_midpoint)]
     #[inline(always)]
     const fn calculate_index(hash: u64, i: u32, modulus: u32) -> u32 {
         // Basically we calculate `(hash + (i^2 + i) / 2) % modulus`.
         let i = i as u64;
-        let idx = i.midpoint(i * i);
+
+        // `idx` calculation cannot overflow, because `i` is at most `modulus`
+        // (at least under typical conditions), which is at most `i32::MAX`
+        // (because `data_len < i32::MAX`). Meaning `i` is at most `2^31`
+        // and thus `i*i+i` is less than `2^63`.
+        let idx = (i * i + i) / 2;
         let modulus = modulus as u64;
         let result = (hash + idx) % modulus;
         result as u32
@@ -87,7 +103,7 @@ mod tests {
         let mut array = InlineDynamicArray::<100, u32>::new();
 
         for _ in 0..data_len {
-            array.push(sequence.next()).unwrap();
+            array.push(unsafe { sequence.next() }).unwrap();
         }
         // Check that values are expected.
         assert_eq!(array.as_slice(), expected);
