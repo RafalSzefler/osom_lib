@@ -34,6 +34,12 @@ impl QuadraticIndexSequence {
         let mut i = self.i;
 
         loop {
+            // Quadratic probing is bijective over sets of size `2^n`.
+            // Therefore, by taking `modulus` to be the next power of two
+            // we get such bijection. However some of the values may go outside
+            // of `0..data_len` range. We discard them, and try to pick a new index
+            // again. In worst theoretical case this loop spins for `data_len/2`
+            // times. But in practice it rarely loops more than twice.
             let new_index = Self::calculate_index(hash, i, modulus);
             i += 1;
             if new_index < data_len {
@@ -46,6 +52,7 @@ impl QuadraticIndexSequence {
     #[allow(clippy::cast_possible_truncation)]
     #[inline(always)]
     const fn calculate_index(hash: u64, i: u32, modulus: u32) -> u32 {
+        // Basically we calculate `(hash + (i^2 + i) / 2) % modulus`.
         let i = i as u64;
         let idx = i.midpoint(i * i);
         let modulus = modulus as u64;
