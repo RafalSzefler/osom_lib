@@ -1,4 +1,4 @@
-//! A crate for various primitives.
+//! A crate implementing a `hash_map` and `hash_set` algorithms. And also couple of hash functions.
 #![deny(warnings)]
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(
@@ -13,8 +13,5 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
 
-mod does_not_have_to_be_used;
-pub use does_not_have_to_be_used::*;
-
-mod length;
-pub use length::*;
+pub mod hash_set;
+pub mod hashers;

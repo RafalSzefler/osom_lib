@@ -3,12 +3,10 @@
 /// Represents length used by `osom_tools`.
 ///
 /// # Notes
-/// Unlike std, [`Length`] has `i32` as the underlying type.
-/// Thus it can handle a lot less items than `usize`
-/// on 64-bit platforms.
+/// Unlike `usize` our [`Length`] has `i32` as the underlying type.
+/// Thus it can handle a lot less items than `usize` on 64-bit platforms.
 ///
-/// But it takes less space in memory, which ultimately is
-/// more useful.
+/// But it takes less space in memory, which ultimately is more useful.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 #[must_use]
@@ -42,6 +40,7 @@ impl Length {
     /// # Errors
     ///
     /// For details see [`LengthError`].
+    #[inline]
     pub const fn try_from_usize(len: usize) -> Result<Self, LengthError> {
         if len > Self::MAX {
             return Err(LengthError::TooLarge);
@@ -55,9 +54,14 @@ impl Length {
     /// # Errors
     ///
     /// For details see [`LengthError`].
+    #[inline]
     pub const fn try_from_i32(len: i32) -> Result<Self, LengthError> {
         if len < 0 {
             return Err(LengthError::Negative);
+        }
+
+        if len as usize > Self::MAX {
+            return Err(LengthError::TooLarge);
         }
 
         Ok(unsafe { Self::new_unchecked(len) })
@@ -86,7 +90,7 @@ impl Length {
     /// # Errors
     ///
     /// For details see [`LengthError`].
-    #[inline(always)]
+    #[inline]
     pub const fn add(&mut self, value: i32) -> Result<(), LengthError> {
         let new_value = self.value + value;
         if new_value < 0 {
@@ -106,6 +110,7 @@ impl Length {
     /// # Errors
     ///
     /// For details see [`LengthError`].
+    #[inline]
     pub const fn mul(&mut self, value: i32) -> Result<(), LengthError> {
         let new_value = self.value * value;
         if new_value < 0 {
@@ -225,5 +230,17 @@ impl core::ops::Mul<i32> for Length {
 impl core::ops::MulAssign<i32> for Length {
     fn mul_assign(&mut self, rhs: i32) {
         Self::mul(self, rhs).unwrap();
+    }
+}
+
+impl AsRef<i32> for Length {
+    fn as_ref(&self) -> &i32 {
+        &self.value
+    }
+}
+
+impl AsMut<i32> for Length {
+    fn as_mut(&mut self) -> &mut i32 {
+        &mut self.value
     }
 }

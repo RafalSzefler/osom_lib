@@ -64,6 +64,12 @@ impl<T: Sized, TAllocator: Allocator> ImmutableWeakArray<T, TAllocator> {
         self.internal.heap_data().weak_counter().load(Ordering::SeqCst) as usize
     }
 
+    /// Returns a reference to the allocator of the [`ImmutableWeakArray`].
+    #[inline(always)]
+    pub const fn allocator(&self) -> &TAllocator {
+        self.internal.allocator()
+    }
+
     /// Releases the weak reference.
     ///
     /// Returns `true` if it was the last weak reference and the memory was deallocated.

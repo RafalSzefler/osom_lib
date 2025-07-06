@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "projects/osom_lib_hash",
     "projects/osom_lib_strings",
     "projects/osom_lib_arrays",
     "projects/osom_lib_primitives",

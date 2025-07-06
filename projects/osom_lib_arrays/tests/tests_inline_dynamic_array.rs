@@ -10,6 +10,7 @@ use std::{
 
 use osom_lib_arrays::InlineDynamicArray;
 
+use osom_lib_primitives::Length;
 use rstest::rstest;
 
 #[rstest]
@@ -124,4 +125,22 @@ fn test_push_and_pop(#[case] data: &[i32]) {
 
     inlined_vec.push(12345).unwrap();
     assert_eq!(inlined_vec.as_slice(), &[12345]);
+}
+
+#[test]
+fn test_fill() {
+    let mut arr = InlineDynamicArray::<10, i32>::new();
+    let result = arr.fill(|| 12345);
+    assert_eq!(arr.as_slice(), &[12345; 10]);
+    assert_eq!(*result, Length::try_from_i32(10).unwrap());
+}
+
+#[test]
+fn test_fill_2() {
+    let mut arr = InlineDynamicArray::<10, i32>::new();
+    arr.push(-1).unwrap();
+    arr.push(-2).unwrap();
+    let result = arr.fill(|| 7);
+    assert_eq!(arr.as_slice(), &[-1, -2, 7, 7, 7, 7, 7, 7, 7, 7]);
+    assert_eq!(*result, Length::try_from_i32(8).unwrap());
 }

@@ -11,7 +11,7 @@ use core::mem::ManuallyDrop;
 use core::ops::Deref;
 
 use osom_lib_alloc::{AllocatedMemory, AllocationError, Allocator};
-use osom_lib_primitives::Length;
+use osom_lib_primitives::{DoesNotHaveToBeUsed, Length};
 
 #[cfg(feature = "std_alloc")]
 use osom_lib_alloc::StdAllocator;
@@ -106,6 +106,37 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
         }
     }
 
+    fn try_grow(&mut self, new_capacity: usize) -> Result<(), InlineDynamicArrayConstructionError> {
+        if new_capacity > Self::MAX_SIZE {
+            return Err(InlineDynamicArrayConstructionError::ArrayTooLong);
+        }
+
+        debug_assert!(
+            new_capacity > self.capacity.into(),
+            "Tried to grow to a smaller capacity."
+        );
+
+        unsafe {
+            if self.is_inlined() {
+                if new_capacity <= N {
+                    return Ok(());
+                }
+                let new_memory = self.allocate_memory(new_capacity)?;
+                let stack_data = (&self.data.stack_data).as_ptr();
+                new_memory.copy_from_nonoverlapping(stack_data, self.length.into());
+                self.data = InlineDynamicArrayUnion { heap_data: new_memory };
+            } else {
+                let old_layout = Self::layout(self.capacity.into());
+                let new_layout = Self::layout(new_capacity);
+                let old_memory = self.allocator.convert_raw_ptr(self.data.heap_data);
+                let new_memory = old_memory.resize(old_layout, new_layout)?;
+                self.data.heap_data = new_memory.as_ptr();
+            }
+            self.capacity = Length::new_unchecked(new_capacity as i32);
+        }
+        Ok(())
+    }
+
     /// Pushes a value to the end of the [`InlineDynamicArray`].
     ///
     /// Note that the [`InlineDynamicArray`] data will be moved to the heap
@@ -121,38 +152,15 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
     pub fn push(&mut self, value: T) -> Result<(), InlineDynamicArrayConstructionError> {
         let capacity: usize = self.capacity.into();
         unsafe {
-            if self.is_inlined() {
-                if self.length.value() < N as i32 {
-                    let data = &mut self.data.stack_data;
-                    data.as_mut_ptr().add(self.length.into()).write(value);
-                    self.length += 1;
-                    return Ok(());
-                }
-                let new_capacity = capacity * 2;
-                if new_capacity > Self::MAX_SIZE {
-                    return Err(InlineDynamicArrayConstructionError::ArrayTooLong);
-                }
-                let new_memory = self.allocate_memory(new_capacity)?;
-                let stack_data = (&self.data.stack_data).as_ptr();
-                new_memory.copy_from_nonoverlapping(stack_data, self.length.into());
-                new_memory.add(self.length.into()).write(value);
+            if self.is_inlined() && self.length.value() < N as i32 {
+                let data = &mut self.data.stack_data;
+                data.as_mut_ptr().add(self.length.into()).write(value);
                 self.length += 1;
-                self.data = InlineDynamicArrayUnion { heap_data: new_memory };
-                self.capacity = Length::new_unchecked(new_capacity as i32);
                 return Ok(());
             }
 
             if self.length == self.capacity {
-                let new_capacity = capacity * 2;
-                if new_capacity > Self::MAX_SIZE {
-                    return Err(InlineDynamicArrayConstructionError::ArrayTooLong);
-                }
-                let old_layout = Self::layout(self.capacity.into());
-                let new_layout = Self::layout(new_capacity);
-                let old_memory = self.allocator.convert_raw_ptr(self.data.heap_data);
-                let new_memory = old_memory.resize(old_layout, new_layout)?;
-                self.data.heap_data = new_memory.as_ptr();
-                self.capacity = Length::new_unchecked(new_capacity as i32);
+                self.try_grow(capacity * 2)?;
             }
 
             self.data.heap_data.add(self.length.into()).write(value);
@@ -214,6 +222,31 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
         }
     }
 
+    /// Creates a new empty [`InlineDynamicArray`] with the given capacity.
+    ///
+    /// # Errors
+    ///
+    /// For details see [`InlineDynamicArrayConstructionError`].
+    #[inline(always)]
+    pub fn with_capacity(capacity: Length) -> Result<Self, InlineDynamicArrayConstructionError> {
+        Self::with_capacity_and_allocator(capacity, TAllocator::default())
+    }
+
+    /// Creates a new empty [`InlineDynamicArray`] with the given capacity and allocator.
+    ///
+    /// # Errors
+    ///
+    /// For details see [`InlineDynamicArrayConstructionError`].
+    #[inline(always)]
+    pub fn with_capacity_and_allocator(
+        capacity: Length,
+        allocator: TAllocator,
+    ) -> Result<Self, InlineDynamicArrayConstructionError> {
+        let mut array = Self::with_allocator(allocator);
+        array.try_grow(capacity.into())?;
+        Ok(array)
+    }
+
     /// Returns the number of elements in the [`InlineDynamicArray`].
     #[inline(always)]
     pub const fn len(&self) -> Length {
@@ -223,6 +256,7 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
     /// Returns `true` if the [`InlineDynamicArray`] is empty,
     /// otherwise `false`.
     #[inline(always)]
+    #[must_use]
     pub const fn is_empty(&self) -> bool {
         self.length.value() == 0
     }
@@ -234,12 +268,52 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
         self.capacity
     }
 
+    /// Returns a reference to the allocator of the [`InlineDynamicArray`].
+    #[inline(always)]
+    pub const fn allocator(&self) -> &TAllocator {
+        &self.allocator
+    }
+
     /// Represents current [`InlineDynamicArray`] as a slice.
     #[inline]
     pub fn as_slice(&self) -> &[T] {
         unsafe {
             let ptr = self.data_ptr();
             core::slice::from_raw_parts(ptr, self.len().into())
+        }
+    }
+
+    /// Represents current [`InlineDynamicArray`] as a mutable slice.
+    #[inline]
+    pub fn as_slice_mut(&mut self) -> &mut [T] {
+        unsafe {
+            let ptr = self.data_ptr();
+            core::slice::from_raw_parts_mut(ptr, self.len().into())
+        }
+    }
+
+    /// Fills the [`InlineDynamicArray`] up to its capacity, by invoking
+    /// `constructor` for each missing element.
+    ///
+    /// # Notes
+    ///
+    /// This method does not reallocate the underlying memory.
+    pub fn fill<F: FnMut() -> T>(&mut self, mut constructor: F) -> DoesNotHaveToBeUsed<Length> {
+        let capacity: usize = self.capacity.into();
+        let len: usize = self.len().into();
+        let diff = capacity - len;
+        if diff == 0 {
+            return Length::ZERO.into();
+        }
+
+        unsafe {
+            let mut ptr = self.data_ptr().add(len);
+            for _ in 0..diff {
+                ptr.write(constructor());
+                ptr = ptr.add(1);
+            }
+            self.length = Length::new_unchecked(capacity as i32);
+            Length::new_unchecked(diff as i32).into()
         }
     }
 }

@@ -71,10 +71,23 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArray<T, TAllocator> {
         self.internal.len()
     }
 
+    /// Returns `true` if the [`ImmutableArray`] is empty, `false` otherwise.
+    #[inline(always)]
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.len().value() == 0
+    }
+
     /// Returns the capacity of the [`ImmutableArray`].
     #[inline(always)]
     pub const fn capacity(&self) -> Length {
         self.internal.capacity()
+    }
+
+    /// Returns a reference to the allocator of the [`ImmutableArray`].
+    #[inline(always)]
+    pub const fn allocator(&self) -> &TAllocator {
+        self.internal.allocator()
     }
 
     /// Creates a new weak reference out of the [`ImmutableArray`].

@@ -83,17 +83,22 @@ impl<TAllocator: Allocator> ImmutableWeakString<TAllocator> {
     /// Returns `None` if the [`ImmutableWeakString`] is no longer valid, i.e.
     /// the underlying memory has been deallocated. Otherwise returns
     /// a new strong
+    #[inline(always)]
     pub fn upgrade(&self) -> Option<ImmutableString<TAllocator>> {
         let internal = self.internal.upgrade()?;
         Some(ImmutableString::from_internal(internal))
     }
 
     /// Returns the number of strong references to the [`ImmutableWeakString`].
+    #[inline(always)]
+    #[must_use]
     pub fn strong_count(instance: &Self) -> usize {
         instance.internal.strong_count()
     }
 
     /// Returns the number of weak references to the [`ImmutableWeakString`].
+    #[inline(always)]
+    #[must_use]
     pub fn weak_count(instance: &Self) -> usize {
         instance.internal.weak_count()
     }
@@ -101,6 +106,7 @@ impl<TAllocator: Allocator> ImmutableWeakString<TAllocator> {
     /// Releases the [`ImmutableWeakString`]. If this was the last weak reference,
     /// it will deallocated the underlying memory and return `true`.
     /// Otherwise it will just return `false`.
+    #[inline(always)]
     pub fn release(mut self) -> bool {
         let internal = unsafe { ManuallyDrop::take(&mut self.internal) };
         let val = internal.release();
@@ -147,29 +153,44 @@ impl<TAllocator: Allocator> ImmutableString<TAllocator> {
         })
     }
 
+    #[inline(always)]
+    #[must_use]
     pub fn as_str(&self) -> &str {
         let slice = self.internal.as_slice();
         unsafe { core::str::from_utf8_unchecked(slice) }
     }
 
     /// Downgrades the [`ImmutableString`] to a [`ImmutableWeakString`] and increments the internal weak counter.
+    #[inline(always)]
     pub fn downgrade(instance: &Self) -> ImmutableWeakString<TAllocator> {
         ImmutableWeakString::from_internal(ImmutableArray::downgrade(&instance.internal))
     }
 
     /// Returns the number of strong references to the [`ImmutableString`].
+    #[inline(always)]
+    #[must_use]
     pub fn strong_count(instance: &Self) -> usize {
         ImmutableArray::strong_count(&instance.internal)
     }
 
     /// Returns the number of weak references to the [`ImmutableString`].
+    #[inline(always)]
+    #[must_use]
     pub fn weak_count(instance: &Self) -> usize {
         ImmutableArray::weak_count(&instance.internal)
     }
 
     /// Returns the length of the [`ImmutableString`].
+    #[inline(always)]
     pub fn len(&self) -> Length {
         self.internal.len()
+    }
+
+    /// Returns `true` if the [`ImmutableString`] is empty, `false` otherwise.
+    #[inline(always)]
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.len().value() == 0
     }
 
     /// Releases the [`ImmutableString`]. If this was the last strong reference,

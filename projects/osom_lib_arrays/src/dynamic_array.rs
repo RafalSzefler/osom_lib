@@ -50,7 +50,7 @@ pub struct DynamicArray<
 
 impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     const fn grow_formula(current: i32) -> Length {
-        unsafe { Length::new_unchecked((3 * (current / 2)) + 1) }
+        unsafe { Length::new_unchecked((3 * (current / 2)) + 2) }
     }
 
     pub const MAX_LENGTH: usize = Length::MAX;
@@ -110,6 +110,7 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
 
     /// Returns `true` if the [`DynamicArray`] is empty, `false` otherwise.
     #[inline(always)]
+    #[must_use]
     pub const fn is_empty(&self) -> bool {
         self.length.value() == 0
     }
@@ -118,6 +119,12 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     #[inline(always)]
     pub const fn capacity(&self) -> Length {
         self.capacity
+    }
+
+    /// Returns a reference to the allocator of the [`DynamicArray`].
+    #[inline(always)]
+    pub const fn allocator(&self) -> &TAllocator {
+        &self.allocator
     }
 
     /// Represents the [`DynamicArray`] as a slice.
