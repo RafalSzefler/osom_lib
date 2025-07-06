@@ -1,11 +1,13 @@
 [workspace]
 members = [
+    "projects/osom_lib_trees",
     "projects/osom_lib_hash",
     "projects/osom_lib_strings",
     "projects/osom_lib_arrays",
     "projects/osom_lib_primitives",
     "projects/osom_lib_macros",
     "projects/osom_lib_test_macros",
+    "projects/osom_lib_rand",
     "projects/osom_lib_alloc",
     "projects/osom_lib",
 ]
