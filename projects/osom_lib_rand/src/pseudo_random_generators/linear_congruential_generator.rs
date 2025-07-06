@@ -19,6 +19,11 @@ const MULTIPLIER_32: u32 = 0x915F77F5;
 const MULTIPLIER_64: u64 = 0xFC0072FA0B15F4FD;
 const MULTIPLIER_128: u128 = 0xAADEC8C3186345282B4E141F3A1232D5;
 
+/// The classical LCG algorithm. In the most general form it does:
+/// `X_{n+1} = (X_n * multiplier + increment) % modulus`.
+/// 
+/// Of course, we use `32`, `64` and `128` as the modulus, and so we completely
+/// skip it and do wrapping arithmetic.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[must_use]
 pub struct LinearCongruentialGenerator<ANumber: Number> {
@@ -28,6 +33,13 @@ pub struct LinearCongruentialGenerator<ANumber: Number> {
 }
 
 impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
+    /// Creates a new LCG with the given parameters.
+    /// 
+    /// # Notes
+    /// 
+    /// Both `multiplier` and `increment` have to be odd. Moreover, `increment`
+    /// should satisfy `increment % 4 == 1` condition, otherwise the generator
+    /// won't produce full period.
     #[inline(always)]
     pub const fn with_params(multiplier: ANumber, increment: ANumber, initial: ANumber) -> Self {
         Self {
@@ -37,6 +49,7 @@ impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
         }
     }
 
+    /// Returns the next value of the LCG.
     #[inline(always)]
     pub fn next_value(&mut self) -> ANumber {
         self.current = self.current.wrapping_mul(self.multiplier).wrapping_add(self.increment);
@@ -45,6 +58,8 @@ impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
 }
 
 impl LinearCongruentialGenerator<u32> {
+    /// Creates a new LCG with the given initial value. The remaining parameters
+    /// are carefuly chosen to maximize generator's quality.
     pub const fn new(initial: u32) -> Self {
         Self::with_params(MULTIPLIER_32, PRIME_INCREMENT, initial)
     }
@@ -63,6 +78,8 @@ impl PseudoRandomGenerator for LinearCongruentialGenerator<u32> {
 }
 
 impl LinearCongruentialGenerator<u64> {
+    /// Creates a new LCG with the given initial value. The remaining parameters
+    /// are carefuly chosen to maximize generator's quality.
     pub const fn new(initial: u64) -> Self {
         Self::with_params(MULTIPLIER_64, PRIME_INCREMENT as u64, initial)
     }
@@ -81,6 +98,8 @@ impl PseudoRandomGenerator for LinearCongruentialGenerator<u64> {
 }
 
 impl LinearCongruentialGenerator<u128> {
+    /// Creates a new LCG with the given initial value. The remaining parameters
+    /// are carefuly chosen to maximize generator's quality.
     pub const fn new(initial: u128) -> Self {
         Self::with_params(MULTIPLIER_128, PRIME_INCREMENT as u128, initial)
     }
