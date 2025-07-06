@@ -1,3 +1,6 @@
+//! The module contains the definition of the [`Number`] trait
+//! and its implementations for `u32`, `u64` and `u128`.
+
 use core::fmt::{Debug, Display};
 use core::hash::Hash;
 use core::mem::size_of;
@@ -6,6 +9,11 @@ trait Private {}
 
 /// Marker trait that abstracts the following numerical types:
 /// `u32`, `u64` and `u128`.
+/// 
+/// # Notes
+/// 
+/// This trait depends on private trait, and thus extending it
+/// is not possible.
 #[allow(private_bounds)]
 pub trait Number:
     Clone + Copy + Debug + Display + PartialEq + Eq + Hash + PartialOrd + Ord + Default + Private
