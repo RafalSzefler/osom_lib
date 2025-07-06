@@ -21,12 +21,16 @@ osom_lib_arrays = { path = "../osom_lib_arrays", version = "0.1", default-featur
 osom_lib_strings = { path = "../osom_lib_strings", version = "0.1", default-features = false }
 osom_lib_macros = { path = "../osom_lib_macros", version = "0.1" }
 osom_lib_hash = { path = "../osom_lib_hash", version = "0.1", default-features = false }
+osom_lib_trees = { path = "../osom_lib_trees", version = "0.1", default-features = false }
+osom_lib_rand = { path = "../osom_lib_rand", version = "0.1", default-features = false }
 
 [features]
-default = ["std_alloc"]
+default = ["std_alloc", "std_rand"]
 std_alloc = [
     "osom_lib_alloc/std_alloc",
     "osom_lib_arrays/std_alloc",
     "osom_lib_strings/std_alloc",
     "osom_lib_hash/std_alloc",
+    "osom_lib_trees/std_alloc",
 ]
+std_rand = ["osom_lib_rand/std_rand"]

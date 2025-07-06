@@ -1,0 +1,30 @@
+[package]
+name = "osom_lib_trees"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+categories.workspace = true
+description = "Osom lib implementation of some tree algorithms, e.g. red black tree."
+keywords = ["osom", "lib", "tools", "tree"]
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+osom_lib_alloc = { path = "../osom_lib_alloc", version = "0.1", default-features = false }
+osom_lib_arrays = { path = "../osom_lib_arrays", version = "0.1", default-features = false }
+osom_lib_macros = { path = "../osom_lib_macros", version = "0.1", default-features = false }
+osom_lib_primitives = { path = "../osom_lib_primitives", version = "0.1" }
+
+[dev-dependencies]
+rstest = { workspace = true }
+
+[features]
+default = ["std_alloc"]
+std_alloc = [
+    "osom_lib_alloc/std_alloc",
+    "osom_lib_arrays/std_alloc",
+]

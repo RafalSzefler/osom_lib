@@ -4,12 +4,14 @@ use core::num::NonZero;
 ///
 /// Basically it is a way of generating a pseudo-random permutation of
 /// `0..data_len` sequence. In an efficient way.
+#[derive(Debug)]
 #[must_use]
 pub struct QuadraticIndexSequence {
     hash: u64,
     i: u32,
     data_len: u32,
     modulus: u32,
+    calls_count: u32,
 }
 
 impl QuadraticIndexSequence {
@@ -23,6 +25,7 @@ impl QuadraticIndexSequence {
             i: 0,
             data_len: data_len,
             modulus,
+            calls_count: 0,
         }
     }
 
@@ -30,19 +33,19 @@ impl QuadraticIndexSequence {
     ///
     /// # Notes
     ///
-    /// This generates a permutation of `0..data_len` sequence.
-    ///
-    /// # Safety
-    ///
-    /// As long as the caller calls it less than `data_len` times, it will
-    /// be fine. Otherwise calculations may overflow, and result in garbage
-    /// values.
+    /// This generates a permutation of `0..data_len` sequence. It can be called
+    /// at most `data_len` times, after which it will return `None`.
     #[inline(always)]
-    pub const unsafe fn next(&mut self) -> u32 {
-        let data_len = self.data_len;
+    pub const fn next(&mut self) -> Option<u32> {
+        if self.calls_count >= self.data_len {
+            return None;
+        }
+        self.calls_count += 1;
+
         let modulus = self.modulus;
-        let hash = self.hash;
         let mut i = self.i;
+        let data_len = self.data_len;
+        let hash = self.hash;
 
         loop {
             // Quadratic probing is bijective over sets of size `2^n`.
@@ -55,7 +58,7 @@ impl QuadraticIndexSequence {
             i += 1;
             if new_index < data_len {
                 self.i = i;
-                return new_index;
+                return Some(new_index);
             }
         }
     }
@@ -67,13 +70,21 @@ impl QuadraticIndexSequence {
         let i = i as u64;
 
         // `idx` calculation cannot overflow, because `i` is at most `modulus`
-        // (at least under typical conditions), which is at most `i32::MAX`
-        // (because `data_len < i32::MAX`). Meaning `i` is at most `2^31`
-        // and thus `i*i+i` is less than `2^63`.
+        // which is at most `i32::MAX`(because `data_len < i32::MAX`).
+        // Meaning `i` is at most `2^31` and thus `i*i+i` is less than `2^63`.
         let idx = (i * i + i) / 2;
         let modulus = modulus as u64;
         let result = (hash + idx) % modulus;
         result as u32
+    }
+}
+
+impl Iterator for QuadraticIndexSequence {
+    type Item = u32;
+
+    #[inline(always)]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next()
     }
 }
 
@@ -103,7 +114,7 @@ mod tests {
         let mut array = InlineDynamicArray::<100, u32>::new();
 
         for _ in 0..data_len {
-            array.push(unsafe { sequence.next() }).unwrap();
+            array.push(sequence.next().unwrap()).unwrap();
         }
         // Check that values are expected.
         assert_eq!(array.as_slice(), expected);
@@ -123,5 +134,12 @@ mod tests {
         }
         assert_eq!(slice_mut[0], 0);
         assert_eq!(slice_mut[len - 1], data_len - 1);
+
+        // Lets verify iteration as well.
+        let sequence = QuadraticIndexSequence::new(hash, NonZero::new(data_len).unwrap());
+
+        for (i, value) in sequence.enumerate() {
+            assert_eq!(value, expected[i]);
+        }
     }
 }

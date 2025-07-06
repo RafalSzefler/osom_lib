@@ -26,3 +26,5 @@ reexport!(macros);
 reexport!(primitives);
 reexport!(strings);
 reexport!(hash);
+reexport!(trees);
+reexport!(rand);

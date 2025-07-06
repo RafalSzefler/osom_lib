@@ -12,5 +12,6 @@ A collection of tools to be used with osom projects and not only. The workspace 
 * [`osom_lib_hash`](https://rafalszefler.github.io/osom_lib/osom_lib_hash) hash map and set algorithms along with various hash functions.
 * [`osom_lib_macros`](https://rafalszefler.github.io/osom_lib/osom_lib_macros) various useful macros for osom projects.
 * [`osom_lib_primitives`](https://rafalszefler.github.io/osom_lib/osom_lib_primitives) various primitives like Length and other basic types.
+* [`osom_lib_rand`](https://rafalszefler.github.io/osom_lib/osom_lib_rand) random number generators, randomness sources, and related algorithms including linear congruential generators and OS-based randomness sources.
 * [`osom_lib_strings`](https://rafalszefler.github.io/osom_lib/osom_lib_strings) various string implementations including immutable strings.
 * [`osom_lib_test_macros`](https://rafalszefler.github.io/osom_lib/osom_lib_test_macros) macros for osom projects for testing purposes only.
