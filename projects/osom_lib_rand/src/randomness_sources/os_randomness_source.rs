@@ -25,7 +25,7 @@ impl<ANumber: Number> RandomnessSource for OsRandomnessSource<ANumber> {
 
     fn next_number(&mut self) -> Self::TNumber {
         let mut result = [0u8; MAX_NUMBER_SIZE];
-        let slice = &mut result[..ANumber::size()];
+        let slice = &mut result[..ANumber::SIZE];
         getrandom::fill(slice).unwrap();
         Self::TNumber::from_le_bytes(slice)
     }

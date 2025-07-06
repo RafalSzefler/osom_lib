@@ -75,7 +75,7 @@ fn test_statistical_properties_lcg_u128(#[case] initial: u128) {
 #[cfg(feature = "std_rand")]
 #[test]
 fn test_statistical_properties_lcg_u128_with_random_seed() {
-    let mut os_rand = OsRandomnessSource::<u64>::default();
+    let mut os_rand = OsRandomnessSource::<u128>::default();
     let mut generator = LinearCongruentialGenerator::<u128>::from_randomness_source(&mut os_rand);
     common::test_statistical_properties(|| generator.next_value());
     common::test_fill_bytes::<u128, _>(|bytes| generator.fill_bytes(bytes));

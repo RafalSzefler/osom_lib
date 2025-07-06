@@ -41,7 +41,7 @@ pub trait RandomnessSource: Default {
 }
 
 fn fill_bytes_from_gens<T: Number, F: FnMut() -> T>(bytes: &mut [u8], mut generator: F) {
-    let size = T::size();
+    let size = T::SIZE;
     let bytes_len = bytes.len();
     let number_of_chunks = bytes_len / size;
     let missing_elements = bytes_len % size;

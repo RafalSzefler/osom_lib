@@ -9,9 +9,9 @@ trait Private {}
 
 /// Marker trait that abstracts the following numerical types:
 /// `u32`, `u64` and `u128`.
-/// 
+///
 /// # Notes
-/// 
+///
 /// This trait depends on private trait, and thus extending it
 /// is not possible.
 #[allow(private_bounds)]
@@ -21,11 +21,17 @@ pub trait Number:
     /// Represents the associated byte representation of the number, e.g. `[u8; 4]` for `u32`.
     type ByteRepr: AsRef<[u8]> + AsMut<[u8]>;
 
-    /// Returns the size of the number in bytes.
-    #[must_use]
-    fn size() -> usize {
-        size_of::<Self>()
-    }
+    /// The size of the number in bytes.
+    const SIZE: usize;
+
+    /// The number zero.
+    const ZERO: Self;
+
+    /// The number one.
+    const ONE: Self;
+
+    /// The highest possible value of the number.
+    const HIGHEST: Self;
 
     /// Returns the sum of two numbers, wrapping around if the result is too large.
     #[must_use]
@@ -55,24 +61,15 @@ pub trait Number:
     #[must_use]
     fn wrapping_shr(self, other: u32) -> Self;
 
-    /// Returns the number one.
-    #[must_use]
-    fn one() -> Self;
-
-    /// Returns the number zero.
-    #[must_use]
-    fn zero() -> Self {
-        Self::default()
-    }
-
-    /// Returns the highest possible value of the number.
-    #[must_use]
-    fn highest() -> Self;
-
     /// Returns the number as a `u128`, which is guaranteed to be big enough to hold
     /// any [`Number`] value.
     #[must_use]
     fn as_u128(self) -> u128;
+
+    /// Creates a number from a `u32` value, which is guaranteed to be small enough
+    /// to fit into the number.
+    #[must_use]
+    fn from_u32(value: u32) -> Self;
 
     /// Creates a number from its little-endian representation in bytes.
     #[must_use]
@@ -90,12 +87,11 @@ impl Private for u128 {}
 impl Number for u32 {
     type ByteRepr = [u8; 4];
 
-    fn one() -> Self {
-        1
-    }
-    fn highest() -> Self {
-        u32::MAX
-    }
+    const SIZE: usize = size_of::<Self>();
+    const ZERO: Self = 0;
+    const ONE: Self = 1;
+    const HIGHEST: Self = u32::MAX;
+
     fn wrapping_add(self, other: Self) -> Self {
         self.wrapping_add(other)
     }
@@ -119,6 +115,9 @@ impl Number for u32 {
     }
     fn as_u128(self) -> u128 {
         u128::from(self)
+    }
+    fn from_u32(value: u32) -> Self {
+        value
     }
     fn from_le_bytes(bytes: &[u8]) -> Self {
         assert!(bytes.len() >= size_of::<Self>());
@@ -134,12 +133,11 @@ impl Number for u32 {
 impl Number for u64 {
     type ByteRepr = [u8; 8];
 
-    fn one() -> Self {
-        1
-    }
-    fn highest() -> Self {
-        u64::MAX
-    }
+    const SIZE: usize = size_of::<Self>();
+    const ZERO: Self = 0;
+    const ONE: Self = 1;
+    const HIGHEST: Self = u64::MAX;
+
     fn wrapping_add(self, other: Self) -> Self {
         self.wrapping_add(other)
     }
@@ -164,6 +162,9 @@ impl Number for u64 {
     fn as_u128(self) -> u128 {
         u128::from(self)
     }
+    fn from_u32(value: u32) -> Self {
+        Self::from(value)
+    }
     fn from_le_bytes(bytes: &[u8]) -> Self {
         assert!(bytes.len() >= size_of::<Self>());
         let mut result = [0u8; size_of::<Self>()];
@@ -178,12 +179,11 @@ impl Number for u64 {
 impl Number for u128 {
     type ByteRepr = [u8; 16];
 
-    fn one() -> Self {
-        1
-    }
-    fn highest() -> Self {
-        u128::MAX
-    }
+    const SIZE: usize = size_of::<Self>();
+    const ZERO: Self = 0;
+    const ONE: Self = 1;
+    const HIGHEST: Self = u128::MAX;
+
     fn wrapping_add(self, other: Self) -> Self {
         self.wrapping_add(other)
     }
@@ -207,6 +207,9 @@ impl Number for u128 {
     }
     fn as_u128(self) -> u128 {
         self
+    }
+    fn from_u32(value: u32) -> Self {
+        Self::from(value)
     }
     fn from_le_bytes(bytes: &[u8]) -> Self {
         assert!(bytes.len() >= size_of::<Self>());

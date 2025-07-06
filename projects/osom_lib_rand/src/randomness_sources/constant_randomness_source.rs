@@ -29,6 +29,6 @@ impl<ANumber: Number> RandomnessSource for ConstantRandomnessSource<ANumber> {
 
 impl<ANumber: Number> Default for ConstantRandomnessSource<ANumber> {
     fn default() -> Self {
-        Self::new(ANumber::one())
+        Self::new(ANumber::ONE)
     }
 }
