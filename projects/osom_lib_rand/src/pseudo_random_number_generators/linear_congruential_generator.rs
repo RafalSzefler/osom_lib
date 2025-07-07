@@ -24,23 +24,17 @@ struct LcgConstants<ANumber: Number> {
 impl<ANumber: Number> LcgConstants<ANumber> {
     #[inline(always)]
     fn new() -> Self {
-        let (multiplier, prime_increment) = unsafe {
+        let multiplier = unsafe {
             match ANumber::NUMBER_TYPE {
-                NumberType::U32 => (ANumber::from_u32(0x915F77F5), ANumber::from_u32(PRIME_INCREMENT)),
-                NumberType::U64 => (
-                    ANumber::from_u64_unchecked(0xFC0072FA0B15F4FD),
-                    ANumber::from_u32(PRIME_INCREMENT),
-                ),
-                NumberType::U128 => (
-                    ANumber::from_u128_unchecked(0xAADEC8C3186345282B4E141F3A1232D5),
-                    ANumber::from_u32(PRIME_INCREMENT),
-                ),
+                NumberType::U32 => ANumber::from_u32(0x915F77F5),
+                NumberType::U64 => ANumber::from_u64_unchecked(0xFC0072FA0B15F4FD),
+                NumberType::U128 => ANumber::from_u128_unchecked(0xAADEC8C3186345282B4E141F3A1232D5),
             }
         };
 
         Self {
             multiplier,
-            prime_increment,
+            prime_increment: ANumber::from_u32(PRIME_INCREMENT),
         }
     }
 
