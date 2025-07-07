@@ -15,3 +15,4 @@ A collection of tools to be used with osom projects and not only. The workspace 
 * [`osom_lib_rand`](https://rafalszefler.github.io/osom_lib/osom_lib_rand) random number generators, randomness sources, and related algorithms including linear congruential generators and OS-based randomness sources.
 * [`osom_lib_strings`](https://rafalszefler.github.io/osom_lib/osom_lib_strings) various string implementations including immutable strings.
 * [`osom_lib_test_macros`](https://rafalszefler.github.io/osom_lib/osom_lib_test_macros) macros for osom projects for testing purposes only.
+* [`osom_lib_trees`](https://rafalszefler.github.io/osom_lib/osom_lib_trees) various tree algorithms implementations.
