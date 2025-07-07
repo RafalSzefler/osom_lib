@@ -85,9 +85,7 @@ impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
         self.current = self.current.wrapping_mul(self.multiplier).wrapping_add(self.increment);
         self.current
     }
-}
 
-impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
     /// Creates a new LCG with the given initial value. The remaining parameters
     /// are carefuly chosen to maximize generator's quality.
     pub fn new(initial: ANumber) -> Self {
