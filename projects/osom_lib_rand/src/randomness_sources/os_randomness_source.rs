@@ -1,6 +1,30 @@
 use core::marker::PhantomData;
 
-use crate::{number::{Number, MAX_NUMBER_SIZE}, traits::RandomnessSource};
+use crate::{number::Number, traits::RandomnessSource};
+
+trait NextOsNumber {
+    fn next_number() -> Self;
+}
+
+impl NextOsNumber for u32 {
+    fn next_number() -> Self {
+        getrandom::u32().expect("Failed to get u32 random number from OS")
+    }
+}
+
+impl NextOsNumber for u64 {
+    fn next_number() -> Self {
+        getrandom::u64().expect("Failed to get u64 random number from OS")
+    }
+}
+
+impl NextOsNumber for u128 {
+    fn next_number() -> Self {
+        let mut array = [0u8; size_of::<Self>()];
+        getrandom::fill(&mut array).expect("Failed to get u128 random number from OS");
+        unsafe { core::mem::transmute::<[u8; size_of::<Self>()], Self>(array) }
+    }
+}
 
 /// Randomness source that retrieves randomness from the operating system.
 /// 
@@ -8,11 +32,12 @@ use crate::{number::{Number, MAX_NUMBER_SIZE}, traits::RandomnessSource};
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[must_use]
 #[repr(transparent)]
-pub struct OsRandomnessSource<ANumber: Number> {
+#[allow(private_bounds)]
+pub struct OsRandomnessSource<ANumber: Number + NextOsNumber> {
     _phantom: PhantomData<ANumber>,
 }
 
-impl<ANumber: Number> Default for OsRandomnessSource<ANumber> {
+impl<ANumber: Number + NextOsNumber> Default for OsRandomnessSource<ANumber> {
     fn default() -> Self {
         Self {
             _phantom: PhantomData,
@@ -20,17 +45,14 @@ impl<ANumber: Number> Default for OsRandomnessSource<ANumber> {
     }
 }
 
-impl<ANumber: Number> RandomnessSource for OsRandomnessSource<ANumber> {
+impl<ANumber: Number + NextOsNumber> RandomnessSource for OsRandomnessSource<ANumber> {
     type TNumber = ANumber;
 
     fn next_number(&mut self) -> Self::TNumber {
-        let mut result = [0u8; MAX_NUMBER_SIZE];
-        let slice = &mut result[..ANumber::SIZE];
-        getrandom::fill(slice).unwrap();
-        Self::TNumber::from_le_bytes(slice)
+        Self::TNumber::next_number()
     }
 
     fn fill_bytes(&mut self, bytes: &mut [u8]) {
-        getrandom::fill(bytes).unwrap();
+        getrandom::fill(bytes).expect("Failed to fill bytes from OS");
     }
 }

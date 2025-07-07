@@ -15,22 +15,22 @@ const PRIME_INCREMENT: u32 = const {
     assert!(value % 4 == 1);
     value
 };
-trait Constants {
+pub(crate) trait LcgConstants {
     const MULTIPLIER: Self;
     const PRIME_INCREMENT: Self;
 }
 
-impl Constants for u32 {
+impl LcgConstants for u32 {
     const MULTIPLIER: Self = 0x915F77F5;
     const PRIME_INCREMENT: Self = PRIME_INCREMENT;
 }
 
-impl Constants for u64 {
+impl LcgConstants for u64 {
     const MULTIPLIER: Self = 0xFC0072FA0B15F4FD;
     const PRIME_INCREMENT: Self = PRIME_INCREMENT as Self;
 }
 
-impl Constants for u128 {
+impl LcgConstants for u128 {
     const MULTIPLIER: Self = 0xAADEC8C3186345282B4E141F3A1232D5;
     const PRIME_INCREMENT: Self = PRIME_INCREMENT as Self;
 }
@@ -74,7 +74,7 @@ impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
 }
 
 #[allow(private_bounds)]
-impl<ANumber: Number + Constants> LinearCongruentialGenerator<ANumber> {
+impl<ANumber: Number + LcgConstants> LinearCongruentialGenerator<ANumber> {
     /// Creates a new LCG with the given initial value. The remaining parameters
     /// are carefuly chosen to maximize generator's quality.
     pub const fn new(initial: ANumber) -> Self {
@@ -82,7 +82,7 @@ impl<ANumber: Number + Constants> LinearCongruentialGenerator<ANumber> {
     }
 }
 
-impl<ANumber: Number + Constants> PseudoRandomGenerator for LinearCongruentialGenerator<ANumber> {
+impl<ANumber: Number + LcgConstants> PseudoRandomGenerator for LinearCongruentialGenerator<ANumber> {
     type TNumber = ANumber;
 
     fn next_number(&mut self) -> Self::TNumber {
