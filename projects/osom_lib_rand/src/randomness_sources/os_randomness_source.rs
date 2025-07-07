@@ -46,7 +46,7 @@ impl<ANumber: Number> RandomnessSource for OsRandomnessSource<ANumber> {
     type TNumber = ANumber;
 
     fn next_number(&mut self) -> Self::TNumber {
-        next_os_number::<Self::TNumber>()
+        next_os_number()
     }
 
     fn fill_bytes(&mut self, bytes: &mut [u8]) {
