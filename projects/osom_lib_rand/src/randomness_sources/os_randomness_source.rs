@@ -48,6 +48,10 @@ impl<ANumber: Number> RandomnessSource for OsRandomnessSource<ANumber> {
     }
 
     fn fill_bytes(&mut self, bytes: &mut [u8]) {
+        if bytes.is_empty() {
+            return;
+        }
+
         getrandom::fill(bytes).expect("Failed to fill bytes from OS");
     }
 }

@@ -1,5 +1,5 @@
 //! Holds traits for random number generators and randomness sources.
-use crate::number::{MAX_NUMBER_SIZE, Number};
+use crate::number::Number;
 
 /// Simple trait for pseudo random number generators. Types implementing
 /// this trait should aim for efficiency above all.
@@ -52,6 +52,10 @@ pub trait RandomnessSource: Default {
 }
 
 fn fill_bytes_from_gens<T: Number, F: FnMut() -> T>(bytes: &mut [u8], mut generator: F) {
+    if bytes.is_empty() {
+        return;
+    }
+
     let size = T::SIZE;
     let bytes_len = bytes.len();
     let number_of_chunks = bytes_len / size;
@@ -59,19 +63,20 @@ fn fill_bytes_from_gens<T: Number, F: FnMut() -> T>(bytes: &mut [u8], mut genera
     let mut ptr = bytes.as_mut_ptr().cast::<T>();
     for _ in 0..number_of_chunks {
         unsafe {
-            *ptr = generator();
+            ptr.write(generator());
             ptr = ptr.add(1);
         }
     }
+
     if missing_elements > 0 {
-        let value = generator();
-        let mut value_bytes = [0u8; MAX_NUMBER_SIZE];
+        let mut value_bytes = T::ByteRepr::default();
+        let value_bytes_slice = value_bytes.as_mut();
+        let value_ptr = value_bytes_slice.as_mut_ptr().cast::<T>();
         unsafe {
-            let value_ptr = value_bytes.as_mut_ptr().cast::<T>();
-            *value_ptr = value;
+            value_ptr.write(generator());
         }
         let index = number_of_chunks * size;
         let remaining_bytes = &mut bytes[index..(index + missing_elements)];
-        remaining_bytes.copy_from_slice(&value_bytes[..missing_elements]);
+        remaining_bytes.copy_from_slice(&value_bytes_slice[..missing_elements]);
     }
 }

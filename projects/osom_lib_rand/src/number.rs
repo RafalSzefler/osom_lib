@@ -28,7 +28,7 @@ pub trait Number:
     'static + Clone + Copy + Debug + Display + PartialEq + Eq + Hash + PartialOrd + Ord + Default + Private
 {
     /// Represents the associated byte representation of the number, e.g. `[u8; 4]` for `u32`.
-    type ByteRepr: AsRef<[u8]> + AsMut<[u8]>;
+    type ByteRepr: AsRef<[u8]> + AsMut<[u8]> + Default;
 
     /// The type of the number.
     const NUMBER_TYPE: NumberType;
