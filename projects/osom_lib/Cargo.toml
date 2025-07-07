@@ -25,7 +25,7 @@ osom_lib_trees = { path = "../osom_lib_trees", version = "0.1", default-features
 osom_lib_rand = { path = "../osom_lib_rand", version = "0.1", default-features = false }
 
 [features]
-default = ["std_alloc", "std_rand"]
+default = ["std_alloc", "std_os_rand"]
 std_alloc = [
     "osom_lib_alloc/std_alloc",
     "osom_lib_arrays/std_alloc",
@@ -33,4 +33,7 @@ std_alloc = [
     "osom_lib_hash/std_alloc",
     "osom_lib_trees/std_alloc",
 ]
-std_rand = ["osom_lib_rand/std_rand"]
+std_os_rand = [
+    "osom_lib_rand/std_os_rand",
+    "osom_lib_trees/std_os_rand",
+]

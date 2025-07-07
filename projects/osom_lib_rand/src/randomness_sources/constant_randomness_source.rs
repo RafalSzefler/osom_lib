@@ -1,7 +1,7 @@
 #![allow(private_bounds)]
 
 use crate::number::Number;
-use crate::pseudo_random_generators::LinearCongruentialGenerator;
+use crate::pseudo_random_number_generators::LinearCongruentialGenerator;
 use crate::traits::RandomnessSource;
 
 /// A trivial [`RandomnessSource`] that always returns the same sequence of values.

@@ -13,6 +13,6 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
 pub mod number;
-pub mod pseudo_random_generators;
+pub mod pseudo_random_number_generators;
 pub mod randomness_sources;
 pub mod traits;

@@ -162,7 +162,6 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     /// # Errors
     ///
     /// For details see [`DynamicArrayConstructionError`].
-    #[inline(always)]
     pub fn extend_from_array<const N: usize>(&mut self, other: [T; N]) -> Result<(), DynamicArrayConstructionError> {
         if N == 0 {
             return Ok(());
@@ -237,6 +236,72 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
         unsafe { Layout::from_size_align_unchecked(byte_size, align) }
     }
 
+    /// Shrinks the [`DynamicArray`] by reducing its capacity to fit its length.
+    ///
+    /// # Notes
+    ///
+    /// Does nothing if the length and capacity are equal.
+    ///
+    /// # Errors
+    ///
+    /// For details see [`DynamicArrayConstructionError`].
+    pub fn shrink_to_fit(&mut self) -> Result<(), DynamicArrayConstructionError> {
+        if self.length == self.capacity {
+            return Ok(());
+        }
+
+        let new_layout = Self::layout(self.length.into());
+        let new_ptr = self.ptr.clone().resize(new_layout, new_layout)?;
+        self.ptr = new_ptr;
+        self.capacity = self.length;
+        Ok(())
+    }
+
+    /// Converts [`Array`][`crate::Array`] into [`DynamicArray`].
+    ///
+    /// # Notes
+    ///
+    /// This operation is basically free.
+    pub fn from_array(array: crate::Array<T, TAllocator>) -> Self {
+        let moved = unsafe {
+            Self {
+                ptr: core::ptr::read(&array.data),
+                length: array.len,
+                capacity: array.len,
+                allocator: core::ptr::read(&array.allocator),
+                phantom: PhantomData,
+            }
+        };
+        core::mem::forget(array);
+        moved
+    }
+
+    /// Converts [`DynamicArray`] into [`Array`][`crate::Array`].
+    ///
+    /// # Notes
+    ///
+    /// This is free unless the capacity is not equal to the length
+    /// in [`DynamicArray`]. In this situation it will shrink the
+    /// [`DynamicArray`], which potentially means memory reallocation.
+    ///
+    /// # Errors
+    ///
+    /// For details see [`DynamicArrayConstructionError`].
+    pub fn into_array(mut self) -> Result<crate::Array<T, TAllocator>, DynamicArrayConstructionError> {
+        self.shrink_to_fit()?;
+
+        let moved = unsafe {
+            crate::Array {
+                data: core::ptr::read(&self.ptr),
+                len: self.length,
+                allocator: core::ptr::read(&self.allocator),
+                phantom: PhantomData,
+            }
+        };
+        core::mem::forget(self);
+        Ok(moved)
+    }
+
     fn grow(&mut self, new_capacity: Length) -> Result<(), AllocationError> {
         assert!(
             new_capacity > self.capacity,
@@ -273,7 +338,7 @@ impl<T, TAllocator: Allocator> Drop for DynamicArray<T, TAllocator> {
                 let len = self.length.into();
                 let end = ptr.add(len);
                 while ptr < end {
-                    drop(ptr.read());
+                    core::ptr::drop_in_place(ptr);
                     ptr = ptr.add(1);
                 }
             }
@@ -290,7 +355,6 @@ impl<T: Clone, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     /// # Errors
     ///
     /// For details see [`DynamicArrayConstructionError`].
-    #[inline(always)]
     pub fn extend_from_slice(&mut self, slice: &[T]) -> Result<(), DynamicArrayConstructionError> {
         let slice_len = slice.len();
         if slice_len == 0 {
@@ -398,3 +462,27 @@ impl<T, TAllocator: Allocator> AsRef<[T]> for DynamicArray<T, TAllocator> {
 
 unsafe impl<T: Send, TAllocator: Allocator> Send for DynamicArray<T, TAllocator> {}
 unsafe impl<T: Sync, TAllocator: Allocator> Sync for DynamicArray<T, TAllocator> {}
+
+impl<T, TAllocator: Allocator> From<crate::Array<T, TAllocator>> for DynamicArray<T, TAllocator> {
+    /// Converts [`Array`][`crate::Array`] into [`DynamicArray`].
+    ///
+    /// # Notes
+    ///
+    /// This operation is basically free.
+    fn from(value: crate::Array<T, TAllocator>) -> Self {
+        Self::from_array(value)
+    }
+}
+
+impl<T, TAllocator: Allocator> From<DynamicArray<T, TAllocator>> for crate::Array<T, TAllocator> {
+    /// Converts [`DynamicArray`] into [`Array`][`crate::Array`].
+    ///
+    /// # Notes
+    ///
+    /// This is free unless the capacity is not equal to the length
+    /// in [`DynamicArray`]. In this situation it will shrink the
+    /// [`DynamicArray`], which potentially means memory reallocation.
+    fn from(value: DynamicArray<T, TAllocator>) -> Self {
+        value.into_array().expect("Failed to convert DynamicArray into Array")
+    }
+}

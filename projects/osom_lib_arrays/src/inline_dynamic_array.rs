@@ -341,7 +341,7 @@ impl<const N: usize, T, TAllocator: Allocator> Drop for InlineDynamicArray<N, T,
                 let mut ptr = self.data_ptr();
                 let mut idx = 0;
                 while idx < self.len().into() {
-                    drop(ptr.read());
+                    core::ptr::drop_in_place(ptr);
                     ptr = ptr.add(1);
                     idx += 1;
                 }

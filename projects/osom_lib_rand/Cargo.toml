@@ -22,6 +22,5 @@ getrandom = { version = "0.3", optional = true }
 rstest = { workspace = true }
 
 [features]
-default = ["std_rand"]
-std_rand = ["getrandom"]
-
+default = ["std_os_rand"]
+std_os_rand = ["getrandom"]

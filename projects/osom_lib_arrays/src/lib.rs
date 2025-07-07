@@ -13,6 +13,9 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
 
+mod array;
+pub use array::*;
+
 mod immutable_array;
 pub use immutable_array::*;
 

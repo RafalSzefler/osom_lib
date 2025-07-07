@@ -1,4 +1,4 @@
-#![cfg(all(not(osom_running_env = "github"), feature = "std_rand"))]
+#![cfg(all(not(osom_running_env = "github"), feature = "std_os_rand"))]
 mod common;
 
 use osom_lib_rand::randomness_sources::OsRandomnessSource;

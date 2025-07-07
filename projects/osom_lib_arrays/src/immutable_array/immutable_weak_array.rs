@@ -85,12 +85,12 @@ impl<T: Sized, TAllocator: Allocator> ImmutableWeakArray<T, TAllocator> {
         let weak_counter = self.internal.heap_data().weak_counter().fetch_sub(1, Ordering::SeqCst);
         if weak_counter == 1 {
             if core::mem::needs_drop::<T>() {
-                let slice = self.internal.as_slice();
-                let mut start = slice.as_ptr();
+                let slice = self.internal.as_slice_mut();
+                let mut start = slice.as_mut_ptr();
                 let end = unsafe { start.add(slice.len()) };
                 while start < end {
                     unsafe {
-                        core::mem::drop(start.read());
+                        core::ptr::drop_in_place(start);
                         start = start.add(1);
                     }
                 }

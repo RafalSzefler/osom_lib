@@ -3,9 +3,11 @@ use rstest::rstest;
 
 mod common;
 
-use osom_lib_rand::pseudo_random_generators::LinearCongruentialGenerator;
+#[cfg(feature = "std_os_rand")]
 use osom_lib_rand::randomness_sources::OsRandomnessSource;
-use osom_lib_rand::traits::PseudoRandomGenerator as _;
+
+use osom_lib_rand::pseudo_random_number_generators::LinearCongruentialGenerator;
+use osom_lib_rand::traits::PseudoRandomNumberGenerator as _;
 
 #[rstest]
 #[case(1)]
@@ -22,7 +24,7 @@ fn test_statistical_properties_lcg_u32(#[case] initial: u32) {
     common::test_fill_bytes::<u32, _>(|bytes| generator.fill_bytes(bytes));
 }
 
-#[cfg(feature = "std_rand")]
+#[cfg(feature = "std_os_rand")]
 #[test]
 fn test_statistical_properties_lcg_u32_with_random_seed() {
     let mut os_rand = OsRandomnessSource::default();
@@ -47,7 +49,7 @@ fn test_statistical_properties_lcg_u64(#[case] initial: u64) {
     common::test_fill_bytes::<u64, _>(|bytes| generator.fill_bytes(bytes));
 }
 
-#[cfg(feature = "std_rand")]
+#[cfg(feature = "std_os_rand")]
 #[test]
 fn test_statistical_properties_lcg_u64_with_random_seed() {
     let mut os_rand = OsRandomnessSource::<u64>::default();
@@ -73,7 +75,7 @@ fn test_statistical_properties_lcg_u128(#[case] initial: u128) {
     common::test_fill_bytes::<u128, _>(|bytes| generator.fill_bytes(bytes));
 }
 
-#[cfg(feature = "std_rand")]
+#[cfg(feature = "std_os_rand")]
 #[test]
 fn test_statistical_properties_lcg_u128_with_random_seed() {
     let mut os_rand = OsRandomnessSource::<u128>::default();

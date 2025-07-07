@@ -229,6 +229,14 @@ impl<T: Sized, TAllocator: Allocator> InternalArray<T, TAllocator> {
             core::slice::from_raw_parts(data_ptr, self.length.value() as usize)
         }
     }
+
+    #[inline(always)]
+    pub fn as_slice_mut(&mut self) -> &mut [T] {
+        unsafe {
+            let data_ptr = self.heap_data().data().as_ptr().cast::<T>();
+            core::slice::from_raw_parts_mut(data_ptr, self.length.value() as usize)
+        }
+    }
 }
 
 impl<T: Sized, TAllocator: Allocator> Clone for InternalArray<T, TAllocator> {

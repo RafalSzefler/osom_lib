@@ -8,7 +8,7 @@
 //! "Notes on a New Pseudo-Random Number Generator" paper by Martin Greenberger.
 //! Thus we fix an appropriate prime increment for all generators.
 use crate::number::{Number, NumberType};
-use crate::traits::{PseudoRandomGenerator, RandomnessSource};
+use crate::traits::{PseudoRandomNumberGenerator, RandomnessSource};
 
 const PRIME_INCREMENT: u32 = const {
     let value = 3326489;
@@ -103,7 +103,7 @@ impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
     }
 }
 
-impl<ANumber: Number> PseudoRandomGenerator for LinearCongruentialGenerator<ANumber> {
+impl<ANumber: Number> PseudoRandomNumberGenerator for LinearCongruentialGenerator<ANumber> {
     type TNumber = ANumber;
 
     fn next_number(&mut self) -> Self::TNumber {

@@ -3,10 +3,14 @@ use crate::number::{MAX_NUMBER_SIZE, Number};
 
 /// Simple trait for pseudo random number generators. Types implementing
 /// this trait should aim for efficiency above all.
-pub trait PseudoRandomGenerator {
+///
+/// In its essence this is the same as [`RandomnessSource`].
+/// We distinguish those types mostly for type safety. These
+/// have different purposes.
+pub trait PseudoRandomNumberGenerator {
     type TNumber: Number;
 
-    /// Creates a new [`PseudoRandomGenerator`] seeded from a [`RandomnessSource`].
+    /// Creates a new [`PseudoRandomNumberGenerator`] seeded from a [`RandomnessSource`].
     fn from_randomness_source(source: &mut impl RandomnessSource<TNumber = Self::TNumber>) -> Self;
 
     /// Returns the next random number.
@@ -21,13 +25,17 @@ pub trait PseudoRandomGenerator {
 /// Simple trait for randomness source.
 ///
 /// This looks (and in fact is)
-/// the same as [`PseudoRandomGenerator`], however it is distinguished
+/// the same as [`PseudoRandomNumberGenerator`], however it is distinguished
 /// by the way it works. It is allowed for implementors of this trait
 /// to be inefficient, but have potentially better randomness (e.g. by
 /// reading from appropriate hardware source).
 ///
-/// It is also a good idea to seed [`PseudoRandomGenerator`] objects
+/// It is also a good idea to seed [`PseudoRandomNumberGenerator`] objects
 /// with whatever [`RandomnessSource`] returns.
+///
+/// In its essence this is the same as [`PseudoRandomNumberGenerator`].
+/// We distinguish those types mostly for type safety. These
+/// have different purposes.
 pub trait RandomnessSource: Default {
     type TNumber: Number;
 
