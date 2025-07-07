@@ -2,30 +2,14 @@
 
 use core::{alloc::Layout, marker::PhantomData, ops::Deref};
 
-use osom_lib_alloc::{AllocatedMemory as _, AllocationError, Allocator};
+use osom_lib_alloc::{AllocatedMemory as _, Allocator};
 
 #[cfg(feature = "std_alloc")]
 use osom_lib_alloc::StdAllocator;
 
 use osom_lib_primitives::Length;
 
-/// Represents an error that occurs when constructing new [`Array`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[must_use]
-#[repr(u8)]
-pub enum ArrayConstructionError {
-    /// The allocator failed to allocate memory.
-    AllocationError,
-
-    /// The passed array is too long, it exceeds [`MAX_LENGTH`][`Array::MAX_LENGTH`].
-    ArrayTooLong,
-}
-
-impl From<AllocationError> for ArrayConstructionError {
-    fn from(_: AllocationError) -> Self {
-        ArrayConstructionError::AllocationError
-    }
-}
+use crate::errors::ArrayConstructionError;
 
 /// Represents a fixed-size array but allocated on the heap.
 ///

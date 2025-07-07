@@ -6,8 +6,10 @@ use osom_lib_primitives::Length;
 #[cfg(feature = "std_alloc")]
 use osom_lib_alloc::StdAllocator;
 
+use crate::errors::ArrayConstructionError;
+
 use super::internal_array::{InternalArray, MAX_LENGTH};
-use super::{ImmutableArray, ImmutableArrayConstructionError, ImmutableWeakArray};
+use super::{ImmutableArray, ImmutableWeakArray};
 
 const INITIAL_CAPACITY: Length = unsafe { Length::new_unchecked(16) };
 
@@ -41,8 +43,8 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArrayBuilder<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`ImmutableArrayConstructionError`].
-    pub fn shrink_to_fit(&mut self) -> Result<(), ImmutableArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn shrink_to_fit(&mut self) -> Result<(), ArrayConstructionError> {
         let internal = &mut self.internal;
         let internal_len = internal.len();
         let internal_capacity = internal.capacity();
@@ -78,9 +80,9 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArrayBuilder<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`ImmutableArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     #[inline(always)]
-    pub fn new() -> Result<Self, ImmutableArrayConstructionError> {
+    pub fn new() -> Result<Self, ArrayConstructionError> {
         Self::with_allocator(TAllocator::default())
     }
 
@@ -88,9 +90,9 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArrayBuilder<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`ImmutableArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     #[inline(always)]
-    pub fn with_allocator(allocator: TAllocator) -> Result<Self, ImmutableArrayConstructionError> {
+    pub fn with_allocator(allocator: TAllocator) -> Result<Self, ArrayConstructionError> {
         let internal = InternalArray::allocate(Length::ZERO, INITIAL_CAPACITY, allocator)?;
         Ok(Self { internal })
     }
@@ -99,9 +101,9 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArrayBuilder<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`ImmutableArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     #[inline(always)]
-    pub fn push(&mut self, value: T) -> Result<(), ImmutableArrayConstructionError> {
+    pub fn push(&mut self, value: T) -> Result<(), ArrayConstructionError> {
         self.extend_from_array([value])
     }
 
@@ -109,14 +111,14 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArrayBuilder<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`ImmutableArrayConstructionError`].
-    pub fn extend_from_array<const N: usize>(&mut self, values: [T; N]) -> Result<(), ImmutableArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn extend_from_array<const N: usize>(&mut self, values: [T; N]) -> Result<(), ArrayConstructionError> {
         if N == 0 {
             return Ok(());
         }
 
         if N > MAX_LENGTH {
-            return Err(ImmutableArrayConstructionError::ArrayTooLong);
+            return Err(ArrayConstructionError::ArrayTooLong);
         }
 
         let internal = &mut self.internal;
@@ -168,16 +170,16 @@ impl<T: Sized + Clone, TAllocator: Allocator> ImmutableArrayBuilder<T, TAllocato
     ///
     /// # Errors
     ///
-    /// For details see [`ImmutableArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     #[inline(always)]
-    pub fn extend_from_slice(&mut self, slice: &[T]) -> Result<(), ImmutableArrayConstructionError> {
+    pub fn extend_from_slice(&mut self, slice: &[T]) -> Result<(), ArrayConstructionError> {
         let slice_len = slice.len();
         if slice_len == 0 {
             return Ok(());
         }
 
         if slice_len > MAX_LENGTH {
-            return Err(ImmutableArrayConstructionError::ArrayTooLong);
+            return Err(ArrayConstructionError::ArrayTooLong);
         }
 
         let internal = &mut self.internal;

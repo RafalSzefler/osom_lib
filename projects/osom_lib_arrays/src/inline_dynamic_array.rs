@@ -16,23 +16,8 @@ use osom_lib_primitives::{DoesNotHaveToBeUsed, Length};
 #[cfg(feature = "std_alloc")]
 use osom_lib_alloc::StdAllocator;
 
-/// Represents an error that occurs when constructing new [`InlineDynamicArray`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[must_use]
-#[repr(u8)]
-pub enum InlineDynamicArrayConstructionError {
-    /// The allocator failed to allocate memory.
-    AllocationError,
+use crate::errors::ArrayConstructionError;
 
-    /// The passed array is too long, it exceeds [`MAX_SIZE`][`InlineDynamicArray::MAX_SIZE`].
-    ArrayTooLong,
-}
-
-impl From<AllocationError> for InlineDynamicArrayConstructionError {
-    fn from(_: AllocationError) -> Self {
-        InlineDynamicArrayConstructionError::AllocationError
-    }
-}
 union InlineDynamicArrayUnion<T, const N: usize> {
     stack_data: ManuallyDrop<[T; N]>,
     heap_data: *mut T,
@@ -106,9 +91,9 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
         }
     }
 
-    fn try_grow(&mut self, new_capacity: usize) -> Result<(), InlineDynamicArrayConstructionError> {
+    fn try_grow(&mut self, new_capacity: usize) -> Result<(), ArrayConstructionError> {
         if new_capacity > Self::MAX_SIZE {
-            return Err(InlineDynamicArrayConstructionError::ArrayTooLong);
+            return Err(ArrayConstructionError::ArrayTooLong);
         }
 
         debug_assert!(
@@ -148,8 +133,8 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
     ///
     /// # Errors
     ///
-    /// For details see [`InlineDynamicArrayConstructionError`].
-    pub fn push(&mut self, value: T) -> Result<(), InlineDynamicArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn push(&mut self, value: T) -> Result<(), ArrayConstructionError> {
         let capacity: usize = self.capacity.into();
         unsafe {
             if self.is_inlined() && self.length.value() < N as i32 {
@@ -226,9 +211,9 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
     ///
     /// # Errors
     ///
-    /// For details see [`InlineDynamicArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     #[inline(always)]
-    pub fn with_capacity(capacity: Length) -> Result<Self, InlineDynamicArrayConstructionError> {
+    pub fn with_capacity(capacity: Length) -> Result<Self, ArrayConstructionError> {
         Self::with_capacity_and_allocator(capacity, TAllocator::default())
     }
 
@@ -236,12 +221,12 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
     ///
     /// # Errors
     ///
-    /// For details see [`InlineDynamicArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     #[inline(always)]
     pub fn with_capacity_and_allocator(
         capacity: Length,
         allocator: TAllocator,
-    ) -> Result<Self, InlineDynamicArrayConstructionError> {
+    ) -> Result<Self, ArrayConstructionError> {
         let mut array = Self::with_allocator(allocator);
         array.try_grow(capacity.into())?;
         Ok(array)
@@ -323,8 +308,8 @@ impl<const N: usize, T: Clone, TAllocator: Allocator> InlineDynamicArray<N, T, T
     ///
     /// # Errors
     ///
-    /// For details see [`InlineDynamicArrayConstructionError`].
-    pub fn try_clone(&self) -> Result<Self, InlineDynamicArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn try_clone(&self) -> Result<Self, ArrayConstructionError> {
         let mut new = Self::with_allocator(self.allocator.clone());
         let slice = self.as_slice();
         for item in slice {

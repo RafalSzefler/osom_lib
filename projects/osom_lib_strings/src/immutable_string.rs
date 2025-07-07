@@ -3,7 +3,7 @@
 use core::mem::ManuallyDrop;
 
 use osom_lib_alloc::Allocator;
-use osom_lib_arrays::{ImmutableArray, ImmutableArrayConstructionError, ImmutableWeakArray};
+use osom_lib_arrays::{ImmutableArray, ImmutableWeakArray, errors::ArrayConstructionError};
 use osom_lib_primitives::Length;
 
 #[cfg(feature = "std_alloc")]
@@ -21,11 +21,11 @@ pub enum ImmutableStringConstructionError {
     StringTooLong,
 }
 
-impl From<ImmutableArrayConstructionError> for ImmutableStringConstructionError {
-    fn from(error: ImmutableArrayConstructionError) -> Self {
+impl From<ArrayConstructionError> for ImmutableStringConstructionError {
+    fn from(error: ArrayConstructionError) -> Self {
         match error {
-            ImmutableArrayConstructionError::AllocationError => ImmutableStringConstructionError::AllocationError,
-            ImmutableArrayConstructionError::ArrayTooLong => ImmutableStringConstructionError::StringTooLong,
+            ArrayConstructionError::AllocationError => ImmutableStringConstructionError::AllocationError,
+            ArrayConstructionError::ArrayTooLong => ImmutableStringConstructionError::StringTooLong,
         }
     }
 }

@@ -2,32 +2,16 @@
 
 use core::sync::atomic::Ordering;
 
-use osom_lib_alloc::{AllocationError, Allocator};
+use osom_lib_alloc::Allocator;
 use osom_lib_primitives::Length;
 
 #[cfg(feature = "std_alloc")]
 use osom_lib_alloc::StdAllocator;
 
+use crate::errors::ArrayConstructionError;
+
 use super::ImmutableWeakArray;
 use super::internal_array::{HeapData, InternalArray, MAX_LENGTH};
-
-/// Represents an error that occurs when constructing new [`ImmutableArray`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[must_use]
-#[repr(u8)]
-pub enum ImmutableArrayConstructionError {
-    /// The allocator failed to allocate memory.
-    AllocationError,
-
-    /// The passed array is too long, it exceeds [`MAX_LENGTH`][`ImmutableArray::MAX_LENGTH`].
-    ArrayTooLong,
-}
-
-impl From<AllocationError> for ImmutableArrayConstructionError {
-    fn from(_: AllocationError) -> Self {
-        ImmutableArrayConstructionError::AllocationError
-    }
-}
 
 /// A smart pointer to an immutable array. It tracks both strong and
 /// weak references to the array, and is thread safe.
@@ -157,8 +141,8 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`ImmutableArrayConstructionError`].
-    pub fn from_array<const N: usize>(array: [T; N]) -> Result<Self, ImmutableArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn from_array<const N: usize>(array: [T; N]) -> Result<Self, ArrayConstructionError> {
         Self::from_array_with_allocator(array, TAllocator::default())
     }
 
@@ -167,14 +151,14 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`ImmutableArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     pub fn from_array_with_allocator<const N: usize>(
         array: [T; N],
         allocator: TAllocator,
-    ) -> Result<Self, ImmutableArrayConstructionError> {
+    ) -> Result<Self, ArrayConstructionError> {
         let slice_len = array.len();
         if slice_len > Self::MAX_LENGTH {
-            return Err(ImmutableArrayConstructionError::ArrayTooLong);
+            return Err(ArrayConstructionError::ArrayTooLong);
         }
 
         let slice_len = unsafe { Length::new_unchecked(slice_len as i32) };
@@ -203,8 +187,8 @@ impl<T: Sized + Clone, TAllocator: Allocator> ImmutableArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`ImmutableArrayConstructionError`].
-    pub fn from_slice(slice: &[T]) -> Result<Self, ImmutableArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn from_slice(slice: &[T]) -> Result<Self, ArrayConstructionError> {
         Self::from_slice_with_allocator(slice, TAllocator::default())
     }
 
@@ -213,14 +197,11 @@ impl<T: Sized + Clone, TAllocator: Allocator> ImmutableArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`ImmutableArrayConstructionError`].
-    pub fn from_slice_with_allocator(
-        slice: &[T],
-        allocator: TAllocator,
-    ) -> Result<Self, ImmutableArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn from_slice_with_allocator(slice: &[T], allocator: TAllocator) -> Result<Self, ArrayConstructionError> {
         let slice_len = slice.len();
         if slice_len > Self::MAX_LENGTH {
-            return Err(ImmutableArrayConstructionError::ArrayTooLong);
+            return Err(ArrayConstructionError::ArrayTooLong);
         }
 
         let slice_len = unsafe { Length::new_unchecked(slice_len as i32) };

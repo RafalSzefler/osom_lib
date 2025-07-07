@@ -8,23 +8,7 @@ use osom_lib_primitives::Length;
 #[cfg(feature = "std_alloc")]
 use osom_lib_alloc::StdAllocator;
 
-/// Represents an error that occurs when constructing new [`DynamicArray`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[must_use]
-#[repr(u8)]
-pub enum DynamicArrayConstructionError {
-    /// The allocator failed to allocate memory.
-    AllocationError,
-
-    /// The passed array is too long, it exceeds [`MAX_LENGTH`][`DynamicArray::MAX_LENGTH`].
-    ArrayTooLong,
-}
-
-impl From<AllocationError> for DynamicArrayConstructionError {
-    fn from(_: AllocationError) -> Self {
-        DynamicArrayConstructionError::AllocationError
-    }
-}
+use crate::errors::ArrayConstructionError;
 
 /// A dynamic array that grows when inserting elements. Similar to
 /// `std::vec::Vec` in its nature.
@@ -77,9 +61,9 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`DynamicArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     #[inline(always)]
-    pub fn with_capacity(capacity: Length) -> Result<Self, DynamicArrayConstructionError> {
+    pub fn with_capacity(capacity: Length) -> Result<Self, ArrayConstructionError> {
         Self::with_capacity_and_allocator(capacity, TAllocator::default())
     }
 
@@ -87,12 +71,12 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`DynamicArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     #[inline(always)]
     pub fn with_capacity_and_allocator(
         capacity: Length,
         allocator: TAllocator,
-    ) -> Result<Self, DynamicArrayConstructionError> {
+    ) -> Result<Self, ArrayConstructionError> {
         if capacity == Length::ZERO {
             return Ok(Self::with_allocator(allocator));
         }
@@ -151,9 +135,9 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`DynamicArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     #[inline(always)]
-    pub fn push(&mut self, value: T) -> Result<(), DynamicArrayConstructionError> {
+    pub fn push(&mut self, value: T) -> Result<(), ArrayConstructionError> {
         self.extend_from_array([value])
     }
 
@@ -161,14 +145,14 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`DynamicArrayConstructionError`].
-    pub fn extend_from_array<const N: usize>(&mut self, other: [T; N]) -> Result<(), DynamicArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn extend_from_array<const N: usize>(&mut self, other: [T; N]) -> Result<(), ArrayConstructionError> {
         if N == 0 {
             return Ok(());
         }
 
         if N > Self::MAX_LENGTH {
-            return Err(DynamicArrayConstructionError::ArrayTooLong);
+            return Err(ArrayConstructionError::ArrayTooLong);
         }
 
         let len = self.length.value() as usize;
@@ -244,8 +228,8 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`DynamicArrayConstructionError`].
-    pub fn shrink_to_fit(&mut self) -> Result<(), DynamicArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn shrink_to_fit(&mut self) -> Result<(), ArrayConstructionError> {
         if self.length == self.capacity {
             return Ok(());
         }
@@ -286,8 +270,8 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`DynamicArrayConstructionError`].
-    pub fn into_array(mut self) -> Result<crate::Array<T, TAllocator>, DynamicArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn into_array(mut self) -> Result<crate::Array<T, TAllocator>, ArrayConstructionError> {
         self.shrink_to_fit()?;
 
         let moved = unsafe {
@@ -354,15 +338,15 @@ impl<T: Clone, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`DynamicArrayConstructionError`].
-    pub fn extend_from_slice(&mut self, slice: &[T]) -> Result<(), DynamicArrayConstructionError> {
+    /// For details see [`ArrayConstructionError`].
+    pub fn extend_from_slice(&mut self, slice: &[T]) -> Result<(), ArrayConstructionError> {
         let slice_len = slice.len();
         if slice_len == 0 {
             return Ok(());
         }
 
         if slice_len > Self::MAX_LENGTH {
-            return Err(DynamicArrayConstructionError::ArrayTooLong);
+            return Err(ArrayConstructionError::ArrayTooLong);
         }
 
         let len = self.length.value() as usize;
@@ -392,9 +376,9 @@ impl<T: Clone, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     ///
     /// # Errors
     ///
-    /// For details see [`DynamicArrayConstructionError`].
+    /// For details see [`ArrayConstructionError`].
     #[inline(always)]
-    pub fn try_clone(&self) -> Result<Self, DynamicArrayConstructionError> {
+    pub fn try_clone(&self) -> Result<Self, ArrayConstructionError> {
         let mut new_array = Self::with_capacity_and_allocator(self.capacity, self.allocator.clone())?;
         new_array.extend_from_slice(self.as_slice())?;
         Ok(new_array)

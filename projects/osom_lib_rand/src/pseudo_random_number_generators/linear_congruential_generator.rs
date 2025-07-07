@@ -105,3 +105,11 @@ impl<ANumber: Number> PseudoRandomNumberGenerator for LinearCongruentialGenerato
         Self::new(source.next_number())
     }
 }
+
+#[cfg(feature = "std_os_rand")]
+impl<ANumber: Number> Default for LinearCongruentialGenerator<ANumber> {
+    fn default() -> Self {
+        let mut os_rand = crate::randomness_sources::OsRandomnessSource::default();
+        Self::from_randomness_source(&mut os_rand)
+    }
+}
