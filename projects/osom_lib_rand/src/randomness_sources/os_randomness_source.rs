@@ -4,22 +4,20 @@ use crate::{number::{Number, NumberType}, traits::RandomnessSource};
 
 #[inline(always)]
 fn next_os_number<ANumber: Number>() -> ANumber {
-    unsafe {
-        match ANumber::NUMBER_TYPE {
-            NumberType::U32 => {
-                let no = getrandom::u32().expect("Failed to get u32 random number from OS");
-                ANumber::from_u32(no)
-            }
-            NumberType::U64 => {
-                let no = getrandom::u64().expect("Failed to get u64 random number from OS");
-                ANumber::from_u64_unchecked(no)
-            }
-            NumberType::U128 => {
-                let mut array = [0u8; size_of::<u128>()];
-                getrandom::fill(&mut array).expect("Failed to get u128 random number from OS");
-                let no = u128::from_ne_bytes(array);
-                ANumber::from_u128_unchecked(no)
-            }
+    match ANumber::NUMBER_TYPE {
+        NumberType::U32 => {
+            let no = getrandom::u32().expect("Failed to get u32 random number from OS");
+            ANumber::from_u32(no)
+        }
+        NumberType::U64 => {
+            let no = getrandom::u64().expect("Failed to get u64 random number from OS");
+            unsafe { ANumber::from_u64_unchecked(no) }
+        }
+        NumberType::U128 => {
+            let mut array = [0u8; size_of::<u128>()];
+            getrandom::fill(&mut array).expect("Failed to get u128 random number from OS");
+            let no = u128::from_ne_bytes(array);
+            unsafe { ANumber::from_u128_unchecked(no) }
         }
     }
 }
