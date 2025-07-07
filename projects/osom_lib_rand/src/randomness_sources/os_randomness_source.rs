@@ -17,7 +17,7 @@ fn next_os_number<ANumber: Number>() -> ANumber {
             NumberType::U128 => {
                 let mut array = [0u8; size_of::<u128>()];
                 getrandom::fill(&mut array).expect("Failed to get u128 random number from OS");
-                let no = core::mem::transmute::<[u8; size_of::<u128>()], u128>(array);
+                let no = u128::from_ne_bytes(array);
                 ANumber::from_u128_unchecked(no)
             }
         }
