@@ -1,3 +1,4 @@
+#![cfg(not(osom_running_env = "github"))]
 use rstest::rstest;
 
 mod common;

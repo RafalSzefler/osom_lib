@@ -7,7 +7,7 @@
 //! if and only if `increment % 4 == 1`. This result can be found in
 //! "Notes on a New Pseudo-Random Number Generator" paper by Martin Greenberger.
 //! Thus we fix an appropriate prime increment for all generators.
-use crate::number::Number;
+use crate::number::{Number, NumberType};
 use crate::traits::{PseudoRandomGenerator, RandomnessSource};
 
 const PRIME_INCREMENT: u32 = const {
@@ -15,24 +15,44 @@ const PRIME_INCREMENT: u32 = const {
     assert!(value % 4 == 1);
     value
 };
-pub(crate) trait LcgConstants {
-    const MULTIPLIER: Self;
-    const PRIME_INCREMENT: Self;
+
+struct LcgConstants<ANumber: Number> {
+    multiplier: ANumber,
+    prime_increment: ANumber,
 }
 
-impl LcgConstants for u32 {
-    const MULTIPLIER: Self = 0x915F77F5;
-    const PRIME_INCREMENT: Self = PRIME_INCREMENT;
-}
+impl<ANumber: Number> LcgConstants<ANumber> {
+    #[inline(always)]
+    fn new() -> Self {
+        let (multiplier, prime_increment) = unsafe {
+            match ANumber::NUMBER_TYPE {
+                NumberType::U32 => (ANumber::from_u32(0x915F77F5), ANumber::from_u32(PRIME_INCREMENT)),
+                NumberType::U64 => (
+                    ANumber::from_u64_unchecked(0xFC0072FA0B15F4FD),
+                    ANumber::from_u32(PRIME_INCREMENT),
+                ),
+                NumberType::U128 => (
+                    ANumber::from_u128_unchecked(0xAADEC8C3186345282B4E141F3A1232D5),
+                    ANumber::from_u32(PRIME_INCREMENT),
+                ),
+            }
+        };
 
-impl LcgConstants for u64 {
-    const MULTIPLIER: Self = 0xFC0072FA0B15F4FD;
-    const PRIME_INCREMENT: Self = PRIME_INCREMENT as Self;
-}
+        Self {
+            multiplier,
+            prime_increment,
+        }
+    }
 
-impl LcgConstants for u128 {
-    const MULTIPLIER: Self = 0xAADEC8C3186345282B4E141F3A1232D5;
-    const PRIME_INCREMENT: Self = PRIME_INCREMENT as Self;
+    #[inline(always)]
+    const fn multiplier(&self) -> ANumber {
+        self.multiplier
+    }
+
+    #[inline(always)]
+    const fn prime_increment(&self) -> ANumber {
+        self.prime_increment
+    }
 }
 
 /// The classical LCG algorithm. In the most general form it does:
@@ -74,15 +94,16 @@ impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
 }
 
 #[allow(private_bounds)]
-impl<ANumber: Number + LcgConstants> LinearCongruentialGenerator<ANumber> {
+impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
     /// Creates a new LCG with the given initial value. The remaining parameters
     /// are carefuly chosen to maximize generator's quality.
-    pub const fn new(initial: ANumber) -> Self {
-        Self::with_params(ANumber::MULTIPLIER, ANumber::PRIME_INCREMENT, initial)
+    pub fn new(initial: ANumber) -> Self {
+        let constants = LcgConstants::<ANumber>::new();
+        Self::with_params(constants.multiplier(), constants.prime_increment(), initial)
     }
 }
 
-impl<ANumber: Number + LcgConstants> PseudoRandomGenerator for LinearCongruentialGenerator<ANumber> {
+impl<ANumber: Number> PseudoRandomGenerator for LinearCongruentialGenerator<ANumber> {
     type TNumber = ANumber;
 
     fn next_number(&mut self) -> Self::TNumber {

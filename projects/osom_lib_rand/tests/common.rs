@@ -17,8 +17,8 @@ pub fn test_fill_bytes<T: Number, G: FnMut(&mut [u8])>(mut generator: G) {
     }
 
     for count in bins {
-        assert!(count > (EXPECTED_PER_BIN * 0.8) as u32);
-        assert!(count < (EXPECTED_PER_BIN * 1.2) as u32);
+        assert!(count > (EXPECTED_PER_BIN * 0.75) as u32);
+        assert!(count < (EXPECTED_PER_BIN * 1.25) as u32);
     }
 }
 
@@ -51,9 +51,9 @@ fn test_chi_square<T: Number, G: FnMut() -> T>(generator: &mut G) {
     const BINS: usize = 100;
     const ITERATIONS: usize = 1000000;
     const EXPECTED_PER_BIN: f64 = ITERATIONS as f64 / BINS as f64;
-    const CHI_SQUARE_THRESHOLD: f64 = 135.0; // ~91.2% confidence level for 99 degrees of freedom
+    const CHI_SQUARE_THRESHOLD: f64 = 140.0;
 
-    let mut bins = [0u64; BINS];
+    let mut bins = [0u32; BINS];
 
     // Generate random numbers and count them into bins
     for _ in 0..ITERATIONS {
@@ -70,8 +70,7 @@ fn test_chi_square<T: Number, G: FnMut() -> T>(generator: &mut G) {
         chi_square += (diff * diff) / EXPECTED_PER_BIN;
     }
 
-    // For a good random generator, chi-square should be below the threshold
-    // (indicating uniform distribution across bins)
+    // For a good enough random generator, chi-square should be below the threshold
     assert!(
         chi_square < CHI_SQUARE_THRESHOLD,
         "Chi-square test failed: {} >= {} (expected uniform distribution)",

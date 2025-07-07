@@ -1,7 +1,7 @@
 #![allow(private_bounds)]
 
 use crate::number::Number;
-use crate::pseudo_random_generators::{LcgConstants, LinearCongruentialGenerator};
+use crate::pseudo_random_generators::LinearCongruentialGenerator;
 use crate::traits::RandomnessSource;
 
 /// A trivial [`RandomnessSource`] that always returns the same sequence of values.
@@ -16,13 +16,15 @@ pub struct ConstantRandomnessSource<ANumber: Number> {
     generator: LinearCongruentialGenerator<ANumber>,
 }
 
-impl<ANumber: Number + LcgConstants> ConstantRandomnessSource<ANumber> {
+impl<ANumber: Number> ConstantRandomnessSource<ANumber> {
     pub fn new(seed: ANumber) -> Self {
-        Self { generator: LinearCongruentialGenerator::new(seed) }
+        Self {
+            generator: LinearCongruentialGenerator::new(seed),
+        }
     }
 }
 
-impl<ANumber: Number + LcgConstants> RandomnessSource for ConstantRandomnessSource<ANumber> {
+impl<ANumber: Number> RandomnessSource for ConstantRandomnessSource<ANumber> {
     type TNumber = ANumber;
 
     fn next_number(&mut self) -> Self::TNumber {
@@ -30,7 +32,7 @@ impl<ANumber: Number + LcgConstants> RandomnessSource for ConstantRandomnessSour
     }
 }
 
-impl<ANumber: Number + LcgConstants> Default for ConstantRandomnessSource<ANumber> {
+impl<ANumber: Number> Default for ConstantRandomnessSource<ANumber> {
     fn default() -> Self {
         Self::new(ANumber::ONE)
     }

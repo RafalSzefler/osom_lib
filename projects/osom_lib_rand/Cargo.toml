@@ -9,6 +9,7 @@ repository.workspace = true
 categories.workspace = true
 description = "Osom lib implementation of some random algorithms."
 keywords = ["osom", "lib", "tools", "random"]
+build = "build.rs"
 
 [lib]
 crate-type = ["lib"]

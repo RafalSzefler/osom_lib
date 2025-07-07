@@ -1,11 +1,20 @@
 //! The module contains the definition of the [`Number`] trait
 //! and its implementations for `u32`, `u64` and `u128`.
+#![allow(clippy::cast_possible_truncation)]
 
 use core::fmt::{Debug, Display};
 use core::hash::Hash;
 use core::mem::size_of;
 
 trait Private {}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+pub enum NumberType {
+    U32,
+    U64,
+    U128,
+}
 
 /// Marker trait that abstracts the following numerical types:
 /// `u32`, `u64` and `u128`.
@@ -16,10 +25,13 @@ trait Private {}
 /// is not possible.
 #[allow(private_bounds)]
 pub trait Number:
-    Clone + Copy + Debug + Display + PartialEq + Eq + Hash + PartialOrd + Ord + Default + Private
+    'static + Clone + Copy + Debug + Display + PartialEq + Eq + Hash + PartialOrd + Ord + Default + Private
 {
     /// Represents the associated byte representation of the number, e.g. `[u8; 4]` for `u32`.
     type ByteRepr: AsRef<[u8]> + AsMut<[u8]>;
+
+    /// The type of the number.
+    const NUMBER_TYPE: NumberType;
 
     /// The size of the number in bytes.
     const SIZE: usize;
@@ -71,13 +83,37 @@ pub trait Number:
     #[must_use]
     fn from_u32(value: u32) -> Self;
 
-    /// Creates a number from its little-endian representation in bytes.
+    /// Creates a number from its byte representation.
+    ///
+    /// # Notes
+    ///
+    /// This method is not portable, in particular it uses platform-specific
+    /// endianness.
     #[must_use]
-    fn from_le_bytes(bytes: &[u8]) -> Self;
+    fn from_bytes(bytes: &[u8]) -> Self;
 
-    /// Returns the little-endian representation of the number in bytes.
+    /// Returns the byte representation of the number.
+    ///
+    /// # Notes
+    ///
+    /// This method is not portable, in particular it uses platform-specific
+    /// endianness.
     #[must_use]
-    fn to_le_bytes(self) -> Self::ByteRepr;
+    fn to_bytes(self) -> Self::ByteRepr;
+
+    /// Creates a number from a `u32` value
+    ///
+    /// # Safety
+    ///
+    /// It does not check whether passed value is small enough to fit into `Self`.
+    unsafe fn from_u64_unchecked(value: u64) -> Self;
+
+    /// Creates a number from a `u128` value
+    ///
+    /// # Safety
+    ///
+    /// It does not check whether passed value is small enough to fit into `Self`.
+    unsafe fn from_u128_unchecked(value: u128) -> Self;
 }
 
 impl Private for u32 {}
@@ -87,6 +123,7 @@ impl Private for u128 {}
 impl Number for u32 {
     type ByteRepr = [u8; 4];
 
+    const NUMBER_TYPE: NumberType = NumberType::U32;
     const SIZE: usize = size_of::<Self>();
     const ZERO: Self = 0;
     const ONE: Self = 1;
@@ -116,23 +153,36 @@ impl Number for u32 {
     fn as_u128(self) -> u128 {
         u128::from(self)
     }
+
+    #[inline(always)]
     fn from_u32(value: u32) -> Self {
         value
     }
-    fn from_le_bytes(bytes: &[u8]) -> Self {
+    fn from_bytes(bytes: &[u8]) -> Self {
         assert!(bytes.len() >= size_of::<Self>());
         let mut result = [0u8; size_of::<Self>()];
         result.copy_from_slice(bytes);
-        Self::from_le_bytes(result)
+        Self::from_ne_bytes(result)
     }
-    fn to_le_bytes(self) -> Self::ByteRepr {
-        self.to_le_bytes()
+    fn to_bytes(self) -> Self::ByteRepr {
+        self.to_ne_bytes()
+    }
+
+    #[inline(always)]
+    unsafe fn from_u64_unchecked(value: u64) -> Self {
+        value as u32
+    }
+
+    #[inline(always)]
+    unsafe fn from_u128_unchecked(value: u128) -> Self {
+        value as u32
     }
 }
 
 impl Number for u64 {
     type ByteRepr = [u8; 8];
 
+    const NUMBER_TYPE: NumberType = NumberType::U64;
     const SIZE: usize = size_of::<Self>();
     const ZERO: Self = 0;
     const ONE: Self = 1;
@@ -162,23 +212,36 @@ impl Number for u64 {
     fn as_u128(self) -> u128 {
         u128::from(self)
     }
+
+    #[inline(always)]
     fn from_u32(value: u32) -> Self {
         Self::from(value)
     }
-    fn from_le_bytes(bytes: &[u8]) -> Self {
+    fn from_bytes(bytes: &[u8]) -> Self {
         assert!(bytes.len() >= size_of::<Self>());
         let mut result = [0u8; size_of::<Self>()];
         result.copy_from_slice(bytes);
-        Self::from_le_bytes(result)
+        Self::from_ne_bytes(result)
     }
-    fn to_le_bytes(self) -> Self::ByteRepr {
-        self.to_le_bytes()
+    fn to_bytes(self) -> Self::ByteRepr {
+        self.to_ne_bytes()
+    }
+
+    #[inline(always)]
+    unsafe fn from_u64_unchecked(value: u64) -> Self {
+        value
+    }
+
+    #[inline(always)]
+    unsafe fn from_u128_unchecked(value: u128) -> Self {
+        value as u64
     }
 }
 
 impl Number for u128 {
     type ByteRepr = [u8; 16];
 
+    const NUMBER_TYPE: NumberType = NumberType::U128;
     const SIZE: usize = size_of::<Self>();
     const ZERO: Self = 0;
     const ONE: Self = 1;
@@ -208,17 +271,29 @@ impl Number for u128 {
     fn as_u128(self) -> u128 {
         self
     }
+
+    #[inline(always)]
     fn from_u32(value: u32) -> Self {
         Self::from(value)
     }
-    fn from_le_bytes(bytes: &[u8]) -> Self {
+    fn from_bytes(bytes: &[u8]) -> Self {
         assert!(bytes.len() >= size_of::<Self>());
         let mut result = [0u8; size_of::<Self>()];
         result.copy_from_slice(bytes);
         Self::from_le_bytes(result)
     }
-    fn to_le_bytes(self) -> Self::ByteRepr {
-        self.to_le_bytes()
+    fn to_bytes(self) -> Self::ByteRepr {
+        self.to_ne_bytes()
+    }
+
+    #[inline(always)]
+    unsafe fn from_u64_unchecked(value: u64) -> Self {
+        u128::from(value)
+    }
+
+    #[inline(always)]
+    unsafe fn from_u128_unchecked(value: u128) -> Self {
+        value
     }
 }
 

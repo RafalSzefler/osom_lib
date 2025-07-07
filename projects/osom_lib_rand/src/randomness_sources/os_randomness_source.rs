@@ -1,28 +1,26 @@
 use core::marker::PhantomData;
 
-use crate::{number::Number, traits::RandomnessSource};
+use crate::{number::{Number, NumberType}, traits::RandomnessSource};
 
-trait NextOsNumber {
-    fn next_number() -> Self;
-}
-
-impl NextOsNumber for u32 {
-    fn next_number() -> Self {
-        getrandom::u32().expect("Failed to get u32 random number from OS")
-    }
-}
-
-impl NextOsNumber for u64 {
-    fn next_number() -> Self {
-        getrandom::u64().expect("Failed to get u64 random number from OS")
-    }
-}
-
-impl NextOsNumber for u128 {
-    fn next_number() -> Self {
-        let mut array = [0u8; size_of::<Self>()];
-        getrandom::fill(&mut array).expect("Failed to get u128 random number from OS");
-        unsafe { core::mem::transmute::<[u8; size_of::<Self>()], Self>(array) }
+#[inline(always)]
+fn next_os_number<ANumber: Number>() -> ANumber {
+    unsafe {
+        match ANumber::NUMBER_TYPE {
+            NumberType::U32 => {
+                let no = getrandom::u32().expect("Failed to get u32 random number from OS");
+                ANumber::from_u32(no)
+            }
+            NumberType::U64 => {
+                let no = getrandom::u64().expect("Failed to get u64 random number from OS");
+                ANumber::from_u64_unchecked(no)
+            }
+            NumberType::U128 => {
+                let mut array = [0u8; size_of::<u128>()];
+                getrandom::fill(&mut array).expect("Failed to get u128 random number from OS");
+                let no = core::mem::transmute::<[u8; size_of::<u128>()], u128>(array);
+                ANumber::from_u128_unchecked(no)
+            }
+        }
     }
 }
 
@@ -33,11 +31,11 @@ impl NextOsNumber for u128 {
 #[must_use]
 #[repr(transparent)]
 #[allow(private_bounds)]
-pub struct OsRandomnessSource<ANumber: Number + NextOsNumber> {
+pub struct OsRandomnessSource<ANumber: Number> {
     _phantom: PhantomData<ANumber>,
 }
 
-impl<ANumber: Number + NextOsNumber> Default for OsRandomnessSource<ANumber> {
+impl<ANumber: Number> Default for OsRandomnessSource<ANumber> {
     fn default() -> Self {
         Self {
             _phantom: PhantomData,
@@ -45,11 +43,11 @@ impl<ANumber: Number + NextOsNumber> Default for OsRandomnessSource<ANumber> {
     }
 }
 
-impl<ANumber: Number + NextOsNumber> RandomnessSource for OsRandomnessSource<ANumber> {
+impl<ANumber: Number> RandomnessSource for OsRandomnessSource<ANumber> {
     type TNumber = ANumber;
 
     fn next_number(&mut self) -> Self::TNumber {
-        Self::TNumber::next_number()
+        next_os_number::<Self::TNumber>()
     }
 
     fn fill_bytes(&mut self, bytes: &mut [u8]) {
