@@ -93,7 +93,6 @@ impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
     }
 }
 
-#[allow(private_bounds)]
 impl<ANumber: Number> LinearCongruentialGenerator<ANumber> {
     /// Creates a new LCG with the given initial value. The remaining parameters
     /// are carefuly chosen to maximize generator's quality.

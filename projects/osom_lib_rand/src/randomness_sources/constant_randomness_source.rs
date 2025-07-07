@@ -1,10 +1,9 @@
-#![allow(private_bounds)]
-
 use crate::number::Number;
 use crate::pseudo_random_number_generators::LinearCongruentialGenerator;
 use crate::traits::RandomnessSource;
 
-/// A trivial [`RandomnessSource`] that always returns the same sequence of values.
+/// A trivial [`RandomnessSource`] that always returns the same sequence of
+/// values based on a seed. Which by default is constant as well.
 ///
 /// # Warning
 ///
@@ -17,6 +16,7 @@ pub struct ConstantRandomnessSource<ANumber: Number> {
 }
 
 impl<ANumber: Number> ConstantRandomnessSource<ANumber> {
+    /// Creates a new [`ConstantRandomnessSource`] with the given seed.
     pub fn new(seed: ANumber) -> Self {
         Self {
             generator: LinearCongruentialGenerator::new(seed),

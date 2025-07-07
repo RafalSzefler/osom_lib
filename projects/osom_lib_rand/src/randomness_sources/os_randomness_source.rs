@@ -30,7 +30,6 @@ fn next_os_number<ANumber: Number>() -> ANumber {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[must_use]
 #[repr(transparent)]
-#[allow(private_bounds)]
 pub struct OsRandomnessSource<ANumber: Number> {
     _phantom: PhantomData<ANumber>,
 }

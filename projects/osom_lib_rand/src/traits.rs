@@ -10,6 +10,9 @@ use crate::number::{MAX_NUMBER_SIZE, Number};
 pub trait PseudoRandomNumberGenerator {
     type TNumber: Number;
 
+    /// Whether the generator is cryptographically secure.
+    const IS_CRYPTOGRAPHICALLY_SECURE: bool = false;
+
     /// Creates a new [`PseudoRandomNumberGenerator`] seeded from a [`RandomnessSource`].
     fn from_randomness_source(source: &mut impl RandomnessSource<TNumber = Self::TNumber>) -> Self;
 
