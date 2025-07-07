@@ -8,6 +8,8 @@ use core::mem::size_of;
 
 trait Private {}
 
+/// Represents all the number types that [`Number`] trait
+/// is implemented for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum NumberType {
