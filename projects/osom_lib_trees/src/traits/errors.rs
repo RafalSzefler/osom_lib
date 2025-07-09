@@ -1,5 +1,4 @@
 //! Holds all custom errors for that crate.
-
 use osom_lib_alloc::AllocationError;
 
 /// Represents an error that can occur when working with a tree.
@@ -10,8 +9,8 @@ pub enum TreeError {
     /// The allocator failed to allocate memory.
     AllocationError,
 
-    /// The tree is too long, it exceeds `MAX_LENGTH`.
-    TreeTooLong,
+    /// The tree is too big, it exceeds `MAX_LEVEL`.
+    TreeTooBig,
 }
 
 impl From<AllocationError> for TreeError {
