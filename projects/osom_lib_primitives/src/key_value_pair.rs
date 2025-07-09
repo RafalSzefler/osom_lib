@@ -1,3 +1,4 @@
+/// Represents a key-value pair.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct KeyValuePair<TKey, TValue> {
     key: TKey,
@@ -5,11 +6,13 @@ pub struct KeyValuePair<TKey, TValue> {
 }
 
 impl<TKey, TValue> KeyValuePair<TKey, TValue> {
+    /// Creates a new key-value pair.
     #[inline(always)]
     pub const fn new(key: TKey, value: TValue) -> Self {
         Self { key, value }
     }
 
+    /// Creates a new key-value pair from a tuple.
     #[inline(always)]
     pub const fn from_tuple(tuple: (TKey, TValue)) -> Self {
         let key = unsafe { core::ptr::read(&tuple.0) };
@@ -19,26 +22,31 @@ impl<TKey, TValue> KeyValuePair<TKey, TValue> {
         result
     }
 
+    /// Returns a reference to the key.
     #[inline(always)]
     pub const fn key(&self) -> &TKey {
         &self.key
     }
 
+    /// Returns a mutable reference to the key.
     #[inline(always)]
     pub const fn key_mut(&mut self) -> &mut TKey {
         &mut self.key
     }
 
+    /// Returns a reference to the value.
     #[inline(always)]
     pub const fn value(&self) -> &TValue {
         &self.value
     }
 
+    /// Returns a mutable reference to the value.
     #[inline(always)]
     pub const fn value_mut(&mut self) -> &mut TValue {
         &mut self.value
     }
 
+    /// Converts the key-value pair into a tuple.
     #[inline(always)]
     pub const fn into_tuple(self) -> (TKey, TValue) {
         let key = unsafe { core::ptr::read(&self.key) };

@@ -7,7 +7,7 @@ license.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 categories.workspace = true
-description = "Osom lib implementation of some tree algorithms, e.g. red black tree."
+description = "Osom lib implementation of some tree algorithms, e.g. B+ tree."
 keywords = ["osom", "lib", "tools", "tree"]
 
 [lib]

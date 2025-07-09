@@ -13,3 +13,4 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
 pub mod traits;
+pub mod bplus_tree;

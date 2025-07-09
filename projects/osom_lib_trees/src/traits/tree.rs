@@ -1,4 +1,4 @@
-use core::num::NonZeroU8;
+use core::ops::RangeBounds;
 
 use super::{Compare, TreeQueryExactMutResult, TreeQueryExactResult, TreeQueryMutResult, TreeQueryResult};
 
@@ -17,150 +17,25 @@ pub trait Tree {
     where
         Self::TKey: Compare<K>;
 
-    /// Searches the tree for the key-value pairs less than the passed key.
-    /// These will be returned in descending order starting from the gratest found element.
+    /// Searches the tree for the key-value pairs contained in the passed range.
     ///
-    /// If `max_count` is `None`, all key-value pairs less than the passed key will be returned.
-    /// If `max_count` is `Some(n)`, at most `n` key-value pairs will be returned.
-    fn query_less_than<K>(
+    /// # Notes
+    /// 
+    /// * If `range` has both lower and upper bounds, then the returned iterator will be in ascending order starting from the lower bound.
+    /// * If `range` has only a lower bound, then the returned iterator will be in ascending order starting from the lower bound.
+    /// * If `range` has only an upper bound, then the returned iterator will be in descending order starting from the upper bound.
+    /// * If `range` has no bounds, then the returned iterator will be in ascending order starting from the smallest key in the tree.
+    fn query_range<K>(
         &self,
-        key: &K,
-        max_count: Option<NonZeroU8>,
+        range: impl RangeBounds<K>,
     ) -> impl TreeQueryResult<'_, Self::TKey, Self::TValue>
     where
         Self::TKey: Compare<K>;
-
-    /// The mutable version of [`Tree::query_less_than`].
-    fn query_less_than_mut<K>(
+    
+    /// The mutable version of [`Tree::query_range`].
+    fn query_range_mut<K>(
         &mut self,
-        key: &K,
-        max_count: Option<NonZeroU8>,
-    ) -> impl TreeQueryMutResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// Searches the tree for the key-value pairs less than or equal to the passed key.
-    /// These will be returned in descending order starting from the gratest found element.
-    ///
-    /// If `max_count` is `None`, all key-value pairs less than or equal to the passed key will be returned.
-    /// If `max_count` is `Some(n)`, at most `n` key-value pairs will be returned.
-    fn query_less_than_or_equal<K>(
-        &self,
-        key: &K,
-        max_count: Option<NonZeroU8>,
-    ) -> impl TreeQueryResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// The mutable version of [`Tree::query_less_than_or_equal`].
-    fn query_less_than_or_equal_mut<K>(
-        &mut self,
-        key: &K,
-        max_count: Option<NonZeroU8>,
-    ) -> impl TreeQueryMutResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// Searches the tree for the key-value pairs greater than the passed key.
-    /// These will be returned in ascending order starting from the smallest found element.
-    ///
-    /// If `max_count` is `None`, all key-value pairs greater than the passed key will be returned.
-    /// If `max_count` is `Some(n)`, at most `n` key-value pairs will be returned.
-    fn query_greater_than<K>(
-        &self,
-        key: &K,
-        max_count: Option<NonZeroU8>,
-    ) -> impl TreeQueryResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// The mutable version of [`Tree::query_greater_than`].
-    fn query_greater_than_mut<K>(
-        &mut self,
-        key: &K,
-        max_count: Option<NonZeroU8>,
-    ) -> impl TreeQueryMutResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// Searches the tree for the key-value pairs greater than or equal to the passed key.
-    /// These will be returned in ascending order starting from the smallest found element.
-    ///
-    /// If `max_count` is `None`, all key-value pairs greater than or equal to the passed key will be returned.
-    /// If `max_count` is `Some(n)`, at most `n` key-value pairs will be returned.
-    fn query_greater_than_or_equal<K>(
-        &self,
-        key: &K,
-        max_count: Option<NonZeroU8>,
-    ) -> impl TreeQueryResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// The mutable version of [`Tree::query_greater_than_or_equal`].
-    fn query_greater_than_or_equal_mut<K>(
-        &mut self,
-        key: &K,
-        max_count: Option<NonZeroU8>,
-    ) -> impl TreeQueryMutResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// Searches the tree for the key-value pairs in the range `(left, right)`,
-    /// i.e. with endpoints excluded.
-    fn query_range_exclusive<K>(&self, left: &K, right: &K) -> impl TreeQueryResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// The mutable version of [`Tree::query_range_exclusive`].
-    fn query_range_exclusive_mut<K>(
-        &mut self,
-        left: &K,
-        right: &K,
-    ) -> impl TreeQueryMutResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// Searches the tree for the key-value pairs in the range `[left, right]`,
-    /// i.e. with endpoints included.
-    fn query_range_inclusive<K>(&self, left: &K, right: &K) -> impl TreeQueryResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// The mutable version of [`Tree::query_range_inclusive`].
-    fn query_range_inclusive_mut<K>(
-        &mut self,
-        left: &K,
-        right: &K,
-    ) -> impl TreeQueryMutResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// Searches the tree for the key-value pairs in the range `[left, right)`,
-    /// i.e. with the left endpoint included and the right endpoint excluded.
-    fn query_range_left_inclusive<K>(&self, left: &K, right: &K) -> impl TreeQueryResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// The mutable version of [`Tree::query_range_left_inclusive`].
-    fn query_range_left_inclusive_mut<K>(
-        &mut self,
-        left: &K,
-        right: &K,
-    ) -> impl TreeQueryMutResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// Searches the tree for the key-value pairs in the range `(left, right]`,
-    /// i.e. with the right endpoint included and the left endpoint excluded.
-    fn query_range_right_inclusive<K>(&self, left: &K, right: &K) -> impl TreeQueryResult<'_, Self::TKey, Self::TValue>
-    where
-        Self::TKey: Compare<K>;
-
-    /// The mutable version of [`Tree::query_range_right_inclusive`].
-    fn query_range_right_inclusive_mut<K>(
-        &mut self,
-        left: &K,
-        right: &K,
+        range: impl RangeBounds<K>,
     ) -> impl TreeQueryMutResult<'_, Self::TKey, Self::TValue>
     where
         Self::TKey: Compare<K>;

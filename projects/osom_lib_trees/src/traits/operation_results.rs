@@ -15,12 +15,10 @@ pub enum TreeQueryExactMutResult<'a, TKey: 'a, TValue: 'a> {
 
 #[must_use]
 pub trait TreeQueryResult<'a, TKey: 'a, TValue: 'a>:
-    core::ops::Deref<Target = [KeyValuePair<&'a TKey, &'a TValue>]>
-{
-}
+    Iterator<Item = KeyValuePair<&'a TKey, &'a TValue>>
+{ }
 
 #[must_use]
 pub trait TreeQueryMutResult<'a, TKey: 'a, TValue: 'a>:
-    core::ops::DerefMut<Target = [KeyValuePair<&'a TKey, &'a mut TValue>]>
-{
-}
+    Iterator<Item = KeyValuePair<&'a TKey, &'a mut TValue>>
+{ }
