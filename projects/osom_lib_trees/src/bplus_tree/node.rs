@@ -2,6 +2,8 @@ use core::{marker::PhantomData, mem::MaybeUninit};
 
 use osom_lib_primitives::ConstSumArray;
 
+use crate::traits::Compare;
+
 pub struct NodeData<const N: usize, TKey, TValue>
 {
     /// Pointer to the parent node. If this is not null, then it has to be
@@ -41,6 +43,39 @@ impl<const N: usize, TKey, TValue> NodeData<N, TKey, TValue> {
             keys: uninit_array(),
             parent_idx: -1,
             len: 0,
+        }
+    }
+
+    #[inline(always)]
+    pub const fn keys(&self) -> &[TKey] {
+        unsafe {
+            core::slice::from_raw_parts(self.keys.as_ptr().cast(), self.len as usize)
+        }
+    }
+
+    #[inline(always)]
+    pub const fn keys_mut(&mut self) -> &mut [TKey] {
+        unsafe {
+            core::slice::from_raw_parts_mut(self.keys.as_mut_ptr().cast(), self.len as usize)
+        }
+    }
+
+    pub fn first_greater_or_equal_position<K>(&self, key: &K) -> usize
+        where TKey: Compare<K>
+    {
+        let slice = self.keys();
+        let mut idx = 0;
+        loop {
+            if idx == slice.len() {
+                break idx;
+            }
+
+            let current_key = &slice[idx];
+            if current_key.is_greater_or_equal(key) {
+                break idx;
+            }
+
+            idx += 1;
         }
     }
 }
@@ -104,16 +139,13 @@ impl<const N: usize, TKey, TValue> InternalNode<N, TKey, TValue> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum NodeKind {
-    Internal,
-    Leaf,
-}
 
 /// A pointer to a node in the B+ tree. It is a tagged pointer that
 /// takes advantage of the fact that each node's alignment has to be
 /// at least 2. It utilizes the last bit to distinguish between leaf
 /// and internal nodes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
 pub struct NodePtr<const N: usize, TKey, TValue> {
     numeric_ptr: usize,
     phantom: PhantomData<(TKey, TValue)>,
@@ -168,14 +200,15 @@ impl<const N: usize, TKey, TValue> NodePtr<N, TKey, TValue> {
     pub const fn is_null(&self) -> bool {
         self.numeric_ptr == 0
     }
-    
+
     #[inline(always)]
-    pub const fn kind(&self) -> NodeKind {
-        match self.numeric_ptr & 1 {
-            0 => NodeKind::Internal,
-            1 => NodeKind::Leaf,
-            _ => unsafe { core::hint::unreachable_unchecked() },
-        }
+    pub const fn is_internal(&self) -> bool {
+        self.numeric_ptr & 1 == 0
+    }
+
+    #[inline(always)]
+    pub const fn is_leaf(&self) -> bool {
+        self.numeric_ptr & 1 == 1
     }
 
     #[inline(always)]
@@ -185,13 +218,13 @@ impl<const N: usize, TKey, TValue> NodePtr<N, TKey, TValue> {
     }
 
     #[inline(always)]
-    pub unsafe fn as_internal(&self) -> *mut InternalNode<N, TKey, TValue> {
-        self.as_ptr().cast()
+    pub unsafe fn as_internal(&self) -> &mut InternalNode<N, TKey, TValue> {
+        unsafe { &mut *self.as_ptr().cast() }
     }
 
     #[inline(always)]
-    pub unsafe fn as_leaf(&self) -> *mut LeafNode<N, TKey, TValue> {
-        self.as_ptr().cast()
+    pub unsafe fn as_leaf(&self) -> &mut LeafNode<N, TKey, TValue> {
+        unsafe { &mut *self.as_ptr().cast() }
     }
 }
 
