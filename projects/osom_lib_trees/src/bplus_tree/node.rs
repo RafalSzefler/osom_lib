@@ -302,6 +302,16 @@ impl<const N: usize, TKey, TValue> NodePtr<N, TKey, TValue> {
     pub unsafe fn as_leaf(&self) -> &mut LeafNode<N, TKey, TValue> {
         unsafe { &mut *self.as_ptr().cast() }
     }
+
+    #[allow(clippy::mut_from_ref)]
+    #[inline(always)]
+    pub unsafe fn as_data(&self) -> &mut NodeData<N, TKey, TValue> {
+        if self.is_leaf() {
+            unsafe { &mut self.as_leaf().data }
+        } else {
+            unsafe { &mut self.as_internal().data }
+        }
+    }
 }
 
 #[inline(always)]

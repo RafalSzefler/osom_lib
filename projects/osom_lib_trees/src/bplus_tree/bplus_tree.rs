@@ -59,10 +59,6 @@ fn recursive_drop<TKey, TValue, TAllocator, const NODE_CAPACITY: usize>(
     TKey: Clone + Ord,
     TAllocator: Allocator,
 {
-    if node.is_null() {
-        return;
-    }
-
     if node.is_leaf() {
         let leaf = unsafe { node.as_leaf() };
         if core::mem::needs_drop::<TValue>() {
@@ -86,7 +82,11 @@ fn recursive_drop<TKey, TValue, TAllocator, const NODE_CAPACITY: usize>(
         let internal_node = unsafe { node.as_internal() };
         let edges = internal_node.edges.as_slice();
         for i in 0..=internal_node.data.len as usize {
-            recursive_drop(allocator, unsafe { edges[i].assume_init_ref() });
+            let edge = unsafe { edges[i].assume_init_ref() };
+            if edge.is_null() {
+                continue;
+            }
+            recursive_drop(allocator, edge);
         }
 
         if core::mem::needs_drop::<TKey>() {
@@ -147,6 +147,11 @@ where
         TKey: Compare<K>,
     {
         let mut node = &self.root;
+
+        if unsafe { node.as_data().len } == 0 {
+            // This can happen only when the tree is empty.
+            return BPlusTreeQueryExactResult::NotFound;
+        }
 
         while !node.is_leaf() {
             let internal_node = unsafe { node.as_internal() };
