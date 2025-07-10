@@ -7,7 +7,8 @@ use osom_lib_alloc::{AllocatedMemory as _, Allocator, StdAllocator};
 use crate::bplus_tree::node::{InternalNode, LeafNode};
 use crate::bplus_tree::operation_results::{BPlusTreeQueryMutResultIterator, BPlusTreeQueryResultIterator};
 use crate::traits::{
-    Compare, Ordering, Tree, TreeQueryExactMutResult, TreeQueryExactResult, TreeQueryMutResult, TreeQueryResult,
+    Compare, Ordering, Tree, TreeError, TreeQueryExactMutResult, TreeQueryExactResult, TreeQueryMutResult,
+    TreeQueryResult, TreeTryInsertResult,
 };
 
 use super::node::NodePtr;
@@ -47,7 +48,7 @@ where
     TAllocator: Allocator,
 {
     fn default() -> Self {
-        Self::new()
+        Self::new().unwrap()
     }
 }
 
@@ -107,16 +108,37 @@ where
     TKey: Clone + Ord,
     TAllocator: Allocator,
 {
+    /// Creates a new B+ tree with the given allocator.
+    ///
+    /// It will allocate the root node straight away.
+    ///
+    /// # Errors
+    ///
+    /// For possible errors, see [`TreeError`].
     #[inline(always)]
-    pub const fn with_allocator(allocator: TAllocator) -> Self {
-        Self {
-            root: NodePtr::null(),
-            allocator: allocator,
-        }
+    pub fn with_allocator(allocator: TAllocator) -> Result<Self, TreeError> {
+        let root_leaf = LeafNode::<NODE_CAPACITY, TKey, TValue>::new();
+        let layout = Layout::new::<LeafNode<NODE_CAPACITY, TKey, TValue>>();
+        let root_ptr = allocator.allocate(layout)?;
+        let root_ptr = unsafe { root_ptr.as_ptr::<LeafNode<NODE_CAPACITY, TKey, TValue>>() };
+        unsafe { root_ptr.write(root_leaf) };
+        let root_node = NodePtr::from_leaf(root_ptr);
+
+        Ok(Self {
+            root: root_node,
+            allocator,
+        })
     }
 
+    /// Creates a new B+ tree with the default allocator.
+    ///
+    /// It will allocate the root node straight away.
+    ///
+    /// # Errors
+    ///
+    /// For possible errors, see [`TreeError`].
     #[inline(always)]
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, TreeError> {
         Self::with_allocator(TAllocator::default())
     }
 
@@ -124,10 +146,6 @@ where
     where
         TKey: Compare<K>,
     {
-        if self.root.is_null() {
-            return BPlusTreeQueryExactResult::NotFound;
-        }
-
         let mut node = &self.root;
 
         while !node.is_leaf() {
@@ -157,6 +175,11 @@ where
     type TKey = TKey;
 
     type TValue = TValue;
+
+    #[allow(unused_variables, invalid_value, unreachable_code, clippy::uninit_assumed_init)]
+    fn try_insert(&mut self, key: Self::TKey, value: Self::TValue) -> TreeTryInsertResult {
+        todo!()
+    }
 
     fn query_exact<K>(&self, key: &K) -> TreeQueryExactResult<'_, Self::TKey, Self::TValue>
     where

@@ -1,11 +1,16 @@
 use core::ops::RangeBounds;
 
-use super::{Compare, Ordering, TreeQueryExactMutResult, TreeQueryExactResult, TreeQueryMutResult, TreeQueryResult};
+use super::{
+    Compare, Ordering, TreeQueryExactMutResult, TreeQueryExactResult, TreeQueryMutResult, TreeQueryResult,
+    TreeTryInsertResult,
+};
 
 /// Abstract trait for tree-like data structures.
 pub trait Tree {
     type TKey: Ord;
     type TValue;
+
+    fn try_insert(&mut self, key: Self::TKey, value: Self::TValue) -> TreeTryInsertResult;
 
     /// Searches the tree for the exact match.
     fn query_exact<K>(&self, key: &K) -> TreeQueryExactResult<'_, Self::TKey, Self::TValue>

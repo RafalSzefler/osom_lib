@@ -1,6 +1,11 @@
 //! Holds the definition of results of various tree operations.
 use osom_lib_primitives::KeyValuePair;
 
+pub enum TreeTryInsertResult {
+    Inserted,
+    AlreadyExists,
+}
+
 #[must_use]
 pub enum TreeQueryExactResult<'a, TKey: 'a, TValue: 'a> {
     NotFound,
