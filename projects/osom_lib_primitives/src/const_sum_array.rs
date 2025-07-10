@@ -1,21 +1,20 @@
 use core::ops::Deref;
 
-
 /// Represents an array of `N+M` elements. The only reason this struct
 /// exists is because `[T; N+M]` is not allowed in Rust yet.
 #[repr(C)]
-pub struct ConstSumArray<const N: usize, const M: usize, T>
-{
+pub struct ConstSumArray<const N: usize, const M: usize, T> {
     left_values: [T; N],
     right_values: [T; M],
 }
 
-impl<const N: usize, const M: usize, T> ConstSumArray<N, M, T>
-{
+impl<const N: usize, const M: usize, T> ConstSumArray<N, M, T> {
     #[inline(always)]
-    pub const fn new(initial_values: [T; N], final_value: [T; M]) -> Self
-    {
-        Self { left_values: initial_values, right_values: final_value }
+    pub const fn new(initial_values: [T; N], final_value: [T; M]) -> Self {
+        Self {
+            left_values: initial_values,
+            right_values: final_value,
+        }
     }
 
     #[inline(always)]
@@ -23,7 +22,7 @@ impl<const N: usize, const M: usize, T> ConstSumArray<N, M, T>
         unsafe {
             let ptr = self as *const Self;
             let len = N + M;
-            core::slice::from_raw_parts(ptr as *const T, len)
+            core::slice::from_raw_parts(ptr.cast(), len)
         }
     }
 
@@ -32,7 +31,7 @@ impl<const N: usize, const M: usize, T> ConstSumArray<N, M, T>
         unsafe {
             let ptr = self as *mut Self;
             let len = N + M;
-            core::slice::from_raw_parts_mut(ptr as *mut T, len)
+            core::slice::from_raw_parts_mut(ptr.cast(), len)
         }
     }
 

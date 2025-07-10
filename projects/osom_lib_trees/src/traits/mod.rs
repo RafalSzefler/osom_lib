@@ -8,5 +8,8 @@ pub use operation_results::*;
 mod comparer;
 pub use comparer::*;
 
+mod ordering;
+pub use ordering::*;
+
 mod tree;
 pub use tree::*;

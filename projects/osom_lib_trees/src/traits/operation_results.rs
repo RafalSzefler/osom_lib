@@ -14,11 +14,10 @@ pub enum TreeQueryExactMutResult<'a, TKey: 'a, TValue: 'a> {
 }
 
 #[must_use]
-pub trait TreeQueryResult<'a, TKey: 'a, TValue: 'a>:
-    Iterator<Item = KeyValuePair<&'a TKey, &'a TValue>>
-{ }
+pub trait TreeQueryResult<'a, TKey: 'a, TValue: 'a>: Iterator<Item = KeyValuePair<&'a TKey, &'a TValue>> {}
 
 #[must_use]
 pub trait TreeQueryMutResult<'a, TKey: 'a, TValue: 'a>:
     Iterator<Item = KeyValuePair<&'a TKey, &'a mut TValue>>
-{ }
+{
+}
