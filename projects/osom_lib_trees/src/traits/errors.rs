@@ -9,7 +9,7 @@ pub enum TreeError {
     /// The allocator failed to allocate memory.
     AllocationError,
 
-    /// The tree is too big, it exceeds `MAX_LEVEL`.
+    /// The tree is too big, it exceeds `MAX_SIZE`.
     TreeTooBig,
 }
 
