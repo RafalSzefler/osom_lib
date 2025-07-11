@@ -26,3 +26,9 @@ pub use inline_dynamic_array::*;
 
 mod dynamic_array;
 pub use dynamic_array::*;
+
+mod fixed_array;
+pub use fixed_array::*;
+
+mod double_fixed_array;
+pub use double_fixed_array::*;
