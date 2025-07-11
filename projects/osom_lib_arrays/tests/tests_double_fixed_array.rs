@@ -186,3 +186,21 @@ fn test_push_on_boundary() {
     arr.extend_from_array([2, 3, 4, -1]).unwrap();
     assert_eq!(arr.as_slice(), &[1, 2, 3, 4, -1]);
 }
+
+#[rstest]
+#[case(&[])]
+#[case(&[5])]
+#[case(&[5, 17])]
+#[case(&[5, 17, 3, -10])]
+#[case(&[1, -1, 2, -2, 3, -3, 4, -4])]
+#[case(&[1, -1, 2, -2, 3, -3, 4, -4, 5, 5])]
+fn test_clone(#[case] input: &[i32]) {
+    let mut arr = DoubleFixedArray::<_, 3, 7>::new();
+    arr.extend_from_slice(input).unwrap();
+    let arr2 = arr.clone();
+    assert_eq!(arr, arr2);
+    assert_eq!(arr.as_slice(), arr2.as_slice());
+    assert_eq!(arr.len(), arr2.len());
+    assert_eq!(arr.is_full(), arr2.is_full());
+    assert_eq!(arr.is_empty(), arr2.is_empty());
+}

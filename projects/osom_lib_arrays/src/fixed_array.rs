@@ -10,7 +10,7 @@ use osom_lib_primitives::Length;
 /// the actual length can be smaller than `N`.
 ///
 /// In addition it supports dynamic api, it keeps length internally and impelements
-/// `push` and `pop` methods. 
+/// `push` and `pop` methods.
 #[derive(Debug)]
 #[must_use]
 pub struct FixedArray<T, const N: usize> {
@@ -71,6 +71,12 @@ impl<T, const N: usize> FixedArray<T, N> {
     #[inline(always)]
     pub const fn is_empty(&self) -> bool {
         self.length.value() == 0
+    }
+
+    /// Returns true if the current length of the [`FixedArray`] is equal its capacity.
+    #[inline(always)]
+    pub const fn is_full(&self) -> bool {
+        self.length.value() == N as i32
     }
 
     /// Returns [`FixedArray`] as a slice.
@@ -136,6 +142,32 @@ impl<T, const N: usize> FixedArray<T, N> {
             let value = self.array[len as usize].assume_init_read();
             Some(value)
         }
+    }
+}
+
+impl<T: Clone, const N: usize> FixedArray<T, N> {
+    /// Extends the [`FixedArray`] with the values from a slice. The values
+    /// will be cloned.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OutOfRangeError`] if the current length of [`FixedArray`] plus
+    /// the length of the other array execeeds the capacity of the [`FixedArray`].
+    pub fn extend_from_slice(&mut self, other: &[T]) -> Result<(), OutOfRangeError> {
+        let len = self.length.value();
+        if len + other.len() as i32 > N as i32 {
+            return Err(OutOfRangeError);
+        }
+
+        let mut idx = len as usize;
+        for item in other {
+            self.array[idx].write(item.clone());
+            idx += 1;
+        }
+
+        self.length = unsafe { Length::new_unchecked(idx as i32) };
+
+        Ok(())
     }
 }
 

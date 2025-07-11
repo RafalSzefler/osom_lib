@@ -45,6 +45,13 @@ impl<T, const N: usize, const M: usize> DoubleFixedArray<T, N, M> {
         self.length.value() == 0
     }
 
+    /// Returns true if the current length of the [`DoubleFixedArray`] is equal
+    /// its total capacity, i.e. `N + M`.
+    #[inline(always)]
+    pub const fn is_full(&self) -> bool {
+        self.length.value() == (N + M) as i32
+    }
+
     /// Returns [`DoubleFixedArray`] as a slice.
     #[inline(always)]
     pub const fn as_slice(&self) -> &[T] {
@@ -130,6 +137,34 @@ impl<T, const N: usize, const M: usize> Drop for DoubleFixedArray<T, N, M> {
                 }
             }
         }
+    }
+}
+
+impl<T: Clone, const N: usize, const M: usize> DoubleFixedArray<T, N, M> {
+    /// Extends the [`DoubleFixedArray`] with the values from a slice. The values
+    /// will be cloned.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OutOfRangeError`] if the current length of [`DoubleFixedArray`] plus
+    /// the length of the other array execeeds the capacity of the [`DoubleFixedArray`].
+    pub fn extend_from_slice(&mut self, other: &[T]) -> Result<(), OutOfRangeError> {
+        let len = self.length.value();
+        if len + other.len() as i32 > (N + M) as i32 {
+            return Err(OutOfRangeError);
+        }
+
+        let real_slice = self.real_slice();
+
+        let mut idx = len as usize;
+        for item in other {
+            real_slice[idx].write(item.clone());
+            idx += 1;
+        }
+
+        self.length = unsafe { Length::new_unchecked(idx as i32) };
+
+        Ok(())
     }
 }
 

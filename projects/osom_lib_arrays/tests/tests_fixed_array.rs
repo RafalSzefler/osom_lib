@@ -146,3 +146,21 @@ fn test_out_of_range() {
     assert_eq!(arr.pop().unwrap(), 1);
     assert!(arr.pop().is_none());
 }
+
+#[rstest]
+#[case(&[])]
+#[case(&[5])]
+#[case(&[5, 17])]
+#[case(&[5, 17, 3, -10])]
+#[case(&[1, -1, 2, -2, 3, -3, 4, -4])]
+#[case(&[1, -1, 2, -2, 3, -3, 4, -4, 5, 5])]
+fn test_clone(#[case] input: &[i32]) {
+    let mut arr = FixedArray::<_, 15>::new();
+    arr.extend_from_slice(input).unwrap();
+    let arr2 = arr.clone();
+    assert_eq!(arr, arr2);
+    assert_eq!(arr.as_slice(), arr2.as_slice());
+    assert_eq!(arr.len(), arr2.len());
+    assert_eq!(arr.is_full(), arr2.is_full());
+    assert_eq!(arr.is_empty(), arr2.is_empty());
+}
