@@ -9,7 +9,7 @@ use crate::traits::Compare;
 pub struct NodeData<const N: usize, TKey, TValue> {
     /// Pointer to the parent node. If this is not null, then it has to be
     /// an internal node.
-    pub parent: NodePtr<N, TKey, TValue>,
+    pub parent: *mut InternalNode<N, TKey, TValue>,
 
     /// Keys of the node.
     pub keys: [MaybeUninit<TKey>; N],
@@ -39,7 +39,7 @@ impl<const N: usize, TKey, TValue> NodeData<N, TKey, TValue> {
     #[inline(always)]
     pub const fn new() -> Self {
         Self {
-            parent: NodePtr::null(),
+            parent: core::ptr::null_mut(),
             keys: uninit_array(),
             parent_idx: 0,
             len: 0,

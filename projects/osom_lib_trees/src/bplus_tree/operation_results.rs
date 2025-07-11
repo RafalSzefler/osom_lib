@@ -153,3 +153,8 @@ impl<'a, const N: usize, TKey: 'a, TValue: 'a> TreeQueryMutResult<'a, TKey, TVal
     for BPlusTreeQueryMutResultIterator<'a, N, TKey, TValue>
 {
 }
+
+pub enum BPlusTreeInsertResult<TKey, TValue> {
+    AlreadyExists { key: *const TKey, value: *mut TValue },
+    Inserted { key: *const TKey, value: *mut TValue },
+}

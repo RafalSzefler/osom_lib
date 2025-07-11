@@ -5,12 +5,12 @@ pub fn test_tree_int_string<TTree: Tree<TKey = i32, TValue = String>, TTreeBuild
 ) {
     let mut tree = builder();
     for i in -10..10 {
-        match tree.try_insert(i, i.to_string()) {
+        match tree.try_insert(i, i.to_string()).unwrap() {
             TreeTryInsertResult::Inserted => {}
             TreeTryInsertResult::AlreadyExists { .. } => panic!("key {} already exists", i),
         };
 
-        match tree.try_insert(i, i.to_string()) {
+        match tree.try_insert(i, i.to_string()).unwrap() {
             TreeTryInsertResult::Inserted => {
                 panic!("key {} should already exist", i)
             }
