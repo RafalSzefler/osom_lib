@@ -1,8 +1,8 @@
 #![allow(clippy::cast_sign_loss, clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 
-use core::{alloc::Layout, marker::PhantomData, ops::Deref};
+use core::{alloc::Layout, marker::PhantomData, ops::Deref, ptr::NonNull};
 
-use osom_lib_alloc::{AllocatedMemory as _, AllocationError, Allocator};
+use osom_lib_alloc::{AllocationError, Allocator};
 use osom_lib_primitives::Length;
 
 #[cfg(feature = "std_alloc")]
@@ -25,7 +25,7 @@ pub struct DynamicArray<
 > where
     TAllocator: Allocator,
 {
-    ptr: TAllocator::TAllocatedMemory,
+    ptr: NonNull<u8>,
     length: Length,
     capacity: Length,
     allocator: TAllocator,
@@ -49,7 +49,7 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
     #[inline(always)]
     pub fn with_allocator(allocator: TAllocator) -> Self {
         Self {
-            ptr: unsafe { allocator.dangling::<T>() },
+            ptr: unsafe { allocator.dangling::<T>().cast() },
             length: Length::ZERO,
             capacity: Length::ZERO,
             allocator: allocator,
@@ -210,7 +210,7 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
 
     #[inline(always)]
     fn data_ptr(&self) -> *mut T {
-        unsafe { self.ptr.as_ptr() }
+        self.ptr.as_ptr().cast()
     }
 
     #[inline(always)]
@@ -235,7 +235,7 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
         }
 
         let new_layout = Self::layout(self.length.into());
-        let new_ptr = self.ptr.clone().resize(new_layout, new_layout)?;
+        let new_ptr = unsafe { self.allocator.resize(self.ptr, new_layout, new_layout) }?;
         self.ptr = new_ptr;
         self.capacity = self.length;
         Ok(())
@@ -296,10 +296,10 @@ impl<T, TAllocator: Allocator> DynamicArray<T, TAllocator> {
             self.allocator.allocate(new_layout)
         } else {
             let old_layout = Self::layout(self.capacity.into());
-            self.ptr.clone().resize(old_layout, new_layout)
+            unsafe { self.allocator.resize(self.ptr, old_layout, new_layout) }
         }?;
 
-        let data_ptr: *mut T = unsafe { new_ptr.as_ptr() };
+        let data_ptr = new_ptr.as_ptr().cast::<T>();
         assert!(
             data_ptr.is_aligned(),
             "Newly allocated memory is not aligned correctly."
@@ -318,7 +318,7 @@ impl<T, TAllocator: Allocator> Drop for DynamicArray<T, TAllocator> {
 
         if core::mem::needs_drop::<T>() {
             unsafe {
-                let mut ptr: *mut T = self.ptr.as_ptr();
+                let mut ptr = self.ptr.as_ptr().cast::<T>();
                 let len = self.length.into();
                 let end = ptr.add(len);
                 while ptr < end {
@@ -328,7 +328,7 @@ impl<T, TAllocator: Allocator> Drop for DynamicArray<T, TAllocator> {
             }
         }
         let layout = Self::layout(self.capacity.into());
-        self.ptr.clone().deallocate(layout);
+        unsafe { self.allocator.deallocate(self.ptr, layout) };
     }
 }
 

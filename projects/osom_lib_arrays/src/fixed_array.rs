@@ -67,6 +67,12 @@ impl<T, const N: usize> FixedArray<T, N> {
         self.length
     }
 
+    /// Returns the capacity of the [`FixedArray`].
+    #[inline(always)]
+    pub const fn capacity(&self) -> Length {
+        unsafe { Length::new_unchecked(N as i32) }
+    }
+
     /// Returns true if the [`FixedArray`] is empty.
     #[inline(always)]
     pub const fn is_empty(&self) -> bool {
@@ -229,6 +235,18 @@ impl<T, const N: usize> core::ops::Deref for FixedArray<T, N> {
 
 impl<T, const N: usize> core::ops::DerefMut for FixedArray<T, N> {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        self.as_mut_slice()
+    }
+}
+
+impl<T, const N: usize> AsRef<[T]> for FixedArray<T, N> {
+    fn as_ref(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+
+impl<T, const N: usize> AsMut<[T]> for FixedArray<T, N> {
+    fn as_mut(&mut self) -> &mut [T] {
         self.as_mut_slice()
     }
 }

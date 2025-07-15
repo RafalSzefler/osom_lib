@@ -4,7 +4,7 @@
 use core::ptr::NonNull;
 use core::{alloc::Layout, marker::PhantomData, mem::size_of};
 
-use osom_lib_alloc::{AllocatedMemory, AllocationError, Allocator};
+use osom_lib_alloc::{AllocationError, Allocator};
 use osom_lib_primitives::Length;
 
 pub(crate) type AtomicCounter = core::sync::atomic::AtomicU32;
@@ -138,7 +138,7 @@ pub const MAX_LENGTH: usize = const { (i32::MAX as usize) - MAX_HEAP_DATA_HEADER
 #[repr(C)]
 pub(crate) struct InternalArray<T: Sized, TAllocator: Allocator> {
     /// The pointer to the [`HeapData`] struct that holds atomic counters and the actual `[u8]` data.
-    data: TAllocator::TAllocatedMemory,
+    data: NonNull<u8>,
 
     /// The length of the array.
     length: Length,
@@ -162,7 +162,7 @@ impl<T: Sized, TAllocator: Allocator> InternalArray<T, TAllocator> {
         unsafe {
             // We fill only the initial `HeapData` segment, because the remaining
             // memory will likely be overwritten anyway.
-            new_memory.as_ptr::<u8>().write_bytes(0, size_of::<HeapData<T>>());
+            new_memory.as_ptr().write_bytes(0, size_of::<HeapData<T>>());
         }
 
         Ok(Self {
@@ -181,7 +181,10 @@ impl<T: Sized, TAllocator: Allocator> InternalArray<T, TAllocator> {
         );
         let old_heap_data_layout = HeapData::<T>::layout(self.capacity);
         let new_heap_data_layout = HeapData::<T>::layout(new_capacity);
-        self.data = self.data.clone().resize(old_heap_data_layout, new_heap_data_layout)?;
+        self.data = unsafe {
+            self.allocator
+                .resize(self.data, old_heap_data_layout, new_heap_data_layout)?
+        };
         self.capacity = new_capacity;
         Ok(())
     }
@@ -189,7 +192,7 @@ impl<T: Sized, TAllocator: Allocator> InternalArray<T, TAllocator> {
     #[inline(always)]
     pub fn deallocate(self) {
         let heap_data_layout = HeapData::<T>::layout(self.capacity);
-        self.data.deallocate(heap_data_layout);
+        unsafe { self.allocator.deallocate(self.data, heap_data_layout) };
     }
 
     #[inline(always)]
@@ -199,12 +202,12 @@ impl<T: Sized, TAllocator: Allocator> InternalArray<T, TAllocator> {
 
     #[inline(always)]
     pub fn heap_data(&self) -> &HeapData<T> {
-        unsafe { &*self.data.as_ptr() }
+        unsafe { &*self.data.as_ptr().cast() }
     }
 
     #[inline(always)]
     pub fn heap_data_mut(&mut self) -> &mut HeapData<T> {
-        unsafe { &mut *self.data.as_ptr() }
+        unsafe { &mut *self.data.as_ptr().cast() }
     }
 
     #[inline(always)]
@@ -242,7 +245,7 @@ impl<T: Sized, TAllocator: Allocator> InternalArray<T, TAllocator> {
 impl<T: Sized, TAllocator: Allocator> Clone for InternalArray<T, TAllocator> {
     fn clone(&self) -> Self {
         Self {
-            data: self.data.clone(),
+            data: self.data,
             length: self.length,
             capacity: self.capacity,
             allocator: self.allocator.clone(),

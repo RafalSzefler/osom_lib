@@ -1,8 +1,8 @@
 #![allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 
-use core::{alloc::Layout, marker::PhantomData, ops::Deref};
+use core::{alloc::Layout, marker::PhantomData, ops::Deref, ptr::NonNull};
 
-use osom_lib_alloc::{AllocatedMemory as _, Allocator};
+use osom_lib_alloc::Allocator;
 
 #[cfg(feature = "std_alloc")]
 use osom_lib_alloc::StdAllocator;
@@ -25,7 +25,7 @@ pub struct Array<
 > where
     TAllocator: Allocator,
 {
-    pub(crate) data: TAllocator::TAllocatedMemory,
+    pub(crate) data: NonNull<u8>,
     pub(crate) len: Length,
     pub(crate) allocator: TAllocator,
     pub(crate) phantom: PhantomData<T>,
@@ -60,7 +60,7 @@ where
     #[inline(always)]
     pub fn empty_with_allocator(allocator: TAllocator) -> Self {
         Self {
-            data: unsafe { allocator.dangling::<T>() },
+            data: unsafe { allocator.dangling::<T>().cast() },
             len: Length::ZERO,
             allocator: allocator,
             phantom: PhantomData,
@@ -149,7 +149,7 @@ where
 
     #[inline(always)]
     fn ptr(&self) -> *mut T {
-        unsafe { self.data.as_ptr() }
+        self.data.as_ptr().cast()
     }
 }
 
@@ -235,8 +235,7 @@ where
             }
 
             let layout = Self::layout(len);
-            let data = core::ptr::read(&self.data);
-            data.deallocate(layout);
+            self.allocator.deallocate(self.data, layout);
         }
     }
 }

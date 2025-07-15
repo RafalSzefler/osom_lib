@@ -1,8 +1,8 @@
 #![allow(dead_code, unused_variables)]
+#![allow(clippy::mut_from_ref)]
+use core::marker::PhantomData;
 
-use core::{alloc::Layout, marker::PhantomData};
-
-use osom_lib_alloc::{AllocatedMemory as _, AllocationError, Allocator};
+use osom_lib_alloc::{AllocationError, Allocator};
 
 use crate::bplus_tree::nodes::NodeData;
 
@@ -57,12 +57,10 @@ impl<const N: usize, TKey, TValue> NodeTaggedPtr<N, TKey, TValue> {
                 "LeafNode must be aligned to at least 2 bytes"
             );
         }
-        let layout = Layout::new::<LeafNode<N, TKey, TValue>>();
-        let ptr = allocator.allocate(layout)?;
-        let raw_ptr = unsafe { ptr.as_ptr::<LeafNode<N, TKey, TValue>>() };
-        debug_assert!(raw_ptr.is_aligned(), "LeafNode must be aligned to at least 2 bytes");
-        unsafe { raw_ptr.write(leaf) };
-        let numeric_ptr = raw_ptr as usize;
+        let ptr = allocator.allocate_for_type::<LeafNode<N, TKey, TValue>>()?;
+        debug_assert!(ptr.is_aligned(), "LeafNode must be aligned to at least 2 bytes");
+        unsafe { ptr.write(leaf) };
+        let numeric_ptr = ptr.as_ptr() as usize;
         Ok(Self {
             numeric_ptr: numeric_ptr,
             phantom: PhantomData,
@@ -84,12 +82,10 @@ impl<const N: usize, TKey, TValue> NodeTaggedPtr<N, TKey, TValue> {
                 "InternalNode must be aligned to at least 2 bytes"
             );
         }
-        let layout = Layout::new::<InternalNode<N, TKey, TValue>>();
-        let ptr = allocator.allocate(layout)?;
-        let raw_ptr = unsafe { ptr.as_ptr::<InternalNode<N, TKey, TValue>>() };
-        debug_assert!(raw_ptr.is_aligned(), "InternalNode must be aligned to at least 2 bytes");
-        unsafe { raw_ptr.write(internal) };
-        let numeric_ptr = (raw_ptr as usize) | 1;
+        let ptr = allocator.allocate_for_type::<InternalNode<N, TKey, TValue>>()?;
+        debug_assert!(ptr.is_aligned(), "InternalNode must be aligned to at least 2 bytes");
+        unsafe { ptr.write(internal) };
+        let numeric_ptr = ptr.as_ptr() as usize | 1;
         Ok(Self {
             numeric_ptr: numeric_ptr,
             phantom: PhantomData,
@@ -124,7 +120,7 @@ impl<const N: usize, TKey, TValue> NodeTaggedPtr<N, TKey, TValue> {
     ///
     /// The call is safe only if [`Self::is_leaf()`] returns `true`.
     #[inline(always)]
-    pub const unsafe fn as_leaf_mut(&mut self) -> &mut LeafNode<N, TKey, TValue> {
+    pub const unsafe fn as_leaf_mut(&self) -> &mut LeafNode<N, TKey, TValue> {
         unsafe { &mut *(self.raw_ptr().cast()) }
     }
 
@@ -144,7 +140,7 @@ impl<const N: usize, TKey, TValue> NodeTaggedPtr<N, TKey, TValue> {
     ///
     /// The call is safe only if [`Self::is_leaf()`] returns `false`.
     #[inline(always)]
-    pub const unsafe fn as_internal_mut(&mut self) -> &mut InternalNode<N, TKey, TValue> {
+    pub const unsafe fn as_internal_mut(&self) -> &mut InternalNode<N, TKey, TValue> {
         unsafe { &mut *(self.raw_ptr().cast()) }
     }
 
@@ -165,29 +161,5 @@ impl<const N: usize, TKey, TValue> NodeTaggedPtr<N, TKey, TValue> {
     #[inline(always)]
     const fn raw_ptr(&self) -> *mut () {
         (self.numeric_ptr & !1) as *mut ()
-    }
-}
-
-pub fn deallocate_recursive<const N: usize, TKey, TValue>(
-    ptr: &mut NodeTaggedPtr<N, TKey, TValue>,
-    allocator: &mut impl Allocator,
-) {
-    unsafe {
-        if ptr.is_leaf() {
-            let leaf_ptr = ptr.as_leaf_mut();
-            core::ptr::drop_in_place(leaf_ptr);
-            let layout = Layout::new::<LeafNode<N, TKey, TValue>>();
-            let aptr = allocator.convert_raw_ptr(leaf_ptr);
-            aptr.deallocate(layout);
-        } else {
-            let internal_ptr = ptr.as_internal_mut();
-            for edge in internal_ptr.edges_mut().as_mut_slice() {
-                deallocate_recursive(edge, allocator);
-            }
-            core::ptr::drop_in_place(internal_ptr);
-            let layout = Layout::new::<InternalNode<N, TKey, TValue>>();
-            let aptr = allocator.convert_raw_ptr(internal_ptr);
-            aptr.deallocate(layout);
-        }
     }
 }

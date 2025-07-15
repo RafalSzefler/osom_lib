@@ -6,11 +6,11 @@
     clippy::cast_sign_loss
 )]
 
-use core::alloc::Layout;
 use core::mem::ManuallyDrop;
 use core::ops::Deref;
+use core::{alloc::Layout, ptr::NonNull};
 
-use osom_lib_alloc::{AllocatedMemory, AllocationError, Allocator};
+use osom_lib_alloc::{AllocationError, Allocator};
 use osom_lib_primitives::{DoesNotHaveToBeUsed, Length};
 
 #[cfg(feature = "std_alloc")]
@@ -70,8 +70,8 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
     #[inline(always)]
     fn allocate_memory(&self, size: usize) -> Result<*mut T, AllocationError> {
         let new_memory = self.allocator.allocate(Self::layout(size))?;
-        let result: *mut T = unsafe { new_memory.as_ptr() };
-        assert!(result.is_aligned(), "Newly allocated memory is not aligned correctly.");
+        let result = new_memory.as_ptr().cast::<T>();
+        debug_assert!(result.is_aligned(), "Newly allocated memory is not aligned correctly.");
         Ok(result)
     }
 
@@ -113,9 +113,9 @@ impl<const N: usize, T, TAllocator: Allocator> InlineDynamicArray<N, T, TAllocat
             } else {
                 let old_layout = Self::layout(self.capacity.into());
                 let new_layout = Self::layout(new_capacity);
-                let old_memory = self.allocator.convert_raw_ptr(self.data.heap_data);
-                let new_memory = old_memory.resize(old_layout, new_layout)?;
-                self.data.heap_data = new_memory.as_ptr();
+                let heap_ptr = NonNull::new_unchecked(self.data.heap_data.cast::<u8>());
+                let new_memory = self.allocator.resize(heap_ptr, old_layout, new_layout)?;
+                self.data.heap_data = new_memory.as_ptr().cast::<T>();
             }
             self.capacity = Length::new_unchecked(new_capacity as i32);
         }
@@ -334,8 +334,8 @@ impl<const N: usize, T, TAllocator: Allocator> Drop for InlineDynamicArray<N, T,
 
             if !self.is_inlined() {
                 let layout = Self::layout(self.capacity.into());
-                let memory = self.allocator.convert_raw_ptr(self.data.heap_data);
-                memory.deallocate(layout);
+                self.allocator
+                    .deallocate(NonNull::new_unchecked(self.data.heap_data.cast()), layout);
             }
         }
     }

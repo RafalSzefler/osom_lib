@@ -1,42 +1,13 @@
 use core::alloc::Layout;
 use core::fmt::Debug;
 use core::hash::Hash;
+use core::ptr::NonNull;
 
 /// Represents an error that occurs when allocating memory.
 /// Most likely due to out of memory.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[must_use]
 pub struct AllocationError;
-
-/// Represents a newly allocated piece of memory. Typically a thin wrapper
-/// around raw `*mut u8` pointer, but type safe.
-///
-/// # Safety
-///
-/// Any type implementing this trait must ensure that the memory
-/// is ultimately deallocated by calling [`AllocatedMemory::deallocate`].
-#[must_use]
-pub unsafe trait AllocatedMemory: Sized + PartialEq + Eq + Clone + Hash + Debug {
-    /// Converts the [`AllocatedMemory`] into a raw pointer.
-    ///
-    /// # Safety
-    ///
-    /// This function is unsafe since it doesn't move ownership, and so
-    /// multiple copies of the same memory can exist. Moreover it does not
-    /// validate the pointer, in particular it does not check whether it is
-    /// properly aligned for the type `T`.
-    unsafe fn as_ptr<T: Sized>(&self) -> *mut T;
-
-    /// Resizes the [`AllocatedMemory`] to a new layout.
-    ///
-    /// # Errors
-    ///
-    /// Returns an [`AllocationError`] if the memory cannot be resized.
-    fn resize(self, old_layout: Layout, new_layout: Layout) -> Result<Self, AllocationError>;
-
-    /// Deallocates the [`AllocatedMemory`].
-    fn deallocate(self, layout: Layout);
-}
 
 /// Represents a memory allocator.
 ///
@@ -46,24 +17,58 @@ pub unsafe trait AllocatedMemory: Sized + PartialEq + Eq + Clone + Hash + Debug 
 /// and memory management.
 #[must_use]
 pub unsafe trait Allocator: Default + Clone + Debug + Send + Sync {
-    type TAllocatedMemory: AllocatedMemory;
-
-    /// Allocates a new [`AllocatedMemory`] with the given layout.
+    /// Allocates a new piece of memory with the given layout.
     ///
     /// # Errors
     ///
     /// Returns an [`AllocationError`] if the memory cannot be allocated.
-    fn allocate(&self, layout: Layout) -> Result<Self::TAllocatedMemory, AllocationError>;
+    fn allocate(&self, layout: Layout) -> Result<NonNull<u8>, AllocationError>;
 
-    /// Creates an [`AllocatedMemory`] from a raw pointer.
+    /// Allocates a new piece of memory with the layout of the type `T`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`AllocationError`] if the memory cannot be allocated.
+    fn allocate_for_type<T: Sized>(&self) -> Result<NonNull<T>, AllocationError> {
+        let layout = Layout::new::<T>();
+        let result = self.allocate(layout)?;
+        Ok(unsafe { NonNull::new_unchecked(result.as_ptr().cast()) })
+    }
+
+    /// Resizes the memory block pointed to by `ptr` to a new layout.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`AllocationError`] if the memory cannot be resized.
     ///
     /// # Safety
     ///
-    /// The pointer must originally arise from calling [`Allocator::allocate`].
-    /// Otherwise the behaviour is undefined.
-    unsafe fn convert_raw_ptr<T: Sized>(&self, ptr: *mut T) -> Self::TAllocatedMemory;
+    /// The passed pointer must not be used after the call.
+    unsafe fn resize(
+        &self,
+        ptr: NonNull<u8>,
+        old_layout: Layout,
+        new_layout: Layout,
+    ) -> Result<NonNull<u8>, AllocationError>;
 
-    /// Creates a new dangling [`AllocatedMemory`]. This pointer
+    /// Deallocates the memory block pointed to by `ptr`.
+    ///
+    /// # Safety
+    ///
+    /// The passed pointer must not be used after the call.
+    unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout);
+
+    /// Deallocates the memory block pointed to by `ptr`, with the layout of the type `T`.
+    ///
+    /// # Safety
+    ///
+    /// The passed pointer must not be used after the call.
+    unsafe fn deallocate_for_type<T: Sized>(&self, ptr: NonNull<T>) {
+        let layout = Layout::new::<T>();
+        unsafe { self.deallocate(ptr.cast(), layout) };
+    }
+
+    /// Creates a new dangling pointer. This pointer
     /// is non-zero, not valid but well-aligned. Note that it should
     /// not be deallocated, nor dereferenced. It does however represent
     /// a valid pointer to the type `T`.
@@ -76,5 +81,5 @@ pub unsafe trait Allocator: Default + Clone + Debug + Send + Sync {
     /// This function is unsafe, because the pointer is not valid.
     /// It is up to the caller to ensure that it is not used directly,
     /// in particular it should never be dereferenced and deallocated.
-    unsafe fn dangling<T: Sized>(&self) -> Self::TAllocatedMemory;
+    unsafe fn dangling<T: Sized>(&self) -> NonNull<T>;
 }
