@@ -2,9 +2,6 @@ use core::sync::atomic::Ordering;
 
 use osom_lib_alloc::Allocator;
 
-#[cfg(feature = "std_alloc")]
-use osom_lib_alloc::StdAllocator;
-
 use super::ImmutableArray;
 use super::internal_array::{HeapData, InternalArray};
 
@@ -14,11 +11,8 @@ use super::internal_array::{HeapData, InternalArray};
 /// but is useful for tracking whether the associated [`ImmutableArray`]
 /// is still alive or not. Through [`ImmutableWeakArray::upgrade`] method.
 #[repr(transparent)]
-pub struct ImmutableWeakArray<
-    T: Sized,
-    #[cfg(feature = "std_alloc")] TAllocator = StdAllocator,
-    #[cfg(not(feature = "std_alloc"))] TAllocator,
-> where
+pub struct ImmutableWeakArray<T: Sized, TAllocator>
+where
     TAllocator: Allocator,
 {
     internal: InternalArray<T, TAllocator>,
@@ -138,3 +132,13 @@ impl<T: Sized, TAllocator: Allocator> core::fmt::Debug for ImmutableWeakArray<T,
             .finish()
     }
 }
+
+#[cfg(feature = "std_alloc")]
+use osom_lib_alloc::StdAllocator;
+
+#[cfg(feature = "std_alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std_alloc")))]
+/// Alias for [`ImmutableWeakArray`] with [`StdAllocator`] as the allocator.
+///
+/// This alias is available only if the `std_alloc` feature is enabled.
+pub type StdImmutableWeakArray<T> = ImmutableWeakArray<T, StdAllocator>;

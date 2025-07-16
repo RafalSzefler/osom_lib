@@ -1,11 +1,11 @@
 #![cfg(feature = "std_alloc")]
 
-use osom_lib_arrays::Array;
+use osom_lib_arrays::StdArray;
 use osom_lib_primitives::Length;
 
 #[inline(always)]
-fn new_array<T: Sized + Copy, const N: usize>(array: [T; N]) -> Array<T> {
-    Array::from_array(array).unwrap()
+fn new_array<T: Sized + Copy, const N: usize>(array: [T; N]) -> StdArray<T> {
+    StdArray::from_array(array).unwrap()
 }
 
 #[test]
@@ -39,7 +39,7 @@ fn test_custom_struct() {
         CustomStruct { first: 3, value: 3 },
         CustomStruct { first: 4, value: 4 },
     ];
-    let array: Array<CustomStruct> = Array::from_slice(&custom_vec).unwrap();
+    let array: StdArray<CustomStruct> = StdArray::from_slice(&custom_vec).unwrap();
 
     assert_eq!(array.as_slice().len(), 4);
     assert_eq!(array.len().value(), 4);
@@ -94,7 +94,7 @@ fn test_custom_drop() {
         ];
 
         assert_ref_count!(0);
-        let array: Array<CustomDrop> = Array::from_slice(&custom_slice).unwrap();
+        let array: StdArray<CustomDrop> = StdArray::from_slice(&custom_slice).unwrap();
         assert_eq!(array.as_slice().len(), 4);
         assert_eq!(array.len().value(), 4);
         assert_ref_count!(0);

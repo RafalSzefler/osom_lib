@@ -3,9 +3,6 @@
 use osom_lib_alloc::Allocator;
 use osom_lib_primitives::Length;
 
-#[cfg(feature = "std_alloc")]
-use osom_lib_alloc::StdAllocator;
-
 use crate::errors::ArrayConstructionError;
 
 use super::internal_array::{InternalArray, MAX_LENGTH};
@@ -19,11 +16,8 @@ const INITIAL_CAPACITY: Length = unsafe { Length::new_unchecked(16) };
 ///
 /// This struct is very similar to a mutable vec. It is used to construct
 /// [`ImmutableArray`][`super::ImmutableArray`] incrementally, in place.
-pub struct ImmutableArrayBuilder<
-    T: Sized,
-    #[cfg(feature = "std_alloc")] TAllocator = StdAllocator,
-    #[cfg(not(feature = "std_alloc"))] TAllocator,
-> where
+pub struct ImmutableArrayBuilder<T: Sized, TAllocator>
+where
     TAllocator: Allocator,
 {
     internal: InternalArray<T, TAllocator>,
@@ -204,3 +198,13 @@ impl<T: Sized + Clone, TAllocator: Allocator> ImmutableArrayBuilder<T, TAllocato
         Ok(())
     }
 }
+
+#[cfg(feature = "std_alloc")]
+use osom_lib_alloc::StdAllocator;
+
+#[cfg(feature = "std_alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std_alloc")))]
+/// Alias for [`ImmutableArrayBuilder`] with [`StdAllocator`] as the allocator.
+///
+/// This alias is available only if the `std_alloc` feature is enabled.
+pub type StdImmutableArrayBuilder<T> = ImmutableArrayBuilder<T, StdAllocator>;

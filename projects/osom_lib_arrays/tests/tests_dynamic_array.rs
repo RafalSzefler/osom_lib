@@ -8,7 +8,7 @@ use std::{
     },
 };
 
-use osom_lib_arrays::DynamicArray;
+use osom_lib_arrays::StdDynamicArray;
 
 use osom_lib_primitives::Length;
 use rstest::rstest;
@@ -19,7 +19,7 @@ use rstest::rstest;
 #[case(&[-1, 12, 0])]
 #[case(&[-100, 2, -6, -7, 0, 12, 165, 111111])]
 fn test_push_and_compare(#[case] data: &[i32]) {
-    let mut dynamic_vec = DynamicArray::<i32>::new();
+    let mut dynamic_vec = StdDynamicArray::<i32>::new();
     for value in data {
         dynamic_vec.push(*value).unwrap();
     }
@@ -27,7 +27,7 @@ fn test_push_and_compare(#[case] data: &[i32]) {
     assert_eq!(dynamic_vec.as_slice(), data);
     assert_eq!(dynamic_vec.deref(), data);
 
-    let mut other = DynamicArray::<i32>::new();
+    let mut other = StdDynamicArray::<i32>::new();
     for value in data {
         other.push(*value).unwrap();
     }
@@ -39,7 +39,7 @@ fn test_push_and_compare(#[case] data: &[i32]) {
 fn test_incremental_push() {
     const MAX: usize = 100;
     let mut vec = Vec::<u32>::with_capacity(MAX);
-    let mut arr = DynamicArray::<u32>::new();
+    let mut arr = StdDynamicArray::<u32>::new();
 
     for i in 0..MAX {
         let no = i as u32;
@@ -67,7 +67,7 @@ fn test_drop<const N: usize>() {
 
     let counter = Arc::new(AtomicUsize::new(0));
 
-    let mut arr = DynamicArray::<Foo>::new();
+    let mut arr = StdDynamicArray::<Foo>::new();
 
     for _ in 0..MAX {
         let foo = Foo {
@@ -100,7 +100,7 @@ fn test_various_drops() {
 fn test_push_and_pop(#[case] data: &[i32]) {
     let first = data[0];
     let second = data[1];
-    let mut dynamic_vec = DynamicArray::<i32>::new();
+    let mut dynamic_vec = StdDynamicArray::<i32>::new();
     for value in data {
         dynamic_vec.push(*value).unwrap();
     }
@@ -130,7 +130,7 @@ fn test_push_and_pop(#[case] data: &[i32]) {
 #[test]
 fn test_shrink_to_fit() {
     let length = Length::try_from_i32(10).unwrap();
-    let mut dynamic_array = DynamicArray::<i32>::with_capacity(length).unwrap();
+    let mut dynamic_array = StdDynamicArray::<i32>::with_capacity(length).unwrap();
     assert_eq!(dynamic_array.capacity(), length);
     assert_eq!(dynamic_array.len(), Length::ZERO);
 

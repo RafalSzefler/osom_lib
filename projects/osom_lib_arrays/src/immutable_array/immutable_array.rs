@@ -5,9 +5,6 @@ use core::sync::atomic::Ordering;
 use osom_lib_alloc::Allocator;
 use osom_lib_primitives::Length;
 
-#[cfg(feature = "std_alloc")]
-use osom_lib_alloc::StdAllocator;
-
 use crate::errors::ArrayConstructionError;
 
 use super::ImmutableWeakArray;
@@ -21,11 +18,8 @@ use super::internal_array::{HeapData, InternalArray, MAX_LENGTH};
 /// allowed, except for internal mutability of course.
 #[must_use]
 #[repr(transparent)]
-pub struct ImmutableArray<
-    T: Sized,
-    #[cfg(feature = "std_alloc")] TAllocator = StdAllocator,
-    #[cfg(not(feature = "std_alloc"))] TAllocator,
-> where
+pub struct ImmutableArray<T: Sized, TAllocator>
+where
     TAllocator: Allocator,
 {
     internal: InternalArray<T, TAllocator>,
@@ -287,3 +281,13 @@ impl<T: Sized, TAllocator: Allocator> AsRef<[T]> for ImmutableArray<T, TAllocato
         self.as_slice()
     }
 }
+
+#[cfg(feature = "std_alloc")]
+use osom_lib_alloc::StdAllocator;
+
+#[cfg(feature = "std_alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std_alloc")))]
+/// Alias for [`ImmutableArray`] with [`StdAllocator`] as the allocator.
+///
+/// This alias is available only if the `std_alloc` feature is enabled.
+pub type StdImmutableArray<T> = ImmutableArray<T, StdAllocator>;

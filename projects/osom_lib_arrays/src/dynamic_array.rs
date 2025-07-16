@@ -5,9 +5,6 @@ use core::{alloc::Layout, marker::PhantomData, ops::Deref, ptr::NonNull};
 use osom_lib_alloc::{AllocationError, Allocator};
 use osom_lib_primitives::Length;
 
-#[cfg(feature = "std_alloc")]
-use osom_lib_alloc::StdAllocator;
-
 use crate::errors::ArrayConstructionError;
 
 /// A dynamic array that grows when inserting elements. Similar to
@@ -18,11 +15,8 @@ use crate::errors::ArrayConstructionError;
 ///   3/2 of the old capacity.
 /// * It allows plugging in custom allocators.
 #[must_use]
-pub struct DynamicArray<
-    T,
-    #[cfg(feature = "std_alloc")] TAllocator = StdAllocator,
-    #[cfg(not(feature = "std_alloc"))] TAllocator,
-> where
+pub struct DynamicArray<T, TAllocator>
+where
     TAllocator: Allocator,
 {
     ptr: NonNull<u8>,
@@ -470,3 +464,13 @@ impl<T, TAllocator: Allocator> From<DynamicArray<T, TAllocator>> for crate::Arra
         value.into_array().expect("Failed to convert DynamicArray into Array")
     }
 }
+
+#[cfg(feature = "std_alloc")]
+use osom_lib_alloc::StdAllocator;
+
+#[cfg(feature = "std_alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std_alloc")))]
+/// Alias for [`DynamicArray`] with [`StdAllocator`] as the allocator.
+///
+/// This alias is available only if the `std_alloc` feature is enabled.
+pub type StdDynamicArray<T> = DynamicArray<T, StdAllocator>;

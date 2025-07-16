@@ -6,9 +6,6 @@ use osom_lib_alloc::Allocator;
 use osom_lib_arrays::{ImmutableArray, ImmutableWeakArray, errors::ArrayConstructionError};
 use osom_lib_primitives::Length;
 
-#[cfg(feature = "std_alloc")]
-use osom_lib_alloc::StdAllocator;
-
 /// Represents an error that occurs when constructing new [`ImmutableString`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[must_use]
@@ -45,10 +42,8 @@ impl From<ArrayConstructionError> for ImmutableStringConstructionError {
 #[derive(Clone)]
 #[repr(transparent)]
 #[must_use]
-pub struct ImmutableString<
-    #[cfg(feature = "std_alloc")] TAllocator = StdAllocator,
-    #[cfg(not(feature = "std_alloc"))] TAllocator,
-> where
+pub struct ImmutableString<TAllocator>
+where
     TAllocator: Allocator,
 {
     internal: ManuallyDrop<ImmutableArray<u8, TAllocator>>,
@@ -62,10 +57,8 @@ unsafe impl<TAllocator: Allocator> Sync for ImmutableString<TAllocator> {}
 /// reference to [`ImmutableArray`].
 #[derive(Clone)]
 #[repr(transparent)]
-pub struct ImmutableWeakString<
-    #[cfg(feature = "std_alloc")] TAllocator = StdAllocator,
-    #[cfg(not(feature = "std_alloc"))] TAllocator,
-> where
+pub struct ImmutableWeakString<TAllocator>
+where
     TAllocator: Allocator,
 {
     internal: ManuallyDrop<ImmutableWeakArray<u8, TAllocator>>,
@@ -274,3 +267,20 @@ impl<TAllocator: Allocator> From<ImmutableString<TAllocator>> for ImmutableArray
         internal
     }
 }
+
+#[cfg(feature = "std_alloc")]
+use osom_lib_alloc::StdAllocator;
+
+#[cfg(feature = "std_alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std_alloc")))]
+/// Alias for [`ImmutableString`] with [`StdAllocator`] as the allocator.
+///
+/// This alias is available only if the `std_alloc` feature is enabled.
+pub type StdImmutableString = ImmutableString<StdAllocator>;
+
+#[cfg(feature = "std_alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std_alloc")))]
+/// Alias for [`ImmutableWeakString`] with [`StdAllocator`] as the allocator.
+///
+/// This alias is available only if the `std_alloc` feature is enabled.
+pub type StdImmutableWeakString = ImmutableWeakString<StdAllocator>;

@@ -1,13 +1,13 @@
 #![cfg(feature = "std_alloc")]
 
-use osom_lib_strings::{ImmutableString, ImmutableWeakString};
+use osom_lib_strings::{StdImmutableString, StdImmutableWeakString};
 use rstest::rstest;
 
 const TEXT: &str = "Hello, world!";
 
 #[inline(always)]
-fn new_string(text: &str) -> ImmutableString {
-    ImmutableString::new(text).unwrap()
+fn new_string(text: &str) -> StdImmutableString {
+    StdImmutableString::new(text).unwrap()
 }
 
 #[test]
@@ -21,8 +21,8 @@ fn test_immutable_string_clone() {
     let string = new_string(TEXT);
     macro_rules! assert_strong_weak {
         ($imm:expr, $strong:expr, $weak:expr) => {
-            assert_eq!(ImmutableString::strong_count($imm), $strong);
-            assert_eq!(ImmutableString::weak_count($imm), $weak);
+            assert_eq!(StdImmutableString::strong_count($imm), $strong);
+            assert_eq!(StdImmutableString::weak_count($imm), $weak);
         };
     }
     assert_strong_weak!(&string, 1, 1);
@@ -42,23 +42,23 @@ fn test_immutable_string_weak() {
     let string = new_string(TEXT);
     macro_rules! assert_strong_weak {
         ($imm:expr, $strong:expr, $weak:expr) => {
-            assert_eq!(ImmutableString::strong_count($imm), $strong);
-            assert_eq!(ImmutableString::weak_count($imm), $weak);
+            assert_eq!(StdImmutableString::strong_count($imm), $strong);
+            assert_eq!(StdImmutableString::weak_count($imm), $weak);
         };
     }
     macro_rules! assert_strong_weak2 {
         ($imm:expr, $strong:expr, $weak:expr) => {
-            assert_eq!(ImmutableWeakString::strong_count($imm), $strong);
-            assert_eq!(ImmutableWeakString::weak_count($imm), $weak);
+            assert_eq!(StdImmutableWeakString::strong_count($imm), $strong);
+            assert_eq!(StdImmutableWeakString::weak_count($imm), $weak);
         };
     }
     assert_strong_weak!(&string, 1, 1);
     let clone = string.clone();
     assert_strong_weak!(&string, 2, 1);
-    let weak = ImmutableString::downgrade(&clone);
+    let weak = StdImmutableString::downgrade(&clone);
     assert_strong_weak!(&string, 2, 2);
     assert_strong_weak2!(&weak, 2, 2);
-    let weak2 = ImmutableString::downgrade(&string);
+    let weak2 = StdImmutableString::downgrade(&string);
     assert_strong_weak!(&string, 2, 3);
     assert_strong_weak2!(&weak2, 2, 3);
     let new_strong = weak.upgrade().unwrap();

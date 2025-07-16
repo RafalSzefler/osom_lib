@@ -1,12 +1,12 @@
 #![cfg(feature = "std_alloc")]
 
-use osom_lib_arrays::{ImmutableArray, ImmutableArrayBuilder};
+use osom_lib_arrays::{StdImmutableArray, StdImmutableArrayBuilder};
 use osom_lib_primitives::Length;
 use rstest::rstest;
 
 #[inline(always)]
-fn new_array<T: Sized + Copy, const N: usize>(array: [T; N]) -> ImmutableArray<T> {
-    ImmutableArray::from_array(array).unwrap()
+fn new_array<T: Sized + Copy, const N: usize>(array: [T; N]) -> StdImmutableArray<T> {
+    StdImmutableArray::from_array(array).unwrap()
 }
 
 #[test]
@@ -20,8 +20,8 @@ fn test_immutable_array_clone() {
     let array = new_array([1, 2, 3]);
     macro_rules! assert_strong_weak {
         ($imm:expr, $strong:expr, $weak:expr) => {
-            assert_eq!(ImmutableArray::strong_count($imm), $strong);
-            assert_eq!(ImmutableArray::weak_count($imm), $weak);
+            assert_eq!(StdImmutableArray::strong_count($imm), $strong);
+            assert_eq!(StdImmutableArray::weak_count($imm), $weak);
         };
     }
     assert_strong_weak!(&array, 1, 1);
@@ -51,7 +51,7 @@ fn test_custom_struct() {
         CustomStruct { first: 3, value: 3 },
         CustomStruct { first: 4, value: 4 },
     ];
-    let immutable_array: ImmutableArray<CustomStruct> = ImmutableArray::from_slice(&custom_vec).unwrap();
+    let immutable_array: StdImmutableArray<CustomStruct> = StdImmutableArray::from_slice(&custom_vec).unwrap();
 
     assert_eq!(immutable_array.as_slice().len(), 4);
     assert_eq!(immutable_array.len().value(), 4);
@@ -106,7 +106,7 @@ fn test_custom_drop() {
         ];
 
         assert_ref_count!(0);
-        let immutable_array: ImmutableArray<CustomDrop> = ImmutableArray::from_slice(&custom_slice).unwrap();
+        let immutable_array: StdImmutableArray<CustomDrop> = StdImmutableArray::from_slice(&custom_slice).unwrap();
         assert_eq!(immutable_array.as_slice().len(), 4);
         assert_eq!(immutable_array.len().value(), 4);
         assert_ref_count!(0);
@@ -127,7 +127,7 @@ fn test_custom_drop() {
 #[case(&[1, -5, 3, 4, -87, 6, 7, 8, 9, 3412])]
 #[case(&[1, -5, 3, 4, -87, 6, 7, 8, 9, 3412, 1, -5, 3, 4, -87, 6, 7, 8, 9, 3412, 5321, 2, 0, 0, 0, 0, 12312, 0])]
 fn test_builder_from_slice(#[case] slice: &[i32]) {
-    let mut builder: ImmutableArrayBuilder<_> = ImmutableArrayBuilder::new().unwrap();
+    let mut builder: StdImmutableArrayBuilder<_> = StdImmutableArrayBuilder::new().unwrap();
     builder.extend_from_slice(slice).unwrap();
     let array = builder.build();
     assert_eq!(array.as_slice(), slice);
@@ -135,7 +135,7 @@ fn test_builder_from_slice(#[case] slice: &[i32]) {
 
 #[test]
 fn test_builder_shrink_1() {
-    let mut builder: ImmutableArrayBuilder<bool> = ImmutableArrayBuilder::new().unwrap();
+    let mut builder: StdImmutableArrayBuilder<bool> = StdImmutableArrayBuilder::new().unwrap();
     assert_eq!(builder.len(), Length::ZERO);
     assert!(builder.capacity() > Length::ZERO);
     builder.shrink_to_fit().unwrap();
@@ -148,7 +148,7 @@ fn test_builder_shrink_1() {
 
 #[test]
 fn test_builder_shrink_2() {
-    let mut builder: ImmutableArrayBuilder<bool> = ImmutableArrayBuilder::new().unwrap();
+    let mut builder: StdImmutableArrayBuilder<bool> = StdImmutableArrayBuilder::new().unwrap();
     builder.push(true).unwrap();
     builder.push(false).unwrap();
     builder.push(true).unwrap();
@@ -165,7 +165,7 @@ fn test_builder_shrink_2() {
 
 #[test]
 fn test_thread_safety() {
-    let mut builder: ImmutableArrayBuilder<i32> = ImmutableArrayBuilder::new().unwrap();
+    let mut builder: StdImmutableArrayBuilder<i32> = StdImmutableArrayBuilder::new().unwrap();
     for i in 1..1000 {
         builder.push(2 * i).unwrap();
     }

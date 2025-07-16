@@ -13,9 +13,6 @@ use core::{alloc::Layout, ptr::NonNull};
 use osom_lib_alloc::{AllocationError, Allocator};
 use osom_lib_primitives::{DoesNotHaveToBeUsed, Length};
 
-#[cfg(feature = "std_alloc")]
-use osom_lib_alloc::StdAllocator;
-
 use crate::errors::ArrayConstructionError;
 
 union InlineDynamicArrayUnion<T, const N: usize> {
@@ -29,12 +26,8 @@ union InlineDynamicArrayUnion<T, const N: usize> {
 ///
 /// Note that this struct can only grow, and will never shrink.
 #[must_use]
-pub struct InlineDynamicArray<
-    const N: usize,
-    T,
-    #[cfg(feature = "std_alloc")] TAllocator = StdAllocator,
-    #[cfg(not(feature = "std_alloc"))] TAllocator,
-> where
+pub struct InlineDynamicArray<const N: usize, T, TAllocator>
+where
     TAllocator: Allocator,
 {
     data: InlineDynamicArrayUnion<T, N>,
@@ -391,3 +384,13 @@ impl<const N: usize, T, TAllocator: Allocator> AsRef<[T]> for InlineDynamicArray
 
 unsafe impl<const N: usize, T: Send, TAllocator: Allocator> Send for InlineDynamicArray<N, T, TAllocator> {}
 unsafe impl<const N: usize, T: Sync, TAllocator: Allocator> Sync for InlineDynamicArray<N, T, TAllocator> {}
+
+#[cfg(feature = "std_alloc")]
+use osom_lib_alloc::StdAllocator;
+
+#[cfg(feature = "std_alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std_alloc")))]
+/// Alias for [`InlineDynamicArray`] with [`StdAllocator`] as the allocator.
+///
+/// This alias is available only if the `std_alloc` feature is enabled.
+pub type StdInlineDynamicArray<const N: usize, T> = InlineDynamicArray<N, T, StdAllocator>;

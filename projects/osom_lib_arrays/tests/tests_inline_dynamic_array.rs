@@ -8,7 +8,7 @@ use std::{
     },
 };
 
-use osom_lib_arrays::InlineDynamicArray;
+use osom_lib_arrays::StdInlineDynamicArray;
 
 use osom_lib_primitives::Length;
 use rstest::rstest;
@@ -19,7 +19,7 @@ use rstest::rstest;
 #[case(&[-1, 12, 0])]
 #[case(&[-100, 2, -6, -7, 0, 12, 165, 111111])]
 fn test_push_and_compare(#[case] data: &[i32]) {
-    let mut inlined_vec = InlineDynamicArray::<5, _>::new();
+    let mut inlined_vec = StdInlineDynamicArray::<5, _>::new();
     for value in data {
         inlined_vec.push(*value).unwrap();
     }
@@ -27,7 +27,7 @@ fn test_push_and_compare(#[case] data: &[i32]) {
     assert_eq!(inlined_vec.as_slice(), data);
     assert_eq!(inlined_vec.deref(), data);
 
-    let mut other = InlineDynamicArray::<15, _>::new();
+    let mut other = StdInlineDynamicArray::<15, _>::new();
     for value in data {
         other.push(*value).unwrap();
     }
@@ -39,7 +39,7 @@ fn test_push_and_compare(#[case] data: &[i32]) {
 fn test_incremental_push() {
     const MAX: usize = 100;
     let mut vec = Vec::<u32>::with_capacity(MAX);
-    let mut arr = InlineDynamicArray::<5, u32>::new();
+    let mut arr = StdInlineDynamicArray::<5, u32>::new();
 
     for i in 0..MAX {
         let no = i as u32;
@@ -67,7 +67,7 @@ fn test_drop<const N: usize>() {
 
     let counter = Arc::new(AtomicUsize::new(0));
 
-    let mut arr = InlineDynamicArray::<N, Foo>::new();
+    let mut arr = StdInlineDynamicArray::<N, Foo>::new();
 
     for _ in 0..MAX {
         let foo = Foo {
@@ -100,7 +100,7 @@ fn test_various_drops() {
 fn test_push_and_pop(#[case] data: &[i32]) {
     let first = data[0];
     let second = data[1];
-    let mut inlined_vec = InlineDynamicArray::<5, _>::new();
+    let mut inlined_vec = StdInlineDynamicArray::<5, _>::new();
     for value in data {
         inlined_vec.push(*value).unwrap();
     }
@@ -129,7 +129,7 @@ fn test_push_and_pop(#[case] data: &[i32]) {
 
 #[test]
 fn test_fill() {
-    let mut arr = InlineDynamicArray::<10, i32>::new();
+    let mut arr = StdInlineDynamicArray::<10, i32>::new();
     let result = arr.fill(|| 12345);
     assert_eq!(arr.as_slice(), &[12345; 10]);
     assert_eq!(*result, Length::try_from_i32(10).unwrap());
@@ -137,7 +137,7 @@ fn test_fill() {
 
 #[test]
 fn test_fill_2() {
-    let mut arr = InlineDynamicArray::<10, i32>::new();
+    let mut arr = StdInlineDynamicArray::<10, i32>::new();
     arr.push(-1).unwrap();
     arr.push(-2).unwrap();
     let result = arr.fill(|| 7);

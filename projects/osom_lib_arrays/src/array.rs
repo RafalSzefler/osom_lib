@@ -4,9 +4,6 @@ use core::{alloc::Layout, marker::PhantomData, ops::Deref, ptr::NonNull};
 
 use osom_lib_alloc::Allocator;
 
-#[cfg(feature = "std_alloc")]
-use osom_lib_alloc::StdAllocator;
-
 use osom_lib_primitives::Length;
 
 use crate::errors::ArrayConstructionError;
@@ -18,11 +15,8 @@ use crate::errors::ArrayConstructionError;
 ///
 /// Cloning of [`Array`] will allocate new memory and copy the data into it.
 #[must_use]
-pub struct Array<
-    T,
-    #[cfg(feature = "std_alloc")] TAllocator = StdAllocator,
-    #[cfg(not(feature = "std_alloc"))] TAllocator,
-> where
+pub struct Array<T, TAllocator>
+where
     TAllocator: Allocator,
 {
     pub(crate) data: NonNull<u8>,
@@ -296,3 +290,13 @@ where
         self.as_slice_mut()
     }
 }
+
+#[cfg(feature = "std_alloc")]
+use osom_lib_alloc::StdAllocator;
+
+#[cfg(feature = "std_alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std_alloc")))]
+/// Alias for [`Array`] with [`StdAllocator`] as the allocator.
+///
+/// This alias is available only if the `std_alloc` feature is enabled.
+pub type StdArray<T> = Array<T, StdAllocator>;

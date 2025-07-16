@@ -5,8 +5,6 @@ use core::ops::{Bound, RangeBounds};
 
 use osom_lib_alloc::Allocator;
 
-#[cfg(feature = "std_alloc")]
-use osom_lib_alloc::StdAllocator;
 use osom_lib_primitives::Length;
 
 use crate::{
@@ -35,13 +33,8 @@ use crate::{
 /// `NODE_CAPACITY` so that array of keys and/or array of values of this
 /// size fills entire cache line.
 #[must_use]
-pub struct BPlusTree<
-    TKey,
-    TValue,
-    #[cfg(feature = "std_alloc")] TAllocator = StdAllocator,
-    #[cfg(not(feature = "std_alloc"))] TAllocator,
-    const NODE_CAPACITY: usize = 16,
-> where
+pub struct BPlusTree<TKey, TValue, TAllocator, const NODE_CAPACITY: usize>
+where
     TKey: Clone + Ord,
     TAllocator: Allocator,
 {
@@ -274,3 +267,15 @@ where
         BPlusTreeQueryMutResult::new(leaf_item_range, ordering)
     }
 }
+
+#[cfg(feature = "std_alloc")]
+use osom_lib_alloc::StdAllocator;
+
+#[cfg(feature = "std_alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std_alloc")))]
+/// Alias for [`BPlusTree`] with [`StdAllocator`] as the allocator
+/// and with default `NODE_CAPACITY` set to `16`.
+///
+/// This alias is available only if the `std_alloc` feature is enabled.
+pub type StdBPlusTree<TKey, TValue, const NODE_CAPACITY: usize = 16> =
+    BPlusTree<TKey, TValue, StdAllocator, NODE_CAPACITY>;
