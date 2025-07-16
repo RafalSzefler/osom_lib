@@ -7,10 +7,7 @@ use osom_lib_primitives::Length;
 
 /// Represents a semi-dynamic array, where the maximum size `N` is known at compile time.
 /// A thin wrapper around `[T; N]` but that supports pushing and popping elements. I.e.
-/// the actual length can be smaller than `N`.
-///
-/// In addition it supports dynamic api, it keeps length internally and impelements
-/// `push` and `pop` methods.
+/// the actual length can be smaller than `N` and is kept internally as a separate field.
 #[derive(Debug)]
 #[must_use]
 pub struct FixedArray<T, const N: usize> {
