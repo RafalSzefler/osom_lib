@@ -127,9 +127,7 @@ impl<T: Sized, TAllocator: Allocator> ImmutableArray<T, TAllocator> {
             None
         }
     }
-}
 
-impl<T: Sized, TAllocator: Allocator> ImmutableArray<T, TAllocator> {
     /// Constructs a new [`ImmutableArray`] from a slice with default allocator.
     /// It copies the slice into the new [`ImmutableArray`].
     ///
