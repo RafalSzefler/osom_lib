@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_variables)]
 #![allow(clippy::mut_from_ref)]
 use core::marker::PhantomData;
 

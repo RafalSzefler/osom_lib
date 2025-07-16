@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_variables)]
 #![allow(clippy::cast_sign_loss)]
 
 use core::ops::{Bound, RangeBounds};

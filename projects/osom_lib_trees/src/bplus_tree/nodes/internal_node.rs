@@ -1,5 +1,3 @@
-#![allow(dead_code, unused_variables)]
-
 use osom_lib_arrays::DoubleFixedArray;
 
 use super::{NodeData, NodeTaggedPtr};
