@@ -34,6 +34,7 @@ pub enum LengthError {
 impl Length {
     pub const MAX: usize = (i32::MAX - 1024) as usize;
     pub const ZERO: Self = unsafe { Self::new_unchecked(0) };
+    pub const ONE: Self = unsafe { Self::new_unchecked(1) };
 
     /// Tries to convert a `usize` to a [`Length`].
     ///

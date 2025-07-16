@@ -46,8 +46,9 @@ pub struct BPlusTree<
     TAllocator: Allocator,
 {
     /// The allocator used to allocate the nodes.
-    allocator: TAllocator,
-    root: NodeTaggedPtr<NODE_CAPACITY, TKey, TValue>,
+    pub(super) allocator: TAllocator,
+    pub(super) root: NodeTaggedPtr<NODE_CAPACITY, TKey, TValue>,
+    pub(super) len: Length,
 }
 
 impl<TKey, TValue, TAllocator, const NODE_CAPACITY: usize> BPlusTree<TKey, TValue, TAllocator, NODE_CAPACITY>
@@ -59,15 +60,29 @@ where
 
     #[inline(always)]
     pub fn with_allocator(allocator: TAllocator) -> Self {
+        const {
+            assert!(NODE_CAPACITY >= 4, "NODE_CAPACITY must be at least 4");
+            assert!(
+                NODE_CAPACITY <= i16::MAX as usize,
+                "NODE_CAPACITY must be at most 32767"
+            );
+        };
+
         Self {
             allocator,
             root: NodeTaggedPtr::null(),
+            len: Length::ZERO,
         }
     }
 
     #[inline(always)]
     pub fn new() -> Self {
         Self::with_allocator(TAllocator::default())
+    }
+
+    #[inline(always)]
+    pub const fn len(&self) -> Length {
+        self.len
     }
 
     pub(super) fn search_for_infimum<K>(&self, key: &K) -> LeafItem<NODE_CAPACITY, TKey, TValue>
@@ -198,7 +213,7 @@ where
     type TValue = TValue;
 
     fn try_insert(&mut self, key: Self::TKey, value: Self::TValue) -> Result<TreeTryInsertResult, TreeError> {
-        todo!()
+        self.internal_try_insert(key, value)
     }
 
     fn query_exact<K>(&self, key: &K) -> TreeQueryExactResult<'_, Self::TKey, Self::TValue>

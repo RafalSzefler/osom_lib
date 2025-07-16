@@ -55,3 +55,45 @@ pub fn deallocate_recursive<TKey, TValue, TAllocator, const NODE_CAPACITY: usize
         unsafe { allocator.deallocate_for_type(ptr) };
     }
 }
+
+pub fn move_last_into_order<T>(arr: &mut [T]) -> usize
+where
+    T: Ord,
+{
+    let len = arr.len();
+    if len <= 1 {
+        return 0;
+    }
+
+    let insert_idx = {
+        let (left, right) = arr.split_at_mut(len - 1);
+        let last = &right[0];
+        let mut insert_idx = 0;
+        for item in left {
+            if last <= item {
+                break;
+            }
+            insert_idx += 1;
+        }
+        insert_idx
+    };
+
+    move_last_into_position(arr, insert_idx);
+    insert_idx
+}
+
+pub fn move_last_into_position<T>(arr: &mut [T], position: usize) {
+    let len = arr.len();
+    if len <= 1 || position == len - 1 {
+        return;
+    }
+
+    let raw_ptr = arr.as_mut_ptr();
+    unsafe {
+        let data = core::ptr::read(raw_ptr.add(len - 1));
+        raw_ptr
+            .add(position + 1)
+            .copy_from(raw_ptr.add(position), len - position - 1);
+        raw_ptr.add(position).write(data);
+    }
+}
