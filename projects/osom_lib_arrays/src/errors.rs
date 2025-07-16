@@ -1,5 +1,5 @@
 //! Holds all custom errors for that crate.
-use osom_lib_alloc::AllocationError;
+use osom_lib_alloc::{AllocationError, DetailedAllocationError};
 
 /// Represents an error that occurs when constructing a new array.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -15,6 +15,12 @@ pub enum ArrayConstructionError {
 
 impl From<AllocationError> for ArrayConstructionError {
     fn from(_: AllocationError) -> Self {
+        ArrayConstructionError::AllocationError
+    }
+}
+
+impl<T: Sized> From<DetailedAllocationError<T>> for ArrayConstructionError {
+    fn from(_: DetailedAllocationError<T>) -> Self {
         ArrayConstructionError::AllocationError
     }
 }

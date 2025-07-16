@@ -2,7 +2,7 @@ use alloc::alloc as std_alloc;
 
 use core::{alloc::Layout, ptr::{dangling_mut, NonNull}};
 
-use super::{AllocationError, Allocator};
+use super::{DetailedAllocationError, Allocator};
 
 /// Represents the default allocator taken from the standard Rust library.
 #[derive(Clone, Default, Debug)]
@@ -11,10 +11,12 @@ use super::{AllocationError, Allocator};
 pub struct StdAllocator;
 
 unsafe impl Allocator for StdAllocator {
-    fn allocate(&self, layout: Layout) -> Result<NonNull<u8>, AllocationError> {
+    type ErrorDetails = ();
+
+    fn allocate(&self, layout: Layout) -> Result<NonNull<u8>, DetailedAllocationError<Self::ErrorDetails>> {
         let new_ptr = unsafe { std_alloc::alloc(layout) };
         if new_ptr.is_null() {
-            return Err(AllocationError);
+            return Err(DetailedAllocationError { details: () });
         }
         Ok(unsafe { NonNull::new_unchecked(new_ptr) })
     }
@@ -27,18 +29,18 @@ unsafe impl Allocator for StdAllocator {
         unsafe { NonNull::new_unchecked(dangling_ptr) }
     }
     
-    unsafe fn resize(&self, ptr: NonNull<u8>, old_layout: Layout, new_layout: Layout) -> Result<NonNull<u8>, AllocationError> {
+    unsafe fn resize(&self, ptr: NonNull<u8>, old_layout: Layout, new_layout: Layout) -> Result<NonNull<u8>, DetailedAllocationError<Self::ErrorDetails>> {
         let ptr = ptr.as_ptr();
         let new_ptr = if old_layout.align() == new_layout.align() {
             let new_ptr = unsafe { std_alloc::realloc(ptr, old_layout, new_layout.size()) };
             if new_ptr.is_null() {
-                return Err(AllocationError);
+                return Err(DetailedAllocationError { details: () });
             } 
             new_ptr
         } else {
             let new_ptr = unsafe { std_alloc::alloc(new_layout) };
             if new_ptr.is_null() {
-                return Err(AllocationError);
+                return Err(DetailedAllocationError { details: () });
             }
 
             let copy_size = core::cmp::min(old_layout.size(), new_layout.size());

@@ -1,13 +1,27 @@
 use core::alloc::Layout;
 use core::fmt::Debug;
-use core::hash::Hash;
 use core::ptr::NonNull;
 
 /// Represents an error that occurs when allocating memory.
-/// Most likely due to out of memory.
+/// Most likely due to out of memory. Concrete allocators can
+/// extend this error with more information.
+#[derive(Debug)]
+#[must_use]
+pub struct DetailedAllocationError<T: Sized> {
+    pub details: T,
+}
+
+/// Represents a generic allocation error. It discards any additional
+/// data.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[must_use]
 pub struct AllocationError;
+
+impl<T: Sized> From<DetailedAllocationError<T>> for AllocationError {
+    fn from(_: DetailedAllocationError<T>) -> Self {
+        AllocationError
+    }
+}
 
 /// Represents a memory allocator.
 ///
@@ -17,19 +31,21 @@ pub struct AllocationError;
 /// and memory management.
 #[must_use]
 pub unsafe trait Allocator: Default + Clone + Debug + Send + Sync {
+    type ErrorDetails: Sized;
+
     /// Allocates a new piece of memory with the given layout.
     ///
     /// # Errors
     ///
     /// Returns an [`AllocationError`] if the memory cannot be allocated.
-    fn allocate(&self, layout: Layout) -> Result<NonNull<u8>, AllocationError>;
+    fn allocate(&self, layout: Layout) -> Result<NonNull<u8>, DetailedAllocationError<Self::ErrorDetails>>;
 
     /// Allocates a new piece of memory with the layout of the type `T`.
     ///
     /// # Errors
     ///
     /// Returns an [`AllocationError`] if the memory cannot be allocated.
-    fn allocate_for_type<T: Sized>(&self) -> Result<NonNull<T>, AllocationError> {
+    fn allocate_for_type<T: Sized>(&self) -> Result<NonNull<T>, DetailedAllocationError<Self::ErrorDetails>> {
         let layout = Layout::new::<T>();
         let result = self.allocate(layout)?;
         Ok(unsafe { NonNull::new_unchecked(result.as_ptr().cast()) })
@@ -49,7 +65,7 @@ pub unsafe trait Allocator: Default + Clone + Debug + Send + Sync {
         ptr: NonNull<u8>,
         old_layout: Layout,
         new_layout: Layout,
-    ) -> Result<NonNull<u8>, AllocationError>;
+    ) -> Result<NonNull<u8>, DetailedAllocationError<Self::ErrorDetails>>;
 
     /// Deallocates the memory block pointed to by `ptr`.
     ///
