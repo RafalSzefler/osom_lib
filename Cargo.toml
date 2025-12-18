@@ -1,0 +1,41 @@
+[workspace]
+members = [
+    "projects/osom_lib",
+    "projects/osom_lib_alloc",
+    "projects/osom_lib_arrays",
+    "projects/osom_lib_cfg_ext",
+    "projects/osom_lib_entropy",
+    "projects/osom_lib_entropy_cprng",
+    "projects/osom_lib_hash_tables",
+    "projects/osom_lib_hashes",
+    "projects/osom_lib_macros",
+    "projects/osom_lib_primitives",
+    "projects/osom_lib_prng",
+    "projects/osom_lib_proc_macro_helpers",
+    "projects/osom_lib_reprc",
+]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+authors = ["Rafal Szefler <rafael.szefler@gmail.com>"]
+rust-version = "1.89"
+license-file = "LICENSE"
+
+[workspace.dependencies]
+libc = { version = "0.2", default-features = false }
+windows-sys = { version = "0.61", default-features = false, features = ["Win32_Security_Cryptography"] }
+core_detect = "1"
+
+# tests
+rstest = "0.26"
+
+# benchmarks
+criterion = "0.7"
+
+# proc macro helpers
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "2.0", features = ["full"] }
+const_format = "0.2"
+paste = "1.0"

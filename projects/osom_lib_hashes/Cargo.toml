@@ -1,0 +1,21 @@
+[package]
+name = "osom_lib_hashes"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+
+[dependencies]
+paste = { workspace = true }
+osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1" }
+osom_lib_cfg_ext = { path = "../osom_lib_cfg_ext", version = "0.1" }
+osom_lib_arrays = { path = "../osom_lib_arrays", version = "0.1" }
+
+[dev-dependencies]
+rstest = { workspace = true }
+criterion = { workspace = true }
+
+[[bench]]
+name = "hashing_calc"
+harness = false

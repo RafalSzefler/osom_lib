@@ -1,0 +1,12 @@
+[package]
+name = "osom_lib_entropy_cprng"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+
+[dependencies]
+osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1" }
+osom_lib_entropy = { path = "../osom_lib_entropy", version = "0.1" }
+osom_lib_prng = { path = "../osom_lib_prng", version = "0.1" }
