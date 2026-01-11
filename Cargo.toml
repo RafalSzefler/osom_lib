@@ -13,6 +13,7 @@ members = [
     "projects/osom_lib_prng",
     "projects/osom_lib_proc_macro_helpers",
     "projects/osom_lib_reprc",
+    "projects/osom_lib_wait_timer",
 ]
 resolver = "3"
 
@@ -31,7 +32,7 @@ core_detect = "1"
 rstest = "0.26"
 
 # benchmarks
-criterion = "0.7"
+criterion = "0.8"
 
 # proc macro helpers
 proc-macro2 = "1.0"

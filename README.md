@@ -21,6 +21,9 @@ osom_lib crates
 The libraries here are independent on the operating system and can be used anywhere
 Rust runs.
 
+* [`osom_lib`](https://rafalszefler.github.io/osom_lib/osom_lib) This library simply
+gathers and re-exports other osom libs defined here. It also supports `std` feature
+for enabling standard (often meaning: os dependent) implementations.
 * [`osom_lib_reprc`](https://rafalszefler.github.io/osom_lib/osom_lib_reprc) defines macros, and
 traits that help working with `#[repr(C)]` representations.
 * [`osom_lib_entropy`](https://rafalszefler.github.io/osom_lib/osom_lib_entropy) holds tools for
@@ -44,6 +47,6 @@ several primitives (like Length and CResult) used by other osom libs.
 trait and related stuff.
 * [`osom_lib_arrays`](https://rafalszefler.github.io/osom_lib/osom_lib_arrays) defines and
 implements various ABI stable arrays.
-* [`osom_lib`](https://rafalszefler.github.io/osom_lib/osom_lib) This library simply
-gathers and re-exports other osom libs defined here. It also supports `std` feature
-for enabling standard (often meaning: os dependent) implementations.
+* [`osom_lib_wait_timers](https://rafalszefler.github.io/osom_lib/osom_lib_arrays) defines and
+implements ABI stable wait timers. These are timers that aim at 1ms resolution, depending on
+the operating system.
