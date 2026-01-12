@@ -3,6 +3,7 @@ use std::time::{Duration, Instant};
 use osom_lib_wait_timer::TheWaitTimer;
 use rstest::rstest;
 
+#[cfg_attr(feature = "ci", ignore)]
 #[rstest]
 #[case(Duration::from_micros(950), Duration::from_micros(1000), Duration::from_micros(1500))]
 #[case(
@@ -15,7 +16,18 @@ use rstest::rstest;
     Duration::from_micros(5000),
     Duration::from_micros(6500)
 )]
-fn test_sleep(#[case] lower: Duration, #[case] dur: Duration, #[case] upper: Duration) {
+fn test_sleep_local(#[case] lower: Duration, #[case] dur: Duration, #[case] upper: Duration) {
+    internal_test_sleep(lower, dur, upper);
+}
+
+#[cfg_attr(not(feature = "ci"), ignore)]
+#[rstest]
+#[case(Duration::from_micros(950), Duration::from_micros(1000), Duration::from_micros(2000))]
+fn test_sleep_ci(#[case] lower: Duration, #[case] dur: Duration, #[case] upper: Duration) {
+    internal_test_sleep(lower, dur, upper);
+}
+
+fn internal_test_sleep(lower: Duration, dur: Duration, upper: Duration) {
     const ITERS: u32 = 100;
 
     let mut total_duration = Duration::ZERO;

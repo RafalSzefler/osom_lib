@@ -26,6 +26,9 @@ osom_lib_wait_timer = { path = "../osom_lib_wait_timer", version = "0.1", defaul
 
 [features]
 default = ["std"]
+ci = [
+    "osom_lib_wait_timer/ci",
+]
 
 # Enables STD features for some of the dependencies.
 # This often means access to the operating system

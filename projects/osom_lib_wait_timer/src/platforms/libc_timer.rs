@@ -13,12 +13,14 @@ impl LibcWaitTimer {
         Self
     }
 
+    #[allow(clippy::cast_lossless)]
     pub fn wait(&mut self, dur: Duration) {
         let _ = self;
         debug_assert!(dur <= MAX_WAIT_DURATION);
 
         let mut secs = dur.as_secs();
-        let mut nsecs = dur.subsec_nanos().into();
+
+        let mut nsecs = dur.subsec_nanos() as _;
 
         // If we're awoken with a signal then the return value will be -1 and
         // nanosleep will fill in `ts` with the remaining time.
@@ -26,7 +28,7 @@ impl LibcWaitTimer {
         unsafe {
             while secs > 0 || nsecs > 0 {
                 let mut ts = libc::timespec {
-                    tv_sec: secs as libc::time_t,
+                    tv_sec: secs as _,
                     tv_nsec: nsecs,
                 };
                 secs -= ts.tv_sec as u64;

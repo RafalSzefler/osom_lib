@@ -80,7 +80,7 @@ jobs:
       with:
         command: test
         target: ${{ matrix.platform.target }}
-        args: "--release"
+        args: "--release --features ci"
         strip: false
 
   build_docs:
