@@ -1,7 +1,7 @@
 osom_lib
 ========
 
-![Build](https://github.com/RafalSzefler/osom_lib/actions/workflows/rust.yml/badge.svg)
+![Build](https://github.com/RafalSzefler/osom_lib/actions/workflows/main.yml/badge.svg)
 ![GitHub Tag](https://img.shields.io/github/v/tag/RafalSzefler/osom_lib)
 
 This project implements various data structures and algorithms for use
@@ -47,6 +47,6 @@ several primitives (like Length and CResult) used by other osom libs.
 trait and related stuff.
 * [`osom_lib_arrays`](https://rafalszefler.github.io/osom_lib/osom_lib_arrays) defines and
 implements various ABI stable arrays.
-* [`osom_lib_wait_timers`](https://rafalszefler.github.io/osom_lib/osom_lib_wait_timers) defines and
+* [`osom_lib_wait_timer`](https://rafalszefler.github.io/osom_lib/osom_lib_wait_timer) defines and
 implements ABI stable wait timers. These are timers that aim at 1ms resolution, depending on
 the operating system.
