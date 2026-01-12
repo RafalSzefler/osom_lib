@@ -1,4 +1,4 @@
-name: Pull Request workflow
+name: Pull Request Workflow
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
