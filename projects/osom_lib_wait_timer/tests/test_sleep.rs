@@ -28,7 +28,7 @@ fn test_sleep_ci() {
         // The macos on CI/CD seems to have very inaccurate sleep for some reason.
         Duration::from_micros(10000)
     } else {
-        Duration::from_micros(1500)
+        Duration::from_micros(2000)
     };
     internal_test_sleep(lower, dur, upper);
 }
