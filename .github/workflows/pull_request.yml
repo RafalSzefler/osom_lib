@@ -1,7 +1,7 @@
-name: Rust
+name: Pull Request Workflow
 on:
-  push:
-    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
 permissions:
   contents: read
   pages: write
@@ -80,7 +80,7 @@ jobs:
       with:
         command: test
         target: ${{ matrix.platform.target }}
-        args: "--release"
+        args: "--release --features ci"
         strip: false
 
   build_docs:
@@ -110,16 +110,3 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: target/doc
-
-  deploy_docs:
-    name: Deploy docs
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build_docs
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-  

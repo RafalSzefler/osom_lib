@@ -1,0 +1,125 @@
+name: Main Workflow
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+  RUST_BACKTRACE: 1
+  # Change to specific Rust release to pin
+  rust_nightly: nightly
+jobs:
+  clippy:
+    name: Fmt & Clippy
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - runs-on: ubuntu-24.04
+          - runs-on: windows-2025
+          - runs-on: macos-26
+    runs-on: ${{ matrix.platform.runs-on }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Configure cache
+        uses: Swatinem/rust-cache@v2
+      - name: Fmt
+        run: cargo fmt --check
+      - name: Clippy debug
+        run: cargo clippy
+      - name: Clippy release
+        run: cargo clippy -r
+
+  build_and_test:
+    name: Build & Test
+    needs: clippy
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os-name: Linux-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+          - os-name: Linux-x86
+            runs-on: ubuntu-24.04
+            target: i686-unknown-linux-musl
+          - os-name: Linux-aarch64
+            runs-on: ubuntu-24.04
+            target: aarch64-unknown-linux-musl
+          - os-name: Windows-x86_64
+            runs-on: windows-2025
+            target: x86_64-pc-windows-msvc
+          - os-name: macOS-aarch64
+            runs-on: macos-26
+            target: aarch64-apple-darwin
+    runs-on: ${{ matrix.platform.runs-on }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Configure cache
+      uses: Swatinem/rust-cache@v2
+    - name: Build
+      uses: houseabsolute/actions-rust-cross@v1
+      with:
+        command: build
+        target: ${{ matrix.platform.target }}
+        args: "--release"
+        strip: false
+    - name: Test
+      uses: houseabsolute/actions-rust-cross@v1
+      env:
+        RUSTFLAGS: -C target-cpu=native
+      with:
+        command: test
+        target: ${{ matrix.platform.target }}
+        args: "--release --features ci"
+        strip: false
+
+  build_docs:
+    name: Build docs
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.rust_nightly }}
+      - name: Setup pages
+        id: pages
+        uses: actions/configure-pages@v4
+      - name: Clean docs folder
+        run: cargo clean --doc
+      - name: Build docs
+        run: cargo doc -r --no-deps --workspace
+        env:
+          RUSTFLAGS: --cfg docsrs
+          RUSTDOCFLAGS: --cfg docsrs
+      - name: Remove lock file
+        run: rm target/doc/.lock
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/doc
+
+  deploy_docs:
+    name: Deploy docs
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build_docs
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+  
