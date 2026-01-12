@@ -1,3 +1,5 @@
+//! Defines the [`WaitTimer`] trait and holds [`MAX_WAIT_DURATION`] const.
+
 use core::time::Duration;
 
 /// The maximum duration allowed on [`WaitTimer`], which is one week.
