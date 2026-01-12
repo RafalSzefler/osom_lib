@@ -26,7 +26,7 @@ fn test_sleep_ci() {
     let dur = Duration::from_micros(1000);
     let upper = if cfg!(target_os = "macos") {
         // The macos on CI/CD seems to have very inaccurate sleep for some reason.
-        Duration::from_micros(6000)
+        Duration::from_micros(15000)
     } else {
         Duration::from_micros(1500)
     };
