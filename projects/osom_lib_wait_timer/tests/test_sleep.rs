@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use osom_lib_wait_timer::TheWaitTimer;
 use rstest::rstest;
 
-#[cfg_attr(feature = "ci", ignore)]
+#[cfg_attr(feature = "ci", ignore="Those tests should not run on CI")]
 #[rstest]
 #[case(Duration::from_micros(950), Duration::from_micros(1000), Duration::from_micros(1500))]
 #[case(
@@ -20,7 +20,6 @@ fn test_sleep_local(#[case] lower: Duration, #[case] dur: Duration, #[case] uppe
     internal_test_sleep(lower, dur, upper);
 }
 
-#[cfg_attr(not(feature = "ci"), ignore)]
 #[test]
 fn test_sleep_ci() {
     let lower = Duration::from_micros(950);
