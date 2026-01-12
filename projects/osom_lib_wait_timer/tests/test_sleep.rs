@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use osom_lib_wait_timer::TheWaitTimer;
 use rstest::rstest;
 
-#[cfg_attr(feature = "ci", ignore="Those tests should not run on CI")]
+#[cfg_attr(feature = "ci", ignore = "Those tests should not run on CI")]
 #[rstest]
 #[case(Duration::from_micros(950), Duration::from_micros(1000), Duration::from_micros(1500))]
 #[case(
