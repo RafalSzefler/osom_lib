@@ -1,11 +1,15 @@
 use core::time::Duration;
 
-use crate::traits::WaitTimer;
+use crate::traits::{MAX_WAIT_DURATION, WaitTimer};
 
 osom_lib_cfg_ext::cfg_match!(
-    (windows) => {
-        mod windows;
-        use windows::WindowsWaitTimer as PlaformWaitTimer;
+    (target_os="windows") => {
+        mod windows_timer;
+        use windows_timer::WindowsWaitTimer as PlaformWaitTimer;
+    },
+    (any(target_os="macos", target_os="linux")) => {
+        mod libc_timer;
+        use libc_timer::LibcWaitTimer as PlaformWaitTimer;
     },
     _ => {
         compile_error!("Current target is not supported.");
@@ -32,8 +36,16 @@ impl TheWaitTimer {
 
     /// Sleeps for the given duration, blocking the thread. This function aims
     /// to have 1ms resolution, assuming the underlying platform allows it.
+    ///
+    /// # Panics
+    ///
+    /// When `dur` is above [`MAX_WAIT_DURATION`].
     #[inline(always)]
     pub fn wait(&mut self, dur: Duration) {
+        assert!(
+            dur <= MAX_WAIT_DURATION,
+            ".wait() cannot be called with duration above MAX_WAIT_DURATION."
+        );
         self.inner.wait(dur);
     }
 }
@@ -41,7 +53,7 @@ impl TheWaitTimer {
 impl WaitTimer for TheWaitTimer {
     #[inline(always)]
     fn wait(&mut self, dur: Duration) {
-        self.inner.wait(dur);
+        self.wait(dur);
     }
 }
 

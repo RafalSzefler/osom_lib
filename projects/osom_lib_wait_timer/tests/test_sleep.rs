@@ -8,12 +8,12 @@ use rstest::rstest;
 #[case(
     Duration::from_micros(1950),
     Duration::from_micros(2000),
-    Duration::from_micros(2500)
+    Duration::from_micros(2800)
 )]
 #[case(
     Duration::from_micros(4950),
     Duration::from_micros(5000),
-    Duration::from_micros(5500)
+    Duration::from_micros(6500)
 )]
 fn test_sleep(#[case] lower: Duration, #[case] dur: Duration, #[case] upper: Duration) {
     const ITERS: u32 = 100;

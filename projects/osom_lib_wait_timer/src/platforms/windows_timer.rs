@@ -37,10 +37,7 @@ impl WindowsWaitTimer {
     }
 
     pub fn wait(&mut self, dur: Duration) {
-        assert!(
-            dur <= MAX_WAIT_DURATION,
-            ".wait() cannot be called with duration above MAX_WAIT_DURATION."
-        );
+        debug_assert!(dur <= MAX_WAIT_DURATION);
 
         if dur.is_zero() {
             unsafe { SwitchToThread() };
