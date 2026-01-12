@@ -24,7 +24,7 @@ fn test_sleep_local(#[case] lower: Duration, #[case] dur: Duration, #[case] uppe
 #[test]
 fn test_sleep_ci() {
     let lower = Duration::from_micros(950);
-    let dur = Duration::from_micros(1);
+    let dur = Duration::from_micros(1000);
     let upper = if cfg!(target_os = "macos") {
         // The macos on CI/CD seems to have very inaccurate sleep for some reason.
         Duration::from_micros(6000)
