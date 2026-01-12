@@ -3,10 +3,9 @@
 use core::{ptr, time::Duration};
 
 use windows_sys::Win32::{
-    Foundation::{FALSE, HANDLE, WAIT_FAILED},
+    Foundation::{CloseHandle, FALSE, HANDLE, WAIT_FAILED},
     System::Threading::{
-        CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, INFINITE, TIMER_ALL_ACCESS,
-        CreateWaitableTimerExW, SetWaitableTimer, Sleep, SwitchToThread, WaitForSingleObject,
+        CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, CreateWaitableTimerExW, INFINITE, SetWaitableTimer, Sleep, SwitchToThread, TIMER_ALL_ACCESS, WaitForSingleObject
     },
 };
 
@@ -79,6 +78,16 @@ impl WaitTimer for WindowsWaitTimer {
     #[inline(always)]
     fn wait(&mut self, dur: Duration) {
         self.wait(dur);
+    }
+}
+
+impl Drop for WindowsWaitTimer {
+    fn drop(&mut self) {
+        if self.handle.is_null() {
+            return;
+        }
+
+        unsafe { CloseHandle(self.handle); }
     }
 }
 
