@@ -13,3 +13,8 @@ fn test_std_dynamic_array() {
 fn test_std_dynamic_array_destruction() {
     array_helpers::test_array_destruction(StdDynamicArray::new);
 }
+
+#[test]
+fn test_std_dynamic_array_clone() {
+    array_helpers::test_array_clone(StdDynamicArray::new);
+}

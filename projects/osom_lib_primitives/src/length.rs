@@ -28,8 +28,10 @@ pub enum LengthError {
 
 impl Length {
     /// The amount of bytes one can store safely in a buffer,
-    /// without exceeding `u32` range. This can be useful if one
-    /// wants to store some additional data in a buffer whose
+    /// without exceeding `u32` range. In other words [`Length::MAX_LENGTH`] plus
+    /// [`Length::SAFE_MARGIN`] is guaranteed to never exceed [`u32::MAX`].
+    ///
+    /// This can be useful if one wants to store some additional data in a buffer whose
     /// length is represented by [`Length`].
     pub const SAFE_MARGIN: u32 = 2048;
 

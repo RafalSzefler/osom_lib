@@ -53,7 +53,7 @@ impl<T, TAllocator> InternalArray<T, TAllocator>
 where
     TAllocator: Allocator,
 {
-    const fn new_layout(size: Length) -> Layout {
+    const fn layout_for_size(size: Length) -> Layout {
         let tsize = size_of::<T>();
         let Some(real_size) = tsize.checked_mul(size.as_usize()) else {
             panic!("Tried to allocate array of size outside of usize range");
@@ -63,7 +63,7 @@ where
 
     #[inline(always)]
     const fn current_layout(&self) -> Layout {
-        Self::new_layout(self.capacity)
+        Self::layout_for_size(self.capacity)
     }
 
     #[inline(always)]
@@ -83,7 +83,7 @@ where
         }
 
         let new_ptr = allocator
-            .allocate(Self::new_layout(capacity))
+            .allocate(Self::layout_for_size(capacity))
             .map_err(Into::into)?
             .cast::<T>();
 
@@ -179,12 +179,14 @@ where
             return Ok(());
         }
 
-        let new_capacity = (f64::from(new_length) * 1.5) as u64 + 1;
-        let new_capacity = core::cmp::min(new_capacity, Length::MAX_LENGTH.as_usize() as u64) as u32;
-        let new_capacity = unsafe { Length::new_unchecked(new_capacity) };
+        let new_capacity = {
+            let upper_bound = ((u64::from(new_length) * 3) / 2) + 1;
+            let capped = core::cmp::min(upper_bound, Length::MAX_LENGTH.as_usize() as u64) as u32;
+            unsafe { Length::new_unchecked(capped) }
+        };
 
         let new_ptr = unsafe {
-            let new_layout = Self::new_layout(new_capacity);
+            let new_layout = Self::layout_for_size(new_capacity);
             if capacity == 0 {
                 self.allocator.allocate(new_layout).map_err(Into::into)?
             } else {
@@ -226,12 +228,11 @@ where
         }
 
         let idx = len - 1;
-        let item = unsafe {
+        unsafe {
             self.length = Length::new_unchecked(idx as u32);
             let ptr = self.raw_ptr.add(idx);
-            ptr.read()
-        };
-        Ok(item)
+            Ok(ptr.read())
+        }
     }
 }
 
@@ -240,25 +241,9 @@ where
     TAllocator: Allocator,
 {
     pub fn clone(&self) -> Self {
-        let allocator = self.allocator.clone();
-        let new_ptr = allocator.allocate(self.current_layout()).unwrap().cast::<T>();
-        let length = self.length.as_u32();
-        let mut offset = 0;
-        while offset < length {
-            unsafe {
-                let raw_data = self.raw_ptr.add(offset as usize);
-                let item = raw_data.as_ref().clone();
-                new_ptr.add(offset as usize).write(item);
-            }
-            offset += 1;
-        }
-
-        Self {
-            raw_ptr: new_ptr,
-            length: self.length,
-            capacity: self.capacity,
-            allocator: allocator,
-            _phantom: PhantomData,
-        }
+        let mut new_array = Self::with_capacity(self.length, self.allocator.clone())
+            .expect("Couldn't allocate memory during clone() call");
+        new_array.try_push_slice(self.as_slice()).unwrap();
+        new_array
     }
 }

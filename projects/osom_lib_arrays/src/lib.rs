@@ -13,6 +13,7 @@ pub mod const_helpers;
 pub mod dynamic_array;
 pub mod errors;
 pub mod fixed_array;
+pub mod inline_array;
 pub mod traits;
 
 #[cfg(feature = "std")]

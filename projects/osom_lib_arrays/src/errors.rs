@@ -13,7 +13,8 @@ pub enum ArrayError {
     /// likely due to out of memory.
     AllocationError = 0,
 
-    /// Tried to push to array beyond its length limit.
+    /// Tried to initialize an array or push to array beyond
+    /// [`Length::MAX_LENGTH`][osom_lib_primitives::length::Length::MAX_LENGTH] limit.
     LengthLimitExceeded = 1,
 }
 

@@ -16,6 +16,11 @@ fn test_fixed_array_destruction() {
     array_helpers::test_array_destruction(FixedArray::<10, _>::new);
 }
 
+#[test]
+fn test_fixed_array_clone() {
+    array_helpers::test_array_clone(FixedArray::<15, _>::new);
+}
+
 #[rstest]
 #[case(FixedArray::<10, i32>::new, 15)]
 #[case(FixedArray::<10, i32>::new, 11)]

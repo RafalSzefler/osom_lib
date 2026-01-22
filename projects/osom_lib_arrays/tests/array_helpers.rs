@@ -118,3 +118,21 @@ pub fn test_array_destruction<'a, TArr: MutableArray<DropCounter>, Builder: FnOn
 
     assert_eq!(counter.load(std::sync::atomic::Ordering::SeqCst), 0);
 }
+
+pub fn test_array_clone<'a, TArr: MutableArray<i32> + Clone, Builder: FnOnce() -> TArr>(array_builder: Builder) {
+    let mut array = array_builder();
+    assert_eq!(array.length(), Length::ZERO);
+    for idx in 0..10 {
+        array.push(2 * idx - 1);
+    }
+    assert_eq!(array.length().as_u32(), 10);
+    let mut clone = array.clone();
+    assert_eq!(clone.length().as_u32(), 10);
+    assert_eq!(array.as_slice(), clone.as_slice());
+
+    clone.push(124);
+
+    assert_eq!(array.length().as_u32(), 10);
+    assert_eq!(clone.length().as_u32(), 11);
+    assert_ne!(array.as_slice(), clone.as_slice());
+}
