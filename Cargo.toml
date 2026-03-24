@@ -9,6 +9,7 @@ members = [
     "projects/osom_lib_hash_tables",
     "projects/osom_lib_hashes",
     "projects/osom_lib_macros",
+    "projects/osom_lib_numbers",
     "projects/osom_lib_primitives",
     "projects/osom_lib_prng",
     "projects/osom_lib_proc_macro_helpers",

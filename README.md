@@ -50,3 +50,5 @@ implements various ABI stable arrays.
 * [`osom_lib_wait_timer`](https://rafalszefler.github.io/osom_lib/osom_lib_wait_timer) defines and
 implements ABI stable wait timers. These are timers that aim at 1ms resolution, depending on
 the operating system.
+* [`osom_lib_numbers`](https://rafalszefler.github.io/osom_lib/osom_lib_numbers) various helpers and
+numeric algorithms.
