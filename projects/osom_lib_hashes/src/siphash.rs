@@ -10,11 +10,11 @@ use osom_lib_arrays::{
 };
 use osom_lib_reprc::macros::reprc;
 
-use crate::traits::{CryptographicallySecureHash, HashFunction};
+use crate::traits::HashFunction;
 
 /// Implementation of the `SipHash` algorithm.
 ///
-/// This algorithm is secure for C >= 2 and D >= 4.
+/// This algorithm is resistant to various hash attacks when C >= 2 and D >= 4.
 ///
 /// # Notes
 ///
@@ -260,13 +260,6 @@ impl<const C: u32, const D: u32> Clone for GeneralSipHashBuilder<C, D> {
         }
     }
 }
-
-// According to the SipHash paper, all variants are secure for C>=2 and D>=4.
-// Unfortunately there is no way to express this constraint in stable Rust
-// at the moment. Thus we implement `CryptographicallySecureHash` only on the
-// two mentioned explicitly (in the paper) variants.
-unsafe impl CryptographicallySecureHash for GeneralSipHash<2, 4> {}
-unsafe impl CryptographicallySecureHash for GeneralSipHash<4, 8> {}
 
 /// The alias for [`GeneralSipHash<2, 4>`], which is an optimal choice of constants.
 pub type SipHash = GeneralSipHash<2, 4>;

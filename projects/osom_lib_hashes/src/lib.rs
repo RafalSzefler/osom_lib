@@ -16,7 +16,7 @@
 //! * However platform specific implementations of `SHA2_256` are actually quite fast. Especially for bigger
 //!   input these are comparable with [`SipHash`][crate::siphash::SipHash].
 //!
-//! So if cryptographic security is not a concern, then [`FxHash`][crate::fxhash::FxHash] is the best choice,
+//! So if cryptographic security is not a concern, then [`FxHash`][crate::fxhash::FxHash] is a valid choice,
 //! since it also is quite ok in terms of collision resistance.
 #![deny(warnings)]
 #![allow(unused_features)]
