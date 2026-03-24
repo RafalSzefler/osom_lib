@@ -15,6 +15,7 @@ osom_lib_arrays = { path = "../osom_lib_arrays", version = "0.1", default-featur
 osom_lib_cfg_ext = { path = "../osom_lib_cfg_ext", version = "0.1", default-features = false }
 osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1", default-features = false }
 osom_lib_macros = { path = "../osom_lib_macros", version = "0.1", default-features = false }
+osom_lib_numbers = { path = "../osom_lib_numbers", version = "0.1", default-features = false }
 osom_lib_prng = { path = "../osom_lib_prng", version = "0.1", default-features = false }
 osom_lib_hashes = { path = "../osom_lib_hashes", version = "0.1", default-features = false }
 osom_lib_hash_tables = { path = "../osom_lib_hash_tables", version = "0.1", default-features = false }
