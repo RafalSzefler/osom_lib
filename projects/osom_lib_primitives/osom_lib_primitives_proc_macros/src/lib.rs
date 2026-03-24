@@ -1,6 +1,7 @@
 //! A private crate that exposes macros for osom_lib_primitives crate.
-#![doc(hidden)]
 #![deny(warnings)]
+#![allow(unused_features)]
+#![doc(hidden)]
 #![warn(clippy::all, clippy::pedantic)]
 
 use quote::quote;

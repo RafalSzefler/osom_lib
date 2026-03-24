@@ -1,9 +1,10 @@
 //! This crate defines pseudo random number generators (PRNG).
 //!
 //! The crate is `#![no_std]`.
+#![deny(warnings)]
+#![allow(unused_features)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
-#![deny(warnings)]
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::inline_always, clippy::unreadable_literal)]
 #![no_std]

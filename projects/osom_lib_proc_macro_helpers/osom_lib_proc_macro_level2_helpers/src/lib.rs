@@ -1,9 +1,10 @@
 //! This is a private crate that holds various proc-macros that
 //! are used by osom_lib_proc_macro_helpers.
+#![deny(warnings)]
+#![allow(unused_features)]
 #![doc(hidden)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
-#![deny(warnings)]
 #![warn(clippy::all, clippy::pedantic)]
 
 mod get_options_inner;

@@ -3,6 +3,7 @@
 //!
 //! The crate is `#![no_std]`.
 #![deny(warnings)]
+#![allow(unused_features)]
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::inline_always)]
 #![no_std]

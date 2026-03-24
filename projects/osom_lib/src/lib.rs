@@ -5,9 +5,10 @@
 //! feature is enabled, it will include code that
 //! depends on the standard Rust library (e.g. the
 //! standard allocator).
+#![deny(warnings)]
+#![allow(unused_features)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
-#![deny(warnings)]
 #![warn(clippy::all, clippy::pedantic)]
 #![no_std]
 

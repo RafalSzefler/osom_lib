@@ -5,9 +5,10 @@
 //!
 //! The crate is `#![no_std]`. But it does use external
 //! os specific dependencies (e.g. `libc` or `windows-sys`).
+#![deny(warnings)]
+#![allow(unused_features)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
-#![deny(warnings)]
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::inline_always)]
 #![no_std]

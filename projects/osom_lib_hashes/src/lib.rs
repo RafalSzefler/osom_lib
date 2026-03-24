@@ -18,9 +18,10 @@
 //!
 //! So if cryptographic security is not a concern, then [`FxHash`][crate::fxhash::FxHash] is the best choice,
 //! since it also is quite ok in terms of collision resistance.
+#![deny(warnings)]
+#![allow(unused_features)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, allow(unused_attributes))]
-#![deny(warnings)]
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::redundant_field_names, clippy::inline_always, clippy::unreadable_literal)]
 #![no_std]

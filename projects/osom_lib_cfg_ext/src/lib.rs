@@ -2,6 +2,7 @@
 //!
 //! At the moment it provides [`cfg_match`] only.
 #![deny(warnings)]
+#![allow(unused_features)]
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::redundant_field_names)]
 #![allow(clippy::inline_always)]
