@@ -10,7 +10,7 @@ use crate::{
     errors::{ArrayError, ArrayIsEmptyError},
 };
 
-/// A fixed-capacity array. This type is a const (as in: compile time) analogue of [`FixedArray`][`super::FixedArray`].
+/// A fixed-capacity array. This type is a const (as in: compile time) analogue of [`InlineFixedArray`][`super::InlineFixedArray`].
 ///
 /// # Notes
 ///
@@ -18,7 +18,7 @@ use crate::{
 /// And in that case `ConstFixedArray` doesn't need to be (and actually cannot be to work in const context)
 /// `Drop` as well.
 ///
-/// Unlike [`FixedArray`][`super::FixedArray`], this type does not implement
+/// Unlike [`InlineFixedArray`][`super::InlineFixedArray`], this type does not implement
 /// any of the convenient traits such as [`ImmutableArray`][`crate::traits::ImmutableArray`]
 /// or `PartialEq`. These are NOT usable in const context anyway.
 #[repr(C)]

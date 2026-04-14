@@ -94,18 +94,16 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.rust_nightly }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
       - name: Setup pages
         id: pages
         uses: actions/configure-pages@v5
-      - name: Clean docs folder
-        run: cargo clean --doc
       - name: Build docs
-        run: cargo doc -r --no-deps --workspace
+        run: uv run scripts/build_docs.py
         env:
           RUSTFLAGS: --cfg docsrs
           RUSTDOCFLAGS: --cfg docsrs
-      - name: Remove lock file
-        run: rm target/doc/.lock
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
