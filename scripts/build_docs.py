@@ -3,6 +3,9 @@
 # dependencies = [
 # ]
 # ///
+#
+# This script runs `cargo doc` command with appropriate params (excludes what
+# is not needed) and does proper cleanup.
 import os
 import subprocess
 import tomllib

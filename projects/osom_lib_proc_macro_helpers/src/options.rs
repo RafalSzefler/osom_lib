@@ -11,7 +11,7 @@ use syn::{
     spanned::Spanned,
 };
 
-pub use osom_lib_proc_macro_level2_helpers::get_options;
+pub use osom_lib_proc_macro_helpers_level2::get_options;
 
 pub enum GetOptionsError {
     MissingKey { key: String, span: Span },

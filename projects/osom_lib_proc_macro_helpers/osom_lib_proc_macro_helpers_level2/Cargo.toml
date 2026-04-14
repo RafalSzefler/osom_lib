@@ -1,5 +1,5 @@
 [package]
-name = "osom_lib_proc_macro_level2_helpers"
+name = "osom_lib_proc_macro_helpers_level2"
 version = "0.1.0"
 edition.workspace = true
 authors.workspace = true
