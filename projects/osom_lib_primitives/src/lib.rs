@@ -12,7 +12,7 @@ pub mod macros {
     //! Holds several helpful macros related to primitives.
 
     #[doc(inline)]
-    pub use ::osom_lib_primitives_proc_macros::*;
+    pub use ::_osom_lib_primitives_proc_macros::*;
 }
 
 pub mod align;

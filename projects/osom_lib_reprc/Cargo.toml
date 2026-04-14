@@ -7,4 +7,4 @@ rust-version.workspace = true
 license-file.workspace = true
 
 [dependencies]
-osom_lib_reprc_proc_macros = { path = "./osom_lib_reprc_proc_macros", version = "0.1" }
+_osom_lib_reprc_proc_macros = { path = "./_osom_lib_reprc_proc_macros", version = "0.1" }

@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
+use _osom_lib_reprc_proc_macros::reprc;
 use osom_lib_reprc::traits::ReprC;
-use osom_lib_reprc_proc_macros::reprc;
 
 #[reprc]
 pub struct MyUser {

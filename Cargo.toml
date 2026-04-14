@@ -12,7 +12,6 @@ members = [
     "projects/osom_lib_numbers",
     "projects/osom_lib_primitives",
     "projects/osom_lib_prng",
-    "projects/osom_lib_proc_macro_helpers",
     "projects/osom_lib_reprc",
 ]
 resolver = "3"

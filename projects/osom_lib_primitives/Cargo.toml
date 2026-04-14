@@ -7,8 +7,8 @@ rust-version.workspace = true
 license-file.workspace = true
 
 [dependencies]
+_osom_lib_primitives_proc_macros = { path = "./_osom_lib_primitives_proc_macros", version = "0.1" }
 osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1" }
-osom_lib_primitives_proc_macros = { path = "./osom_lib_primitives_proc_macros", version = "0.1" }
 paste = { workspace = true }
 
 [dev-dependencies]

@@ -26,14 +26,14 @@ def get_all_projects() -> List[Project]:
     for (root, dirs, files) in os.walk(PROJECTS):
         if "Cargo.toml" not in files:
             continue
-        
-        rel_path = root[len(PROJECTS) + 1:]
-        is_private = os.path.sep in rel_path
+
         data = None
         with open(os.path.join(root, "Cargo.toml"), "rb") as fo:
             data = tomllib.load(fo)
         
-        project = Project(data["package"]["name"], root, is_private)
+        name = data["package"]["name"]
+        is_private = name.startswith("_")
+        project = Project(name, root, is_private)
         result.append(project)
 
     return result
