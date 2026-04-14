@@ -86,7 +86,7 @@ where
     ///
     /// For details see [`ArrayError`].
     #[inline(always)]
-    pub fn with_factory<Factory: Fn(usize) -> T>(size: Length, factory: Factory) -> Result<Self, ArrayError> {
+    pub fn with_factory<Factory: FnMut(usize) -> T>(size: Length, factory: Factory) -> Result<Self, ArrayError> {
         Self::with_factory_and_allocator(size, factory, TAllocator::default())
     }
 
@@ -96,9 +96,9 @@ where
     /// # Errors
     ///
     /// For details see [`ArrayError`].
-    pub fn with_factory_and_allocator<Factory: Fn(usize) -> T>(
+    pub fn with_factory_and_allocator<Factory: FnMut(usize) -> T>(
         size: Length,
-        factory: Factory,
+        mut factory: Factory,
         allocator: TAllocator,
     ) -> Result<Self, ArrayError> {
         let mut array = unsafe { Self::with_size_and_allocator_uninitialized(size, allocator) }?;
