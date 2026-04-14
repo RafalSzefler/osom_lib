@@ -1,4 +1,4 @@
-//! Holds the definition of [`ConstFixedArray`] and [`InlineFixedArray`].
+//! Holds the definition of [`ConstFixedArray`], [`InlineFixedArray`] and [`FixedArray`].
 
 mod const_fixed_array;
 pub use const_fixed_array::*;

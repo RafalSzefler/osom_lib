@@ -15,7 +15,7 @@ use crate::{
     traits::{ImmutableArray, MutableArray},
 };
 
-/// A fixed-capacity array. This type is similar to [`InlineFixedArray`][`super::InlineFixedArray`],
+/// A fixed-capacity array. This type is similar to [`DynamicArray`][`crate::dynamic_array::DynamicArray`],
 /// except its capacity is fixed at runtime, instead of compile time. Internally it keeps a pointer
 /// to heap allocated data. That heap allocated data is never resized during the array's lifetime.
 ///
