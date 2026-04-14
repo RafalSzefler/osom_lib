@@ -1,121 +1,58 @@
-use osom_lib_arrays::fixed_array::{ConstFixedArray, InlineFixedArray};
-use osom_lib_arrays::traits::MutableArray;
+#![cfg(feature = "std")]
 
-use osom_lib_primitives::{length::Length, macros::make_length};
-use rstest::rstest;
+use osom_lib_arrays::{
+    std::StdFixedArray,
+    traits::{ImmutableArray, MutableArray},
+};
+use osom_lib_primitives::length::Length;
 
 mod array_helpers;
 
-#[test]
-fn test_fixed_array() {
-    array_helpers::test_mutable_array(InlineFixedArray::<10, _>::new);
+macro_rules! array_builder {
+    ( $val: expr ) => {{ StdFixedArray::with_capacity(Length::try_from_i32($val).unwrap()).unwrap() }};
 }
 
 #[test]
-fn test_fixed_array_destruction() {
-    array_helpers::test_array_destruction(InlineFixedArray::<10, _>::new);
+fn test_std_fixed_array() {
+    array_helpers::test_mutable_array(|| array_builder!(100));
 }
 
 #[test]
-fn test_fixed_array_clone() {
-    array_helpers::test_array_clone(InlineFixedArray::<15, _>::new);
+fn test_std_fixed_array_destruction() {
+    array_helpers::test_array_destruction(|| array_builder!(100));
 }
 
-#[rstest]
-#[case(InlineFixedArray::<10, i32>::new, 15)]
-#[case(InlineFixedArray::<10, i32>::new, 11)]
-#[case(InlineFixedArray::<1, i32>::new, 2)]
-#[case(InlineFixedArray::<1, i32>::new, 3)]
-#[case(InlineFixedArray::<1, i32>::new, 15)]
-#[case(InlineFixedArray::<99, i32>::new, 100)]
-fn test_overflow_error<TArr: MutableArray<i32>, Builder: FnOnce() -> TArr>(
-    #[case] array_builder: Builder,
-    #[case] count: usize,
-) {
-    let mut array = array_builder();
-    let mut has_overflowed = false;
-    for idx in 0..count {
-        use osom_lib_arrays::errors::ArrayError;
+#[test]
+fn test_std_fixed_array_clone() {
+    array_helpers::test_array_clone(|| array_builder!(100));
+}
 
-        match array.try_push(idx as i32) {
-            Ok(_) => (),
-            Err(ArrayError::LengthLimitExceeded) => {
-                has_overflowed = true;
-                break;
-            }
-            Err(e) => panic!("Unexpected error: {:?}", e),
-        }
+#[test]
+fn test_std_fixed_array_sized_allocation() {
+    let array = StdFixedArray::with_factory(Length::try_from_u32(15).unwrap(), |idx| idx).unwrap();
+    assert_eq!(array.as_slice(), &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+}
+
+#[test]
+fn test_std_fixed_array_unsafe_allocation() {
+    let length = Length::try_from_u32(6).unwrap();
+    let mut array = unsafe { StdFixedArray::with_size_uninitialized(length) }.unwrap();
+    for i in 0..array.length().as_usize() {
+        array.as_slice_mut()[i] = i * i;
+    }
+    assert_eq!(array.as_slice(), &[0, 1, 4, 9, 16, 25]);
+}
+
+#[test]
+fn test_std_fixed_array_error_beyond_limit() {
+    const LENGTH: usize = 10;
+    let mut array = array_builder!(LENGTH as i32);
+
+    for idx in 0..LENGTH {
+        array.push(idx * idx);
     }
 
-    assert!(has_overflowed);
-}
-
-#[test]
-fn test_const_array() {
-    let mut array = ConstFixedArray::<10, i32>::new();
-    assert_eq!(array.as_slice_const(), &[]);
-    assert_eq!(array.as_slice_mut_const(), &[]);
-    assert_eq!(array.length(), Length::ZERO);
-    assert!(array.is_empty());
-    assert!(array.try_pop_const().is_err());
-
-    array.push_const(1);
-    assert_eq!(array.as_slice_const(), &[1]);
-    assert_eq!(array.as_slice_mut_const(), &[1]);
-    assert_eq!(array.length(), Length::ONE);
-    assert!(!array.is_empty());
-
-    array.push_slice_const(&[5, -1, 3]);
-    assert_eq!(array.as_slice_const(), &[1, 5, -1, 3]);
-    assert_eq!(array.as_slice_mut_const(), &[1, 5, -1, 3]);
-    assert_eq!(array.length(), make_length!(4));
-    assert!(!array.is_empty());
-
-    array.push_slice_const(&[1, 1, 1, 2, 2, 2]);
-    assert_eq!(array.as_slice_const(), &[1, 5, -1, 3, 1, 1, 1, 2, 2, 2]);
-    assert_eq!(array.as_slice_mut_const(), &[1, 5, -1, 3, 1, 1, 1, 2, 2, 2]);
-    assert_eq!(array.length(), make_length!(10));
-    assert!(!array.is_empty());
-
-    assert_eq!(array.pop_const(), 2);
-    assert_eq!(array.as_slice_const(), &[1, 5, -1, 3, 1, 1, 1, 2, 2]);
-    assert_eq!(array.as_slice_mut_const(), &[1, 5, -1, 3, 1, 1, 1, 2, 2]);
-    assert_eq!(array.length(), make_length!(9));
-    assert!(!array.is_empty());
-
-    assert_eq!(array.pop_const(), 2);
-    assert_eq!(array.as_slice_const(), &[1, 5, -1, 3, 1, 1, 1, 2]);
-    assert_eq!(array.as_slice_mut_const(), &[1, 5, -1, 3, 1, 1, 1, 2]);
-    assert_eq!(array.length(), make_length!(8));
-    assert!(!array.is_empty());
-
-    let _ = array.pop_const();
-    let _ = array.pop_const();
-    let _ = array.pop_const();
-    let _ = array.pop_const();
-    let _ = array.pop_const();
-    assert_eq!(array.as_slice_const(), &[1, 5, -1]);
-    assert_eq!(array.as_slice_mut_const(), &[1, 5, -1]);
-    assert_eq!(array.length(), make_length!(3));
-    assert!(!array.is_empty());
-
-    assert_eq!(array.pop_const(), -1);
-    assert_eq!(array.as_slice_const(), &[1, 5]);
-    assert_eq!(array.as_slice_mut_const(), &[1, 5]);
-    assert_eq!(array.length(), make_length!(2));
-    assert!(!array.is_empty());
-
-    assert_eq!(array.pop_const(), 5);
-    assert_eq!(array.as_slice_const(), &[1]);
-    assert_eq!(array.as_slice_mut_const(), &[1]);
-    assert_eq!(array.length(), make_length!(1));
-    assert!(!array.is_empty());
-
-    assert_eq!(array.pop_const(), 1);
-    assert_eq!(array.as_slice_const(), &[]);
-    assert_eq!(array.as_slice_mut_const(), &[]);
-    assert_eq!(array.length(), make_length!(0));
-    assert!(array.is_empty());
-
-    assert!(array.try_pop_const().is_err());
+    for idx in 0..5 {
+        assert!(array.try_push(idx * idx).is_err());
+    }
 }

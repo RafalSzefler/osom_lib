@@ -58,7 +58,7 @@ fn test_const_bufferer_chunked_const() {
 }
 
 #[test]
-fn test_equal_chunks() {
+fn test_const_bufferer_equal_chunks() {
     let mut bufferer = ConstBuffer::<3, i32>::new();
     let mut iterator = bufferer.buffer_const(&[-3, -2, -1, 1, 2, 3]);
     array_eq_const(iterator.next().unwrap(), &[-3, -2, -1]);

@@ -245,15 +245,27 @@ where
             Ok(ptr.read())
         }
     }
-}
 
-impl<T: Clone, TAllocator> InternalArray<T, TAllocator>
-where
-    TAllocator: Allocator,
-{
-    pub fn clone(&self) -> Self {
+    /// Clones the array, but sets the capacity to the current size.
+    /// This isn't a perfect clone, the cloned array will have a different capacity.
+    pub fn clone_with_capacity(&self) -> Self
+    where
+        T: Clone,
+    {
         let mut new_array = Self::with_capacity(self.length, self.allocator.clone())
-            .expect("Couldn't allocate memory during clone() call");
+            .expect("Couldn't allocate memory during clone_with_capacity() call");
+        new_array.try_push_slice(self.as_slice()).unwrap();
+        new_array
+    }
+
+    /// Clones the array, but sets the capacity to the current capacity.
+    /// This is a perfect clone.
+    pub fn clone_perfect(&self) -> Self
+    where
+        T: Clone,
+    {
+        let mut new_array = Self::with_capacity(self.capacity, self.allocator.clone())
+            .expect("Couldn't allocate memory during clone_perfect() call");
         new_array.try_push_slice(self.as_slice()).unwrap();
         new_array
     }

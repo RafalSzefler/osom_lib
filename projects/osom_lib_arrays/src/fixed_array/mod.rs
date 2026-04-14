@@ -8,3 +8,7 @@ pub use const_buffer::*;
 
 mod inline_fixed_array;
 pub use inline_fixed_array::*;
+
+#[allow(clippy::module_inception)]
+mod fixed_array;
+pub use fixed_array::*;

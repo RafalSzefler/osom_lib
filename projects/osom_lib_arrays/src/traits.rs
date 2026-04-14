@@ -5,7 +5,7 @@ use osom_lib_primitives::length::Length;
 use crate::errors::{ArrayError, ArrayIsEmptyError};
 
 /// Represents a simply contiguous block of memory.
-pub trait ImmutableArray<T>: Default {
+pub trait ImmutableArray<T> {
     /// Returns array's length as [`Length`].
     fn length(&self) -> Length;
 

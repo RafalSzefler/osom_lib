@@ -19,7 +19,7 @@ use crate::{
 /// except its capacity is fixed at compile time, and doesn't change at runtime. The "Inline" prefix
 /// indicates that the data is stored inside the struct itself, meaning its size depends on `TSIZE`.
 ///
-/// In particular his type does not require an allocator.
+/// In particular this type does not require an allocator.
 #[repr(C)]
 #[must_use]
 pub struct InlineFixedArray<const TSIZE: usize, T: Sized> {
