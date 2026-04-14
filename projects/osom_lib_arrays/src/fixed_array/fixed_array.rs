@@ -1,4 +1,4 @@
-//! Holds the definition of [`DynamicArray`].
+//! Holds the definition of [`FixedArray`].
 
 use core::{
     borrow::{Borrow, BorrowMut},
