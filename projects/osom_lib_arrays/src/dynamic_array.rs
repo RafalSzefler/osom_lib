@@ -78,6 +78,73 @@ where
     pub fn with_capacity(capacity: Length) -> Result<Self, ArrayError> {
         Self::with_capacity_and_allocator(capacity, TAllocator::default())
     }
+
+    /// Creates a new [`DynamicArray`] with a given size, generated through a given factory.
+    /// This allocates memory only when `size > 0`.
+    ///
+    /// # Errors
+    ///
+    /// For details see [`ArrayError`].
+    #[inline(always)]
+    pub fn with_factory<Factory: Fn(usize) -> T>(size: Length, factory: Factory) -> Result<Self, ArrayError> {
+        Self::with_factory_and_allocator(size, factory, TAllocator::default())
+    }
+
+    /// Creates a new [`DynamicArray`] with a given size, generated through a given factory,
+    /// with a custom allocator. This allocates memory only when `size > 0`.
+    ///
+    /// # Errors
+    ///
+    /// For details see [`ArrayError`].
+    pub fn with_factory_and_allocator<Factory: Fn(usize) -> T>(
+        size: Length,
+        factory: Factory,
+        allocator: TAllocator,
+    ) -> Result<Self, ArrayError> {
+        let mut array = unsafe { Self::with_size_and_allocator_uninitialized(size, allocator) }?;
+
+        #[allow(clippy::needless_range_loop)]
+        {
+            let slice_mut = array.as_slice_mut();
+            for idx in 0..size.as_usize() {
+                slice_mut[idx] = factory(idx);
+            }
+        }
+        Ok(array)
+    }
+
+    /// Creates a new [`DynamicArray`] with a given size, but uninitialized.
+    ///
+    /// # Safety
+    ///
+    /// The underlying array is uninitialized and reading the data is UB, unless
+    /// initialized first.
+    ///
+    /// # Errors
+    ///
+    /// For details see [`ArrayError`].
+    #[inline(always)]
+    pub unsafe fn with_size_uninitialized(size: Length) -> Result<Self, ArrayError> {
+        unsafe { Self::with_size_and_allocator_uninitialized(size, TAllocator::default()) }
+    }
+
+    /// Creates a new [`DynamicArray`] with a given size and allocator, but uninitialized.
+    ///
+    /// # Safety
+    ///
+    /// The underlying array is uninitialized and reading the data is UB, unless
+    /// initialized first.
+    ///
+    /// # Errors
+    ///
+    /// For details see [`ArrayError`].
+    pub unsafe fn with_size_and_allocator_uninitialized(
+        size: Length,
+        allocator: TAllocator,
+    ) -> Result<Self, ArrayError> {
+        let inner = unsafe { InternalArray::with_size_uninitialized(size, allocator) }?;
+        Ok(Self { inner })
+    }
 }
 
 impl<T, TAllocator> ImmutableArray<T> for DynamicArray<T, TAllocator>
@@ -223,27 +290,5 @@ where
 {
     fn borrow_mut(&mut self) -> &mut [T] {
         self.as_slice_mut()
-    }
-}
-
-impl<T, TAllocator> core::ops::Index<Length> for DynamicArray<T, TAllocator>
-where
-    TAllocator: Allocator,
-{
-    type Output = T;
-
-    #[inline(always)]
-    fn index(&self, index: Length) -> &Self::Output {
-        &self.as_slice()[index.as_usize()]
-    }
-}
-
-impl<T, TAllocator> core::ops::IndexMut<Length> for DynamicArray<T, TAllocator>
-where
-    TAllocator: Allocator,
-{
-    #[inline(always)]
-    fn index_mut(&mut self, index: Length) -> &mut Self::Output {
-        &mut self.as_slice_mut()[index.as_usize()]
     }
 }

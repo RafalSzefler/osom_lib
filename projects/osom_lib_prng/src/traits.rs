@@ -122,7 +122,7 @@ pub trait PRNGSerialize: PRNGenerator {
     const MAX_SERIALIZED_SIZE: usize;
 
     /// Serializes self into the buffer. Returns the actual amount of bytes that
-    /// were written on success.
+    /// were written on success. Note that the result is cross platform.
     ///
     /// # Errors
     ///

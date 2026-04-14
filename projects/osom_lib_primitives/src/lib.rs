@@ -19,11 +19,11 @@ pub mod align;
 pub mod cresult;
 pub mod fraction;
 pub mod length;
+mod length_ops;
 pub mod offset;
 pub mod power_of_two;
 
 pub(crate) mod as_i32;
-mod length_ops;
 mod offset_ops;
 
 mod checks;

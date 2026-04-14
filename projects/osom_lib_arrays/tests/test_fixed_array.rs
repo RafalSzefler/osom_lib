@@ -1,4 +1,4 @@
-use osom_lib_arrays::fixed_array::{ConstFixedArray, FixedArray};
+use osom_lib_arrays::fixed_array::{ConstFixedArray, InlineFixedArray};
 use osom_lib_arrays::traits::MutableArray;
 
 use osom_lib_primitives::{length::Length, macros::make_length};
@@ -8,26 +8,26 @@ mod array_helpers;
 
 #[test]
 fn test_fixed_array() {
-    array_helpers::test_mutable_array(FixedArray::<10, _>::new);
+    array_helpers::test_mutable_array(InlineFixedArray::<10, _>::new);
 }
 
 #[test]
 fn test_fixed_array_destruction() {
-    array_helpers::test_array_destruction(FixedArray::<10, _>::new);
+    array_helpers::test_array_destruction(InlineFixedArray::<10, _>::new);
 }
 
 #[test]
 fn test_fixed_array_clone() {
-    array_helpers::test_array_clone(FixedArray::<15, _>::new);
+    array_helpers::test_array_clone(InlineFixedArray::<15, _>::new);
 }
 
 #[rstest]
-#[case(FixedArray::<10, i32>::new, 15)]
-#[case(FixedArray::<10, i32>::new, 11)]
-#[case(FixedArray::<1, i32>::new, 2)]
-#[case(FixedArray::<1, i32>::new, 3)]
-#[case(FixedArray::<1, i32>::new, 15)]
-#[case(FixedArray::<99, i32>::new, 100)]
+#[case(InlineFixedArray::<10, i32>::new, 15)]
+#[case(InlineFixedArray::<10, i32>::new, 11)]
+#[case(InlineFixedArray::<1, i32>::new, 2)]
+#[case(InlineFixedArray::<1, i32>::new, 3)]
+#[case(InlineFixedArray::<1, i32>::new, 15)]
+#[case(InlineFixedArray::<99, i32>::new, 100)]
 fn test_overflow_error<TArr: MutableArray<i32>, Builder: FnOnce() -> TArr>(
     #[case] array_builder: Builder,
     #[case] count: usize,

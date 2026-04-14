@@ -5,7 +5,6 @@ use core::{
     hash::Hash,
     marker::PhantomData,
     mem::{ManuallyDrop, MaybeUninit},
-    ops::{Index, IndexMut},
 };
 
 use osom_lib_primitives::length::Length;
@@ -17,18 +16,19 @@ use crate::{
 };
 
 /// A fixed-capacity array. This type is similar to [`DynamicArray`][`crate::dynamic_array::DynamicArray`],
-/// except its capacity is fixed at compile time, and doesn't change at runtime.
+/// except its capacity is fixed at compile time, and doesn't change at runtime. The "Inline" prefix
+/// indicates that the data is stored inside the struct itself, meaning its size depends on `TSIZE`.
 ///
-/// Additionally this type does not require an allocator (the data is inlined inside the struct).
+/// In particular his type does not require an allocator.
 #[repr(C)]
 #[must_use]
-pub struct FixedArray<const TSIZE: usize, T: Sized> {
+pub struct InlineFixedArray<const TSIZE: usize, T: Sized> {
     length: Length,
     inner: MaybeUninit<[T; TSIZE]>,
     _phantom: PhantomData<T>,
 }
 
-unsafe impl<const TSIZE: usize, T: ReprC + Sized> ReprC for FixedArray<TSIZE, T> {
+unsafe impl<const TSIZE: usize, T: ReprC + Sized> ReprC for InlineFixedArray<TSIZE, T> {
     const CHECK: () = const {
         let () = T::CHECK;
         let () = <PhantomData<T> as ReprC>::CHECK;
@@ -37,8 +37,8 @@ unsafe impl<const TSIZE: usize, T: ReprC + Sized> ReprC for FixedArray<TSIZE, T>
     };
 }
 
-impl<const TSIZE: usize, T: Sized> FixedArray<TSIZE, T> {
-    /// Creates a new, empty [`FixedArray`].
+impl<const TSIZE: usize, T: Sized> InlineFixedArray<TSIZE, T> {
+    /// Creates a new, empty [`InlineFixedArray`].
     ///
     /// # Panics
     ///
@@ -60,7 +60,7 @@ impl<const TSIZE: usize, T: Sized> FixedArray<TSIZE, T> {
         }
     }
 
-    /// Returns the length of the [`FixedArray`].
+    /// Returns the length of the [`InlineFixedArray`].
     #[inline(always)]
     pub const fn length(&self) -> Length {
         self.length
@@ -71,14 +71,14 @@ impl<const TSIZE: usize, T: Sized> FixedArray<TSIZE, T> {
         self.length.as_u32() == 0
     }
 
-    /// Returns the capacity of the [`FixedArray`]. This is `TSIZE`
+    /// Returns the capacity of the [`InlineFixedArray`]. This is `TSIZE`
     /// as [`Length`].
     #[inline(always)]
     pub const fn capacity(&self) -> Length {
         unsafe { Length::new_unchecked(TSIZE as u32) }
     }
 
-    /// Returns the [`FixedArray`] as immutable slice.
+    /// Returns the [`InlineFixedArray`] as immutable slice.
     #[inline(always)]
     pub const fn as_slice_const(&self) -> &[T] {
         // In const context we cannot take `.as_ptr()` directly,
@@ -98,7 +98,7 @@ impl<const TSIZE: usize, T: Sized> FixedArray<TSIZE, T> {
         unsafe { core::slice::from_raw_parts(ptr, self.length.as_usize()) }
     }
 
-    /// Returns the [`FixedArray`] as mutable slice.
+    /// Returns the [`InlineFixedArray`] as mutable slice.
     #[inline(always)]
     pub const fn as_slice_mut_const(&mut self) -> &mut [T] {
         // In const context we cannot take `.as_ptr()` directly,
@@ -119,27 +119,13 @@ impl<const TSIZE: usize, T: Sized> FixedArray<TSIZE, T> {
     }
 }
 
-impl<const TSIZE: usize, T: Sized> Default for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized> Default for InlineFixedArray<TSIZE, T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<const TSIZE: usize, T: Sized> Index<Length> for FixedArray<TSIZE, T> {
-    type Output = T;
-
-    fn index(&self, index: Length) -> &T {
-        &self.as_slice_const()[index.as_usize()]
-    }
-}
-
-impl<const TSIZE: usize, T: Sized> IndexMut<Length> for FixedArray<TSIZE, T> {
-    fn index_mut(&mut self, index: Length) -> &mut T {
-        &mut self.as_slice_mut_const()[index.as_usize()]
-    }
-}
-
-impl<const TSIZE: usize, T: Sized> ImmutableArray<T> for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized> ImmutableArray<T> for InlineFixedArray<TSIZE, T> {
     #[inline(always)]
     fn length(&self) -> Length {
         self.length()
@@ -156,7 +142,7 @@ impl<const TSIZE: usize, T: Sized> ImmutableArray<T> for FixedArray<TSIZE, T> {
     }
 }
 
-impl<const TSIZE: usize, T: Sized> MutableArray<T> for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized> MutableArray<T> for InlineFixedArray<TSIZE, T> {
     fn try_push_array<const TARRSIZE: usize>(&mut self, arr: [T; TARRSIZE]) -> Result<(), ArrayError> {
         let len = self.length.as_usize();
         if len + TARRSIZE > TSIZE {
@@ -218,7 +204,7 @@ impl<const TSIZE: usize, T: Sized> MutableArray<T> for FixedArray<TSIZE, T> {
     }
 }
 
-impl<const TSIZE: usize, T: Sized + Clone> Clone for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized + Clone> Clone for InlineFixedArray<TSIZE, T> {
     fn clone(&self) -> Self {
         let mut new_instance = Self::new();
         new_instance
@@ -228,45 +214,45 @@ impl<const TSIZE: usize, T: Sized + Clone> Clone for FixedArray<TSIZE, T> {
     }
 }
 
-impl<const TSIZE: usize, T: Sized + PartialEq, Rhs: AsRef<[T]>> PartialEq<Rhs> for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized + PartialEq, Rhs: AsRef<[T]>> PartialEq<Rhs> for InlineFixedArray<TSIZE, T> {
     fn eq(&self, other: &Rhs) -> bool {
         self.as_slice_const() == other.as_ref()
     }
 }
 
-impl<const TSIZE: usize, T: Sized + Eq> Eq for FixedArray<TSIZE, T> {}
+impl<const TSIZE: usize, T: Sized + Eq> Eq for InlineFixedArray<TSIZE, T> {}
 
-impl<const TSIZE: usize, T: Sized + Hash> Hash for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized + Hash> Hash for InlineFixedArray<TSIZE, T> {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         self.as_slice_const().hash(state);
     }
 }
 
-impl<const TSIZE: usize, T: Sized> AsRef<[T]> for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized> AsRef<[T]> for InlineFixedArray<TSIZE, T> {
     fn as_ref(&self) -> &[T] {
         self.as_slice_const()
     }
 }
 
-impl<const TSIZE: usize, T: Sized> AsMut<[T]> for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized> AsMut<[T]> for InlineFixedArray<TSIZE, T> {
     fn as_mut(&mut self) -> &mut [T] {
         self.as_slice_mut_const()
     }
 }
 
-impl<const TSIZE: usize, T: Sized> Borrow<[T]> for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized> Borrow<[T]> for InlineFixedArray<TSIZE, T> {
     fn borrow(&self) -> &[T] {
         self.as_slice_const()
     }
 }
 
-impl<const TSIZE: usize, T: Sized> BorrowMut<[T]> for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized> BorrowMut<[T]> for InlineFixedArray<TSIZE, T> {
     fn borrow_mut(&mut self) -> &mut [T] {
         self.as_slice_mut_const()
     }
 }
 
-impl<const TSIZE: usize, T: Sized> Drop for FixedArray<TSIZE, T> {
+impl<const TSIZE: usize, T: Sized> Drop for InlineFixedArray<TSIZE, T> {
     fn drop(&mut self) {
         if !core::mem::needs_drop::<T>() {
             return;

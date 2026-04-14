@@ -1,7 +1,5 @@
 #![allow(clippy::cast_possible_truncation)]
 
-use core::ops::IndexMut;
-
 use osom_lib_alloc::traits::Allocator;
 use osom_lib_primitives::length::Length;
 
@@ -11,17 +9,6 @@ use crate::{
 };
 
 use super::InlineArray;
-
-impl<const TCAPACITY: usize, T, TAllocator> IndexMut<Length> for InlineArray<TCAPACITY, T, TAllocator>
-where
-    T: Sized,
-    TAllocator: Allocator,
-{
-    #[inline(always)]
-    fn index_mut(&mut self, index: Length) -> &mut Self::Output {
-        &mut self.as_slice_mut_internal()[index.as_usize()]
-    }
-}
 
 impl<const TCAPACITY: usize, T, TAllocator> MutableArray<T> for InlineArray<TCAPACITY, T, TAllocator>
 where

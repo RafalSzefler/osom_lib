@@ -18,9 +18,6 @@ core_detect = { workspace = true }
 rstest = { workspace = true }
 criterion = { workspace = true }
 
-[features]
-default = []
-
 [[bench]]
 name = "prng_u64_generation"
 harness = false

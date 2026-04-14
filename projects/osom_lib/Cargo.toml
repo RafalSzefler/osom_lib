@@ -23,8 +23,6 @@ osom_lib_hash_tables = { path = "../osom_lib_hash_tables", version = "0.1", defa
 osom_lib_entropy = { path = "../osom_lib_entropy", version = "0.1", default-features = false, optional = true }
 osom_lib_entropy_cprng = { path = "../osom_lib_entropy_cprng", version = "0.1", default-features = false, optional = true }
 
-osom_lib_wait_timer = { path = "../osom_lib_wait_timer", version = "0.1", default-features = false, optional = true }
-
 [features]
 default = ["std"]
 
@@ -37,5 +35,4 @@ std = [
     "osom_lib_hash_tables/std",
     "osom_lib_entropy",
     "osom_lib_entropy_cprng",
-    "osom_lib_wait_timer",
 ]

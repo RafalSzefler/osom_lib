@@ -14,7 +14,6 @@ members = [
     "projects/osom_lib_prng",
     "projects/osom_lib_proc_macro_helpers",
     "projects/osom_lib_reprc",
-    "projects/osom_lib_wait_timer",
 ]
 resolver = "3"
 

@@ -1,13 +1,11 @@
 //! Defines mutable and immutable traits for arrays.
 
-use core::ops::{Index, IndexMut};
-
 use osom_lib_primitives::length::Length;
 
 use crate::errors::{ArrayError, ArrayIsEmptyError};
 
 /// Represents a simply contiguous block of memory.
-pub trait ImmutableArray<T>: Default + Index<Length> {
+pub trait ImmutableArray<T>: Default {
     /// Returns array's length as [`Length`].
     fn length(&self) -> Length;
 
@@ -30,7 +28,7 @@ pub trait ImmutableArray<T>: Default + Index<Length> {
 
 /// Represents a simply contiguous block of memory that is not only
 /// mutable internally but can also grow/shrink in size.
-pub trait MutableArray<T>: ImmutableArray<T> + IndexMut<Length> {
+pub trait MutableArray<T>: ImmutableArray<T> {
     /// Pushes raw array to the array.
     ///
     /// # Errors

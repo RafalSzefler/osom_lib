@@ -77,6 +77,17 @@ where
         }
     }
 
+    /// Initialies new [`InternalArray`], just like [`InternalArray::with_capacity`],
+    /// except it sets [`InternalArray::length`] to size as well. This is deeply unsafe,
+    /// since the underlying memory **is not** initialized to anything. In particular
+    /// it is caller's responsibility to initialize the array properly before using it.
+    #[inline(always)]
+    pub unsafe fn with_size_uninitialized(size: Length, allocator: TAllocator) -> Result<Self, ArrayError> {
+        let mut result = Self::with_capacity(size, allocator)?;
+        result.length = size;
+        Ok(result)
+    }
+
     pub fn with_capacity(capacity: Length, allocator: TAllocator) -> Result<Self, ArrayError> {
         if capacity == Length::ZERO {
             return Ok(Self::new(allocator));

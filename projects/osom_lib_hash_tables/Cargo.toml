@@ -20,7 +20,7 @@ rstest = { workspace = true }
 criterion = { workspace = true }
 
 [features]
-default = []
+default = ["std"]
 std = ["osom_lib_alloc/std"]
 
 [[bench]]

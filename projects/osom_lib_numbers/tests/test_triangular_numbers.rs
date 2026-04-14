@@ -36,12 +36,12 @@ fn test_triangular_numbers_empty(#[case] count: u32) {
 #[case(1 << 1)]
 #[case(1 << 2)]
 #[case(1 << 4)]
-#[case(1 << 10)]
-#[case(1 << 11)]
-#[case(1 << 12)]
-#[case(1 << 19)]
-#[case(1 << 20)]
-#[case(1 << 23)]
+#[cfg_attr(not(miri), case(1 << 10))]
+#[cfg_attr(not(miri), case(1 << 11))]
+#[cfg_attr(not(miri), case(1 << 12))]
+#[cfg_attr(not(miri), case(1 << 19))]
+#[cfg_attr(not(miri), case(1 << 20))]
+#[cfg_attr(not(miri), case(1 << 23))]
 fn test_triangular_numbers_generate_permutation_over_powers_of_two(#[case] count: u32) {
     assert!(count == 0 || count.is_power_of_two());
     let mask = count.wrapping_sub(1);

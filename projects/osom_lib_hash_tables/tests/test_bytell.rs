@@ -4,6 +4,7 @@ use osom_lib_hash_tables::bytell::defaults::StdBytellHashTable;
 
 common::build_tests!(StdBytellHashTable);
 
+#[cfg(not(miri))]
 #[test]
 fn test_bytell_distribution() {
     use osom_lib_hash_tables::traits::MutableHashTable;

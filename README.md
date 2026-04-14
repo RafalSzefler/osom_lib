@@ -47,8 +47,5 @@ several primitives (like Length and CResult) used by other osom libs.
 trait and related stuff.
 * [`osom_lib_arrays`](https://rafalszefler.github.io/osom_lib/osom_lib_arrays) defines and
 implements various ABI stable arrays.
-* [`osom_lib_wait_timer`](https://rafalszefler.github.io/osom_lib/osom_lib_wait_timer) defines and
-implements ABI stable wait timers. These are timers that aim at 1ms resolution, depending on
-the operating system.
 * [`osom_lib_numbers`](https://rafalszefler.github.io/osom_lib/osom_lib_numbers) various helpers and
 numeric algorithms.
