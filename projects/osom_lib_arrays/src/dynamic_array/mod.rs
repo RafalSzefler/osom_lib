@@ -1,3 +1,5 @@
+//! Holds the definition of [`DynamicArray`] and [`InlineDynamicArray`].
+
 pub(crate) mod internal_array;
 
 #[allow(clippy::module_inception)]
