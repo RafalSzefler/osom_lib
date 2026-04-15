@@ -361,7 +361,7 @@ where
             el_idx += 1;
 
             let control_byte = ptr_to_ref!(entry.control_byte());
-            if control_byte.contains_data() {
+            if !control_byte.contains_data() {
                 continue;
             }
 

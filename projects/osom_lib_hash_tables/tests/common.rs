@@ -192,6 +192,31 @@ pub fn test_hash_table_ownership<T: MutableHashTable<i32, TestStruct>>(builder: 
     assert_eq!(load!(), 0);
 }
 
+pub fn test_hash_table_clone<T: MutableHashTable<i32, String> + Clone + PartialEq>(builder: impl FnOnce() -> T) {
+    let mut table = builder();
+    assert_eq!(table.length().as_u32(), 0);
+    table.insert(5, "test".to_string());
+    assert_eq!(table.length().as_u32(), 1);
+    assert_eq!(table.get(&5).unwrap(), "test");
+    let mut clone = table.clone();
+    assert_eq!(clone.length().as_u32(), 1);
+    if table != clone {
+        panic!("clone not equal to table");
+    }
+    clone.insert(5, "foo".to_string());
+    if table == clone {
+        panic!("clone after modification still equal to table");
+    }
+    clone.insert(5, "test".to_string());
+    if table != clone {
+        panic!("clone not equal to table");
+    }
+    clone.insert(1, "test".to_string());
+    if table == clone {
+        panic!("clone after modification still equal to table");
+    }
+}
+
 #[allow(unused_macros)]
 macro_rules! build_tests {
     ( $array_name: ident ) => {
@@ -212,6 +237,12 @@ macro_rules! build_tests {
             #[test]
             fn [< test_ $array_name _ownership >]() {
                 crate::common::test_hash_table_ownership($array_name::default);
+            }
+
+            #[allow(non_snake_case)]
+            #[test]
+            fn [< test_ $array_name _clone >]() {
+                crate::common::test_hash_table_clone($array_name::default);
             }
 
             #[cfg(not(miri))]

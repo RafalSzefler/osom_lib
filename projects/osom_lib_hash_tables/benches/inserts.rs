@@ -5,11 +5,11 @@ use criterion::{BenchmarkGroup, Criterion, criterion_group, criterion_main, meas
 use osom_lib_hash_tables::{bytell::defaults::StdBytellHashTable, traits::MutableHashTable};
 
 #[inline(never)]
-fn bench_insertions<T: MutableHashTable<String, i32>>(hash_table: &mut T, strings: Vec<String>) {
+fn bench_insertions<T: MutableHashTable<String, i32>>(hash_table: &mut T, strings: &Vec<String>) {
     let mut idx = 0;
-    for txt in strings.into_iter() {
+    for txt in strings.iter() {
         idx += 1;
-        hash_table.insert(txt, idx);
+        hash_table.insert(txt.clone(), idx);
     }
 }
 
@@ -46,9 +46,9 @@ impl<'a> Bencher<'a> {
     fn add_benchmark<T: MutableHashTable<String, i32>>(&mut self, name: &str, mut hash_function: T) {
         let data = generate_data(self.size);
         self.group.bench_function(name, move |b| {
+            let new_data = data.clone();
             b.iter(|| {
-                let new_data = data.clone();
-                bench_insertions(black_box(&mut hash_function), black_box(new_data));
+                bench_insertions(black_box(&mut hash_function), black_box(&new_data));
             })
         });
     }

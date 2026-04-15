@@ -7,12 +7,12 @@ use osom_lib_reprc::macros::reprc;
 use super::traits::{AllocationError, Allocator};
 
 /// The standard allocator based on `libc` crate.
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
 #[reprc]
 pub struct StdAllocator;
 
 /// The standard allocator error.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[reprc]
 pub enum StdAllocationError {
     /// A generic allocation error. Likely because of out of memory.
