@@ -5,14 +5,14 @@ use osom_lib_alloc::traits::Allocator;
 
 use crate::traits::MutableArray;
 
-use super::InlineArray;
+use super::InlineDynamicArray;
 
-impl<const TCAPACITY: usize, T: Clone, TAllocator> Clone for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T: Clone, TAllocator> Clone for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     TAllocator: Allocator,
 {
     fn clone(&self) -> Self {
-        let mut new_array = InlineArray::with_capacity_and_allocator(self.size, self.allocator.clone())
+        let mut new_array = Self::with_capacity_and_allocator(self.size, self.allocator.clone())
             .expect("Couldn't create a new InlineArray during clone() call");
 
         new_array.push_slice(self.as_slice_internal());
@@ -20,7 +20,7 @@ where
     }
 }
 
-impl<const TCAPACITY: usize, T, TAllocator, Rhs> PartialEq<Rhs> for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator, Rhs> PartialEq<Rhs> for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     T: PartialEq,
     TAllocator: Allocator,
@@ -31,14 +31,14 @@ where
     }
 }
 
-impl<const TCAPACITY: usize, T, TAllocator> Eq for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> Eq for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     T: Eq,
     TAllocator: Allocator,
 {
 }
 
-impl<const TCAPACITY: usize, T, TAllocator> Hash for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> Hash for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     T: Hash,
     TAllocator: Allocator,
@@ -48,7 +48,7 @@ where
     }
 }
 
-impl<const TCAPACITY: usize, T, TAllocator> AsRef<[T]> for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> AsRef<[T]> for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     TAllocator: Allocator,
 {
@@ -57,29 +57,29 @@ where
     }
 }
 
-impl<const TCAPACITY: usize, T, TAllocator> AsMut<[T]> for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> AsMut<[T]> for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     TAllocator: Allocator,
 {
     fn as_mut(&mut self) -> &mut [T] {
-        self.as_slice_mut()
+        self.as_slice_mut_internal()
     }
 }
 
-impl<const TCAPACITY: usize, T, TAllocator> Borrow<[T]> for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> Borrow<[T]> for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     TAllocator: Allocator,
 {
     fn borrow(&self) -> &[T] {
-        self.as_slice_internal()
+        self.as_ref()
     }
 }
 
-impl<const TCAPACITY: usize, T, TAllocator> BorrowMut<[T]> for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> BorrowMut<[T]> for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     TAllocator: Allocator,
 {
     fn borrow_mut(&mut self) -> &mut [T] {
-        self.as_slice_mut_internal()
+        self.as_mut()
     }
 }

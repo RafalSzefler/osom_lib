@@ -10,8 +10,8 @@ use osom_lib_primitives::length::Length;
 use osom_lib_reprc::traits::ReprC;
 
 use crate::{
+    dynamic_array::internal_array::InternalArray,
     errors::{ArrayError, ArrayIsEmptyError},
-    internal_array::InternalArray,
     traits::{ImmutableArray, MutableArray},
 };
 
@@ -93,7 +93,7 @@ where
 
         #[allow(clippy::needless_range_loop)]
         {
-            let slice_mut = array.as_slice_mut();
+            let slice_mut = array.as_mut();
             for idx in 0..size.as_usize() {
                 slice_mut[idx] = factory(idx);
             }
@@ -150,11 +150,6 @@ where
     }
 
     #[inline(always)]
-    fn as_slice(&self) -> &[T] {
-        self.inner.as_slice()
-    }
-
-    #[inline(always)]
     fn is_empty(&self) -> bool {
         self.length().as_u32() == 0
     }
@@ -195,11 +190,6 @@ where
     fn try_pop(&mut self) -> Result<T, ArrayIsEmptyError> {
         self.inner.try_pop()
     }
-
-    #[inline(always)]
-    fn as_slice_mut(&mut self) -> &mut [T] {
-        self.inner.as_slice_mut()
-    }
 }
 
 impl<T, TAllocator> Drop for FixedArray<T, TAllocator>
@@ -229,7 +219,7 @@ where
     Rhs: AsRef<[T]>,
 {
     fn eq(&self, other: &Rhs) -> bool {
-        self.as_slice() == other.as_ref()
+        self.as_ref() == other.as_ref()
     }
 }
 
@@ -246,7 +236,7 @@ where
     TAllocator: Allocator,
 {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        self.as_slice().hash(state);
+        self.as_ref().hash(state);
     }
 }
 
@@ -255,7 +245,7 @@ where
     TAllocator: Allocator,
 {
     fn as_ref(&self) -> &[T] {
-        self.as_slice()
+        self.inner.as_slice()
     }
 }
 
@@ -264,7 +254,7 @@ where
     TAllocator: Allocator,
 {
     fn as_mut(&mut self) -> &mut [T] {
-        self.as_slice_mut()
+        self.inner.as_slice_mut()
     }
 }
 
@@ -273,7 +263,7 @@ where
     TAllocator: Allocator,
 {
     fn borrow(&self) -> &[T] {
-        self.as_slice()
+        self.as_ref()
     }
 }
 
@@ -282,6 +272,6 @@ where
     TAllocator: Allocator,
 {
     fn borrow_mut(&mut self) -> &mut [T] {
-        self.as_slice_mut()
+        self.as_mut()
     }
 }

@@ -135,11 +135,6 @@ impl<const TSIZE: usize, T: Sized> ImmutableArray<T> for InlineFixedArray<TSIZE,
     fn capacity(&self) -> Length {
         self.capacity()
     }
-
-    #[inline(always)]
-    fn as_slice(&self) -> &[T] {
-        self.as_slice_const()
-    }
 }
 
 impl<const TSIZE: usize, T: Sized> MutableArray<T> for InlineFixedArray<TSIZE, T> {
@@ -196,11 +191,6 @@ impl<const TSIZE: usize, T: Sized> MutableArray<T> for InlineFixedArray<TSIZE, T
             self.inner.as_ptr().cast::<T>().add((len - 1) as usize).read()
         };
         Ok(item)
-    }
-
-    #[inline(always)]
-    fn as_slice_mut(&mut self) -> &mut [T] {
-        self.as_slice_mut_const()
     }
 }
 

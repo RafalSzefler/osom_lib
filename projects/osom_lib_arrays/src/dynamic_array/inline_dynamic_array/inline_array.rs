@@ -17,7 +17,7 @@ use crate::errors::ArrayError;
 /// case it allocates data on heap, and becomes pretty much a [`DynamicArray`][crate::dynamic_array::DynamicArray].
 #[repr(C)]
 #[must_use]
-pub struct InlineArray<const TCAPACITY: usize, T, TAllocator>
+pub struct InlineDynamicArray<const TCAPACITY: usize, T, TAllocator>
 where
     T: Sized,
     TAllocator: Allocator,
@@ -28,7 +28,7 @@ where
     pub(super) allocator: TAllocator,
 }
 
-unsafe impl<const TCAPACITY: usize, T, TAllocator> ReprC for InlineArray<TCAPACITY, T, TAllocator>
+unsafe impl<const TCAPACITY: usize, T, TAllocator> ReprC for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     T: Sized + ReprC,
     TAllocator: Allocator,
@@ -61,7 +61,7 @@ where
     };
 }
 
-impl<const TCAPACITY: usize, T, TAllocator> InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     T: Sized,
     TAllocator: Allocator,
@@ -212,7 +212,7 @@ where
     }
 }
 
-impl<const TCAPACITY: usize, T, TAllocator> Drop for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> Drop for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     T: Sized,
     TAllocator: Allocator,

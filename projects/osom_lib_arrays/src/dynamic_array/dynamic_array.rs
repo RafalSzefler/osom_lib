@@ -11,9 +11,10 @@ use osom_lib_reprc::traits::ReprC;
 
 use crate::{
     errors::{ArrayError, ArrayIsEmptyError},
-    internal_array::InternalArray,
     traits::{ImmutableArray, MutableArray},
 };
+
+use super::internal_array::InternalArray;
 
 /// A `#[repr(C)]` variant of the standard `vec` struct.
 ///
@@ -105,7 +106,7 @@ where
 
         #[allow(clippy::needless_range_loop)]
         {
-            let slice_mut = array.as_slice_mut();
+            let slice_mut = array.as_mut();
             for idx in 0..size.as_usize() {
                 slice_mut[idx] = factory(idx);
             }
@@ -162,11 +163,6 @@ where
     }
 
     #[inline(always)]
-    fn as_slice(&self) -> &[T] {
-        self.inner.as_slice()
-    }
-
-    #[inline(always)]
     fn is_empty(&self) -> bool {
         self.length().as_u32() == 0
     }
@@ -192,11 +188,6 @@ where
     #[inline(always)]
     fn try_pop(&mut self) -> Result<T, ArrayIsEmptyError> {
         self.inner.try_pop()
-    }
-
-    #[inline(always)]
-    fn as_slice_mut(&mut self) -> &mut [T] {
-        self.inner.as_slice_mut()
     }
 }
 
@@ -236,7 +227,7 @@ where
     Rhs: AsRef<[T]>,
 {
     fn eq(&self, other: &Rhs) -> bool {
-        self.as_slice() == other.as_ref()
+        self.as_ref() == other.as_ref()
     }
 }
 
@@ -253,7 +244,7 @@ where
     TAllocator: Allocator,
 {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        self.as_slice().hash(state);
+        self.as_ref().hash(state);
     }
 }
 
@@ -262,7 +253,7 @@ where
     TAllocator: Allocator,
 {
     fn as_ref(&self) -> &[T] {
-        self.as_slice()
+        self.inner.as_slice()
     }
 }
 
@@ -271,7 +262,7 @@ where
     TAllocator: Allocator,
 {
     fn as_mut(&mut self) -> &mut [T] {
-        self.as_slice_mut()
+        self.inner.as_slice_mut()
     }
 }
 
@@ -279,8 +270,9 @@ impl<T, TAllocator> Borrow<[T]> for DynamicArray<T, TAllocator>
 where
     TAllocator: Allocator,
 {
+    #[inline(always)]
     fn borrow(&self) -> &[T] {
-        self.as_slice()
+        self.as_ref()
     }
 }
 
@@ -288,7 +280,8 @@ impl<T, TAllocator> BorrowMut<[T]> for DynamicArray<T, TAllocator>
 where
     TAllocator: Allocator,
 {
+    #[inline(always)]
     fn borrow_mut(&mut self) -> &mut [T] {
-        self.as_slice_mut()
+        self.as_mut()
     }
 }

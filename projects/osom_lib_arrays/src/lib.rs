@@ -14,11 +14,8 @@ pub mod const_helpers;
 pub mod dynamic_array;
 pub mod errors;
 pub mod fixed_array;
-pub mod inline_array;
 pub mod traits;
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 pub mod std;
-
-pub(crate) mod internal_array;

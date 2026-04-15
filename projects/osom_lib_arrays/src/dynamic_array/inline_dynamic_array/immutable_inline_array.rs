@@ -5,9 +5,9 @@ use osom_lib_primitives::length::Length;
 
 use crate::traits::ImmutableArray;
 
-use super::InlineArray;
+use super::InlineDynamicArray;
 
-impl<const TCAPACITY: usize, T, TAllocator> Default for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> Default for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     T: Sized,
     TAllocator: Allocator,
@@ -18,7 +18,7 @@ where
     }
 }
 
-impl<const TCAPACITY: usize, T, TAllocator> Index<Length> for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> Index<Length> for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     T: Sized,
     TAllocator: Allocator,
@@ -30,7 +30,7 @@ where
     }
 }
 
-impl<const TCAPACITY: usize, T, TAllocator> ImmutableArray<T> for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> ImmutableArray<T> for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     T: Sized,
     TAllocator: Allocator,
@@ -43,10 +43,5 @@ where
     #[inline(always)]
     fn capacity(&self) -> Length {
         self.capacity
-    }
-
-    #[inline(always)]
-    fn as_slice(&self) -> &[T] {
-        self.as_slice_internal()
     }
 }

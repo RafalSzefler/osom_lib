@@ -5,16 +5,12 @@ use osom_lib_primitives::length::Length;
 use crate::errors::{ArrayError, ArrayIsEmptyError};
 
 /// Represents a simply contiguous block of memory.
-pub trait ImmutableArray<T> {
+pub trait ImmutableArray<T>: AsRef<[T]> {
     /// Returns array's length as [`Length`].
     fn length(&self) -> Length;
 
     /// Returns the current capacity for holding items in the array.
     fn capacity(&self) -> Length;
-
-    /// Represents the array as immutable slice.
-    #[must_use]
-    fn as_slice(&self) -> &[T];
 
     /// Returns `true` if array is empty, `false` otherwise.
     /// Should be consistent with `self.length() == Length::ZERO`
@@ -28,7 +24,7 @@ pub trait ImmutableArray<T> {
 
 /// Represents a simply contiguous block of memory that is not only
 /// mutable internally but can also grow/shrink in size.
-pub trait MutableArray<T>: ImmutableArray<T> {
+pub trait MutableArray<T>: ImmutableArray<T> + AsMut<[T]> {
     /// Pushes raw array to the array.
     ///
     /// # Errors
@@ -52,9 +48,6 @@ pub trait MutableArray<T>: ImmutableArray<T> {
     ///
     /// Returns [`ArrayIsEmptyError`] when the array is empty.
     fn try_pop(&mut self) -> Result<T, ArrayIsEmptyError>;
-
-    /// Represents the array as mutable slice.
-    fn as_slice_mut(&mut self) -> &mut [T];
 
     /// Removes element from the top of the array.
     ///

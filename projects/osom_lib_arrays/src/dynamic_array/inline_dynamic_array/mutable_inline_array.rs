@@ -8,9 +8,9 @@ use crate::{
     traits::MutableArray,
 };
 
-use super::InlineArray;
+use super::InlineDynamicArray;
 
-impl<const TCAPACITY: usize, T, TAllocator> MutableArray<T> for InlineArray<TCAPACITY, T, TAllocator>
+impl<const TCAPACITY: usize, T, TAllocator> MutableArray<T> for InlineDynamicArray<TCAPACITY, T, TAllocator>
 where
     T: Sized,
     TAllocator: Allocator,
@@ -84,10 +84,5 @@ where
             let ptr = self.current_ptr_mut().add(idx);
             Ok(ptr.read())
         }
-    }
-
-    #[inline(always)]
-    fn as_slice_mut(&mut self) -> &mut [T] {
-        self.as_slice_mut_internal()
     }
 }

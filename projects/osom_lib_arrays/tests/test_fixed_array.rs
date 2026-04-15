@@ -30,7 +30,7 @@ fn test_std_fixed_array_clone() {
 #[test]
 fn test_std_fixed_array_sized_allocation() {
     let array = StdFixedArray::with_factory(Length::try_from_u32(15).unwrap(), |idx| idx).unwrap();
-    assert_eq!(array.as_slice(), &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+    assert_eq!(array.as_ref(), &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
 }
 
 #[test]
@@ -38,9 +38,9 @@ fn test_std_fixed_array_unsafe_allocation() {
     let length = Length::try_from_u32(6).unwrap();
     let mut array = unsafe { StdFixedArray::with_size_uninitialized(length) }.unwrap();
     for i in 0..array.length().as_usize() {
-        array.as_slice_mut()[i] = i * i;
+        array.as_mut()[i] = i * i;
     }
-    assert_eq!(array.as_slice(), &[0, 1, 4, 9, 16, 25]);
+    assert_eq!(array.as_ref(), &[0, 1, 4, 9, 16, 25]);
 }
 
 #[test]

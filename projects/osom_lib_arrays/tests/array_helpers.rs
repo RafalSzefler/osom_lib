@@ -8,39 +8,39 @@ use osom_lib_reprc::traits::ReprC;
 
 pub fn test_mutable_array<TArr: MutableArray<i32>, Builder: FnOnce() -> TArr>(array_builder: Builder) {
     let mut array = array_builder();
-    assert_eq!(array.as_slice(), &[]);
-    assert_eq!(array.as_slice_mut(), &[]);
+    assert_eq!(array.as_ref(), &[]);
+    assert_eq!(array.as_mut(), &[]);
     assert_eq!(array.length(), Length::ZERO);
     assert!(array.is_empty());
     assert!(array.try_pop().is_err());
 
     array.push(1);
-    assert_eq!(array.as_slice(), &[1]);
-    assert_eq!(array.as_slice_mut(), &[1]);
+    assert_eq!(array.as_ref(), &[1]);
+    assert_eq!(array.as_mut(), &[1]);
     assert_eq!(array.length(), Length::ONE);
     assert!(!array.is_empty());
 
     array.push_array([5, -1, 3]);
-    assert_eq!(array.as_slice(), &[1, 5, -1, 3]);
-    assert_eq!(array.as_slice_mut(), &[1, 5, -1, 3]);
+    assert_eq!(array.as_ref(), &[1, 5, -1, 3]);
+    assert_eq!(array.as_mut(), &[1, 5, -1, 3]);
     assert_eq!(array.length(), make_length!(4));
     assert!(!array.is_empty());
 
     array.push_slice(&[1, 1, 1, 2, 2, 2]);
-    assert_eq!(array.as_slice(), &[1, 5, -1, 3, 1, 1, 1, 2, 2, 2]);
-    assert_eq!(array.as_slice_mut(), &[1, 5, -1, 3, 1, 1, 1, 2, 2, 2]);
+    assert_eq!(array.as_ref(), &[1, 5, -1, 3, 1, 1, 1, 2, 2, 2]);
+    assert_eq!(array.as_mut(), &[1, 5, -1, 3, 1, 1, 1, 2, 2, 2]);
     assert_eq!(array.length(), make_length!(10));
     assert!(!array.is_empty());
 
     assert_eq!(array.pop(), 2);
-    assert_eq!(array.as_slice(), &[1, 5, -1, 3, 1, 1, 1, 2, 2]);
-    assert_eq!(array.as_slice_mut(), &[1, 5, -1, 3, 1, 1, 1, 2, 2]);
+    assert_eq!(array.as_ref(), &[1, 5, -1, 3, 1, 1, 1, 2, 2]);
+    assert_eq!(array.as_mut(), &[1, 5, -1, 3, 1, 1, 1, 2, 2]);
     assert_eq!(array.length(), make_length!(9));
     assert!(!array.is_empty());
 
     assert_eq!(array.pop(), 2);
-    assert_eq!(array.as_slice(), &[1, 5, -1, 3, 1, 1, 1, 2]);
-    assert_eq!(array.as_slice_mut(), &[1, 5, -1, 3, 1, 1, 1, 2]);
+    assert_eq!(array.as_ref(), &[1, 5, -1, 3, 1, 1, 1, 2]);
+    assert_eq!(array.as_mut(), &[1, 5, -1, 3, 1, 1, 1, 2]);
     assert_eq!(array.length(), make_length!(8));
     assert!(!array.is_empty());
 
@@ -49,26 +49,26 @@ pub fn test_mutable_array<TArr: MutableArray<i32>, Builder: FnOnce() -> TArr>(ar
     let _ = array.pop();
     let _ = array.pop();
     let _ = array.pop();
-    assert_eq!(array.as_slice(), &[1, 5, -1]);
-    assert_eq!(array.as_slice_mut(), &[1, 5, -1]);
+    assert_eq!(array.as_ref(), &[1, 5, -1]);
+    assert_eq!(array.as_mut(), &[1, 5, -1]);
     assert_eq!(array.length(), make_length!(3));
     assert!(!array.is_empty());
 
     assert_eq!(array.pop(), -1);
-    assert_eq!(array.as_slice(), &[1, 5]);
-    assert_eq!(array.as_slice_mut(), &[1, 5]);
+    assert_eq!(array.as_ref(), &[1, 5]);
+    assert_eq!(array.as_mut(), &[1, 5]);
     assert_eq!(array.length(), make_length!(2));
     assert!(!array.is_empty());
 
     assert_eq!(array.pop(), 5);
-    assert_eq!(array.as_slice(), &[1]);
-    assert_eq!(array.as_slice_mut(), &[1]);
+    assert_eq!(array.as_ref(), &[1]);
+    assert_eq!(array.as_mut(), &[1]);
     assert_eq!(array.length(), make_length!(1));
     assert!(!array.is_empty());
 
     assert_eq!(array.pop(), 1);
-    assert_eq!(array.as_slice(), &[]);
-    assert_eq!(array.as_slice_mut(), &[]);
+    assert_eq!(array.as_ref(), &[]);
+    assert_eq!(array.as_mut(), &[]);
     assert_eq!(array.length(), make_length!(0));
     assert!(array.is_empty());
 
@@ -128,11 +128,11 @@ pub fn test_array_clone<'a, TArr: MutableArray<i32> + Clone, Builder: FnOnce() -
     assert_eq!(array.length().as_u32(), 10);
     let mut clone = array.clone();
     assert_eq!(clone.length().as_u32(), 10);
-    assert_eq!(array.as_slice(), clone.as_slice());
+    assert_eq!(array.as_ref(), clone.as_ref());
 
     clone.push(124);
 
     assert_eq!(array.length().as_u32(), 10);
     assert_eq!(clone.length().as_u32(), 11);
-    assert_ne!(array.as_slice(), clone.as_slice());
+    assert_ne!(array.as_ref(), clone.as_ref());
 }
