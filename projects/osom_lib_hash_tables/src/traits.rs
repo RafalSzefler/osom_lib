@@ -59,7 +59,7 @@ where
     ///
     /// The iterator yields `(&TKey, &TValue)` tuples representing each key-value pair
     /// in the hash table.
-    fn iter<'a>(&'a self) -> impl Iterator<Item = (&'a TKey, &'a TValue)>
+    fn iter<'a>(&'a self) -> impl Iterator<Item = (&'a TKey, &'a TValue)> + 'a
     where
         TKey: 'a,
         TValue: 'a,
@@ -148,7 +148,7 @@ where
     ///
     /// The iterator yields `(&TKey, &mut TValue)` tuples representing each key-value pair
     /// in the hash table.
-    fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = (&'a TKey, &'a mut TValue)>
+    fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = (&'a TKey, &'a mut TValue)> + 'a
     where
         TKey: 'a,
         TValue: 'a,
