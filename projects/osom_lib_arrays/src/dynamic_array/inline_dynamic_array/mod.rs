@@ -1,4 +1,4 @@
-//! Holds the definition of [`InlineArray`].
+//! Holds the definition of [`InlineDynamicArray`].
 #![allow(clippy::module_inception)]
 
 mod immutable_inline_array;

@@ -66,13 +66,13 @@ where
     T: Sized,
     TAllocator: Allocator,
 {
-    /// Creates a new empty [`InlineArray`] with the default `TAllocator`.
+    /// Creates a new empty [`InlineDynamicArray`] with the default `TAllocator`.
     #[inline(always)]
     pub fn new() -> Self {
         Self::with_allocator(TAllocator::default())
     }
 
-    /// Creates a new empty [`InlineArray`] with the given `TAllocator`.
+    /// Creates a new empty [`InlineDynamicArray`] with the given `TAllocator`.
     #[inline]
     pub const fn with_allocator(allocator: TAllocator) -> Self {
         let inlined = ManuallyDrop::new(MaybeUninit::uninit());
@@ -84,7 +84,7 @@ where
         }
     }
 
-    /// Creates a new [`InlineArray`] with the default `TAllocator`. This method allocates memory
+    /// Creates a new [`InlineDynamicArray`] with the default `TAllocator`. This method allocates memory
     /// if `capacity` exceeds `TCAPACITY`.
     ///
     /// # Errors
@@ -95,7 +95,7 @@ where
         Self::with_capacity_and_allocator(capacity, TAllocator::default())
     }
 
-    /// Creates a new [`InlineArray`] with the given `TAllocator`. This method allocates memory
+    /// Creates a new [`InlineDynamicArray`] with the given `TAllocator`. This method allocates memory
     /// if `capacity` exceeds `TCAPACITY`.
     ///
     /// # Errors
