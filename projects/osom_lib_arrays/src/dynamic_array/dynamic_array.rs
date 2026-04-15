@@ -18,7 +18,9 @@ use super::internal_array::InternalArray;
 
 /// A `#[repr(C)]` variant of the standard `vec` struct.
 ///
-/// Functionally similar, and implements [`ReprC`] for `T: ReprC`.
+/// Functionally similar, and implements [`ReprC`] for `T: ReprC`. However,
+/// unlike `vec` this struct multiplies capacity by `3/2` when resizing is
+/// needed.
 #[derive(Debug)]
 #[repr(transparent)]
 #[must_use]

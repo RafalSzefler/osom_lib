@@ -14,7 +14,11 @@ use crate::errors::ArrayError;
 /// Represents a dynamic array, where first `TCAPACITY` items are inlined in the struct itself.
 ///
 /// In other words, this array allocates memory only when its length exceeds `TCAPACITY`. In which
-/// case it allocates data on heap, and becomes pretty much a [`DynamicArray`][crate::dynamic_array::DynamicArray].
+/// case it allocates data on heap, and becomes a slightly less efficient variant of
+/// [`DynamicArray`][crate::dynamic_array::DynamicArray].
+///
+/// Similarly to [`DynamicArray`][crate::dynamic_array::DynamicArray] this struct resizes the
+/// underlying buffer by multiplying capacity by `3/2`.
 #[repr(C)]
 #[must_use]
 pub struct InlineDynamicArray<const TCAPACITY: usize, T, TAllocator>
@@ -25,6 +29,7 @@ where
     pub(super) internal: InlineArrayUnion<TCAPACITY, T>,
     pub(super) size: Length,
     pub(super) capacity: Length,
+    pub(super) is_inlined: bool,
     pub(super) allocator: TAllocator,
 }
 
@@ -80,6 +85,7 @@ where
             internal: InlineArrayUnion { inlined },
             size: Length::ZERO,
             capacity: static_capacity::<TCAPACITY>(),
+            is_inlined: true,
             allocator,
         }
     }
@@ -119,6 +125,7 @@ where
             internal: InlineArrayUnion { ptr: new_ptr.as_ptr() },
             size: Length::ZERO,
             capacity: capacity,
+            is_inlined: false,
             allocator: allocator,
         })
     }
@@ -138,7 +145,7 @@ where
 
     #[inline(always)]
     pub(super) fn is_inlined(&self) -> bool {
-        self.capacity.as_usize() <= TCAPACITY
+        self.is_inlined
     }
 
     pub(super) fn current_ptr_mut(&mut self) -> *mut T {
@@ -175,7 +182,10 @@ where
         }
 
         let new_capacity = {
-            let upper_bound = ((u64::from(new_length) * 3) / 2) + 1;
+            let upper_bound = match new_length {
+                0..=11 => 16,
+                v => (u64::from(v) * 3) / 2,
+            };
             let capped = core::cmp::min(upper_bound, Length::MAX_LENGTH.as_usize() as u64) as u32;
             unsafe { Length::new_unchecked(capped) }
         };
@@ -194,6 +204,7 @@ where
                     let inlined_ptr = self.internal.inlined.deref_mut().as_mut_ptr().cast::<T>();
                     ptr.copy_from_nonoverlapping(inlined_ptr, current_length);
                 }
+                self.is_inlined = false;
                 ptr
             } else {
                 let old_layout = self.current_layout();

@@ -191,7 +191,10 @@ where
         }
 
         let new_capacity = {
-            let upper_bound = ((u64::from(new_length) * 3) / 2) + 1;
+            let upper_bound = match new_length {
+                0..=11 => 16,
+                v => (u64::from(v) * 3) / 2,
+            };
             let capped = core::cmp::min(upper_bound, Length::MAX_LENGTH.as_usize() as u64) as u32;
             unsafe { Length::new_unchecked(capped) }
         };
