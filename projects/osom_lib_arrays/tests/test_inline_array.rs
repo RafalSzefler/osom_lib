@@ -26,6 +26,22 @@ fn test_inline_array_clone<TArr: MutableArray<i32> + Clone, Builder: FnOnce() ->
 }
 
 #[rstest]
+#[case(StdInlineDynamicArray::<1, i32>::new)]
+#[case(StdInlineDynamicArray::<2, i32>::new)]
+#[case(StdInlineDynamicArray::<5, i32>::new)]
+#[case(StdInlineDynamicArray::<10, i32>::new)]
+#[case(StdInlineDynamicArray::<15, i32>::new)]
+#[case(StdInlineDynamicArray::<25, i32>::new)]
+#[case(StdInlineDynamicArray::<100, i32>::new)]
+#[case(StdInlineDynamicArray::<211, i32>::new)]
+#[case(StdInlineDynamicArray::<600, i32>::new)]
+fn test_inline_array_back_and_forth<TArr: MutableArray<i32> + Clone, Builder: FnOnce() -> TArr>(
+    #[case] array_builder: Builder,
+) {
+    array_helpers::test_array_back_and_forth(array_builder)
+}
+
+#[rstest]
 #[case(StdInlineDynamicArray::<10, i32>::new, 15)]
 #[case(StdInlineDynamicArray::<10, i32>::new, 11)]
 #[case(StdInlineDynamicArray::<1, i32>::new, 2)]

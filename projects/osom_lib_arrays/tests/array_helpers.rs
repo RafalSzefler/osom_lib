@@ -136,3 +136,30 @@ pub fn test_array_clone<'a, TArr: MutableArray<i32> + Clone, Builder: FnOnce() -
     assert_eq!(clone.length().as_u32(), 11);
     assert_ne!(array.as_ref(), clone.as_ref());
 }
+
+pub fn test_array_back_and_forth<'a, TArr: MutableArray<i32> + Clone, Builder: FnOnce() -> TArr>(
+    array_builder: Builder,
+) {
+    let mut array = array_builder();
+
+    for _ in 0..10 {
+        assert_eq!(array.length(), Length::ZERO);
+        for idx in 0..500 {
+            array.push(2 * idx - 1);
+        }
+
+        let mut length = 500;
+        assert_eq!(array.length().as_u32(), length);
+        assert_eq!(array.pop(), 2 * 499 - 1);
+        length -= 1;
+        assert_eq!(array.length().as_u32(), length);
+
+        for idx in (0..499).rev() {
+            assert_eq!(array.pop(), 2 * idx - 1);
+            length -= 1;
+            assert_eq!(array.length().as_u32(), length);
+        }
+
+        assert!(array.try_pop().is_err());
+    }
+}

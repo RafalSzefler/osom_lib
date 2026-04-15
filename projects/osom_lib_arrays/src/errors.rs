@@ -25,6 +25,6 @@ impl From<AllocationError> for ArrayError {
 
 /// Represents an error that occures when the array is empty.
 #[reprc]
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 #[must_use]
 pub struct ArrayIsEmptyError;

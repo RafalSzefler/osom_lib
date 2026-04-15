@@ -85,6 +85,15 @@ where
     /// Creates a new [`DynamicArray`] with a given size, generated through a given factory.
     /// This allocates memory only when `size > 0`.
     ///
+    /// # Notes
+    ///
+    /// This method is functionally equivalent to initializing an empty vector and running
+    /// factory one by one in a loop, and passing it to
+    /// [`push`][`crate::traits::MutableArray::push`]. This way, however, is more efficient,
+    /// even if you preallocate the vector with capacity. Because this method gives the
+    /// compiler an opportunity to vectorize the construction, unlike sequential
+    /// [`push`][`crate::traits::MutableArray::push`] calls.
+    ///
     /// # Errors
     ///
     /// For details see [`ArrayError`].
@@ -95,6 +104,15 @@ where
 
     /// Creates a new [`DynamicArray`] with a given size, generated through a given factory,
     /// with a custom allocator. This allocates memory only when `size > 0`.
+    ///
+    /// # Notes
+    ///
+    /// This method is functionally equivalent to initializing an empty vector and running
+    /// factory one by one in a loop, and passing it to
+    /// [`push`][`crate::traits::MutableArray::push`]. This way, however, is more efficient,
+    /// even if you preallocate the vector with capacity. Because this method gives the
+    /// compiler an opportunity to vectorize the construction, unlike sequential
+    /// [`push`][`crate::traits::MutableArray::push`] calls.
     ///
     /// # Errors
     ///

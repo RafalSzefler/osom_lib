@@ -21,6 +21,11 @@ fn test_std_dynamic_array_clone() {
 }
 
 #[test]
+fn test_std_dynamic_array_back_and_forth() {
+    array_helpers::test_array_back_and_forth(StdDynamicArray::new)
+}
+
+#[test]
 fn test_std_dynamic_array_sized_allocation() {
     let array = StdDynamicArray::with_factory(Length::try_from_u32(15).unwrap(), |idx| idx).unwrap();
     assert_eq!(array.as_ref(), &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);

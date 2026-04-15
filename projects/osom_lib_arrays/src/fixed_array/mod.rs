@@ -1,4 +1,7 @@
 //! Holds the definition of [`ConstFixedArray`], [`InlineFixedArray`] and [`FixedArray`].
+//!
+//! Unlike dynamic arrays, fixed arrays' capacity does not change once initialized. Its
+//! size still does change though.
 
 mod const_fixed_array;
 pub use const_fixed_array::*;
