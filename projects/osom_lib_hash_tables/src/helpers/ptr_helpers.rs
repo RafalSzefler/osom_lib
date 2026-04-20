@@ -3,7 +3,7 @@ macro_rules! ptr_to_ref {
         let result;
         #[allow(unused_unsafe)]
         {
-            result = unsafe { &*($e) };
+            result = unsafe { ($e).as_ref_unchecked() };
         }
         result
     }};
@@ -16,7 +16,7 @@ macro_rules! ptr_to_mut {
         let result;
         #[allow(unused_unsafe)]
         {
-            result = unsafe { &mut *($e) };
+            result = unsafe { ($e).as_mut_unchecked() };
         }
         result
     }};

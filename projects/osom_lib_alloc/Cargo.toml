@@ -8,9 +8,8 @@ license-file.workspace = true
 
 [dependencies]
 osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1" }
-osom_lib_cfg_ext = { path = "../osom_lib_cfg_ext", version = "0.1", optional = true }
 libc = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
-std = ["osom_lib_cfg_ext", "libc"]
+std = ["libc"]

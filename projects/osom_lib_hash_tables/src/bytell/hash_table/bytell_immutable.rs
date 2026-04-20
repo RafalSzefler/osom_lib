@@ -73,7 +73,7 @@ where
 {
     #[inline(always)]
     fn length(&self) -> Length {
-        self.elements_count
+        self.length()
     }
 
     #[inline(always)]
@@ -82,7 +82,7 @@ where
         TKey: Borrow<Q>,
         Q: Eq + Hash + ?Sized,
     {
-        self.get(key).is_some()
+        self.get_key_value(key).is_some()
     }
 
     #[inline(always)]

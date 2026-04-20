@@ -1,4 +1,5 @@
-//! Holds the implementation of the standard allocator, based on `libc` crate.
+//! Holds the implementation of the standard allocator, based on `alloc` crate.
+extern crate alloc;
 
 use core::{alloc::Layout, ptr::NonNull};
 
@@ -81,55 +82,17 @@ unsafe impl Allocator for StdAllocator {
     }
 }
 
-osom_lib_cfg_ext::cfg_match!(
-    (miri) => {
-        extern crate alloc;
+#[inline(always)]
+fn raw_aligned_malloc(layout: Layout) -> *mut u8 {
+    unsafe { alloc::alloc::alloc(layout) }
+}
 
-        #[inline(always)]
-        fn raw_aligned_malloc(layout: Layout) -> *mut u8 {
-            unsafe { alloc::alloc::alloc(layout) }
-        }
+#[inline(always)]
+fn raw_aligned_realloc(ptr: *mut u8, old_layout: Layout, new_size: usize) -> *mut u8 {
+    unsafe { alloc::alloc::realloc(ptr, old_layout, new_size) }
+}
 
-        #[inline(always)]
-        fn raw_aligned_realloc(ptr: *mut u8, old_layout: Layout, new_size: usize) -> *mut u8 {
-            unsafe { alloc::alloc::realloc(ptr, old_layout, new_size) }
-        }
-
-        #[inline(always)]
-        fn raw_aligned_free(ptr: *mut u8, layout: Layout) {
-            unsafe { alloc::alloc::dealloc(ptr, layout) }
-        }
-    },
-    (target_os="windows") => {
-        #[inline(always)]
-        fn raw_aligned_malloc(layout: Layout) -> *mut u8 {
-            unsafe { ::libc::aligned_malloc(layout.size(), layout.align()).cast() }
-        }
-
-        #[inline(always)]
-        fn raw_aligned_realloc(ptr: *mut u8, old_layout: Layout, new_size: usize) -> *mut u8 {
-            unsafe { ::libc::aligned_realloc(ptr.cast(), new_size, old_layout.align()).cast() }
-        }
-
-        #[inline(always)]
-        fn raw_aligned_free(ptr: *mut u8, _layout: Layout) {
-            unsafe { ::libc::aligned_free(ptr.cast()) }
-        }
-    },
-    _ => {
-        #[inline(always)]
-        fn raw_aligned_malloc(layout: Layout) -> *mut u8 {
-            unsafe { ::libc::malloc(layout.size()).cast() }
-        }
-
-        #[inline(always)]
-        fn raw_aligned_realloc(ptr: *mut u8, _old_layout: Layout, new_size: usize) -> *mut u8 {
-            unsafe { ::libc::realloc(ptr.cast(), new_size).cast() }
-        }
-
-        #[inline(always)]
-        fn raw_aligned_free(ptr: *mut u8, _layout: Layout) {
-            unsafe { ::libc::free(ptr.cast()) }
-        }
-    }
-);
+#[inline(always)]
+fn raw_aligned_free(ptr: *mut u8, layout: Layout) {
+    unsafe { alloc::alloc::dealloc(ptr, layout) }
+}

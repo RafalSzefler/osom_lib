@@ -9,6 +9,7 @@
 #![allow(clippy::redundant_field_names, clippy::inline_always, clippy::unreadable_literal)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod abseil;
 pub mod bytell;
 pub(crate) mod helpers;
 pub mod traits;

@@ -29,6 +29,9 @@ pub struct ConstFixedArray<const TSIZE: usize, T: Sized + Copy> {
     _phantom: PhantomData<T>,
 }
 
+unsafe impl<const TSIZE: usize, T: Send + Sized + Copy> Send for ConstFixedArray<TSIZE, T> {}
+unsafe impl<const TSIZE: usize, T: Sync + Sized + Copy> Sync for ConstFixedArray<TSIZE, T> {}
+
 unsafe impl<const TSIZE: usize, T: ReprC + Sized + Copy> ReprC for ConstFixedArray<TSIZE, T> {
     const CHECK: () = {
         let () = T::CHECK;

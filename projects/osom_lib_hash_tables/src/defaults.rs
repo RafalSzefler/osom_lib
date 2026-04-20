@@ -11,6 +11,8 @@ use crate::{
     traits::{ImmutableHashTable, MutableHashTable},
 };
 
+type InnerMap<TKey, TValue, TAllocator> = BytellHashTable<TKey, TValue, DefaultBytellConfig<TAllocator>>;
+
 /// Represents a general possible error for the default hash table.
 #[reprc]
 #[repr(u8)]
@@ -46,7 +48,25 @@ where
     TKey: Eq + Hash,
     TAllocator: Allocator,
 {
-    inner: BytellHashTable<TKey, TValue, DefaultBytellConfig<TAllocator>>,
+    inner: InnerMap<TKey, TValue, TAllocator>,
+}
+
+unsafe impl<TKey, TValue, TAllocator> Send for DefaultHashTable<TKey, TValue, TAllocator>
+where
+    TKey: Send + Eq + Hash,
+    TValue: Send,
+    TAllocator: Allocator + Send,
+    InnerMap<TKey, TValue, TAllocator>: Sync,
+{
+}
+
+unsafe impl<TKey, TValue, TAllocator> Sync for DefaultHashTable<TKey, TValue, TAllocator>
+where
+    TKey: Sync + Eq + Hash,
+    TValue: Sync,
+    TAllocator: Allocator + Sync,
+    InnerMap<TKey, TValue, TAllocator>: Sync,
+{
 }
 
 unsafe impl<TKey, TValue, TAllocator> ReprC for DefaultHashTable<TKey, TValue, TAllocator>
@@ -54,9 +74,13 @@ where
     TKey: Eq + Hash + ReprC,
     TValue: ReprC,
     TAllocator: Allocator + ReprC,
+    InnerMap<TKey, TValue, TAllocator>: ReprC,
 {
     const CHECK: () = const {
-        let () = <BytellHashTable<TKey, TValue, DefaultBytellConfig<TAllocator>> as ReprC>::CHECK;
+        let () = <TKey as ReprC>::CHECK;
+        let () = <TValue as ReprC>::CHECK;
+        let () = <TAllocator as ReprC>::CHECK;
+        let () = <InnerMap<TKey, TValue, TAllocator> as ReprC>::CHECK;
     };
 }
 
@@ -112,6 +136,7 @@ impl<TKey, TValue, TAllocator> ImmutableHashTable<TKey, TValue> for DefaultHashT
 where
     TKey: Eq + Hash,
     TAllocator: Allocator,
+    InnerMap<TKey, TValue, TAllocator>: ImmutableHashTable<TKey, TValue>,
 {
     #[inline(always)]
     fn length(&self) -> Length {
@@ -160,6 +185,7 @@ impl<TKey, TValue, TAllocator> MutableHashTable<TKey, TValue> for DefaultHashTab
 where
     TKey: Eq + Hash,
     TAllocator: Allocator,
+    InnerMap<TKey, TValue, TAllocator>: MutableHashTable<TKey, TValue>,
 {
     #[inline(always)]
     fn insert(&mut self, key: TKey, value: TValue) -> Option<TValue> {
@@ -199,6 +225,7 @@ impl<TKey, TValue, TAllocator> Default for DefaultHashTable<TKey, TValue, TAlloc
 where
     TKey: Eq + Hash,
     TAllocator: Allocator,
+    InnerMap<TKey, TValue, TAllocator>: Default,
 {
     #[inline(always)]
     fn default() -> Self {

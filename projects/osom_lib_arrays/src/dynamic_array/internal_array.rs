@@ -38,14 +38,14 @@ where
 unsafe impl<T, TAllocator> Send for InternalArray<T, TAllocator>
 where
     T: Send,
-    TAllocator: Allocator,
+    TAllocator: Allocator + Send,
 {
 }
 
 unsafe impl<T, TAllocator> Sync for InternalArray<T, TAllocator>
 where
     T: Sync,
-    TAllocator: Allocator,
+    TAllocator: Allocator + Sync,
 {
 }
 

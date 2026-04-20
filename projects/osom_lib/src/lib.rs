@@ -15,7 +15,7 @@
 mod macro_helpers;
 
 crate::macro_helpers::reexport!(lib;
-    primitives, alloc, arrays, cfg_ext, reprc, prng, hashes, hash_tables, macros, numbers);
+    primitives, alloc, arrays, reprc, prng, hashes, hash_tables, macros, numbers);
 
 crate::macro_helpers::reexport_std!(lib;
     entropy, entropy_cprng);

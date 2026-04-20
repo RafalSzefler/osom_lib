@@ -103,8 +103,8 @@ struct SHA2_256_aarch64_Updater;
 impl SHA2_256_Updater for SHA2_256_aarch64_Updater {
     #[inline(always)]
     fn update_state(state: &mut [u32; 8], bufferer: &mut ConstBufferer<'_, 64, u8>) {
-        osom_lib_cfg_ext::cfg_match!(
-            (target_arch = "aarch64") => {
+        cfg_select! {
+            target_arch = "aarch64" => {
                 unsafe { sha2_256_update_state_aarch64(state, bufferer) };
             },
             _ => {
@@ -112,7 +112,7 @@ impl SHA2_256_Updater for SHA2_256_aarch64_Updater {
                 let _ = bufferer;
                 panic!("SHA2_256_aarch64 requires aarch64 target.");
             },
-        );
+        }
     }
 }
 
@@ -141,8 +141,8 @@ impl SHA2_256_aarch64 {
     /// If `target_arch` is not `aarch64`.
     #[inline(always)]
     pub const fn new() -> Self {
-        osom_lib_cfg_ext::cfg_match!(
-            (target_arch="aarch64") => {
+        cfg_select! {
+            target_arch="aarch64" => {
                 return Self {
                     inner: SHA2_256_Template::new(),
                 };
@@ -150,7 +150,7 @@ impl SHA2_256_aarch64 {
             _ => {
                 panic!("SHA2_256_aarch64 requires aarch64 target.");
             },
-        );
+        }
     }
 
     /// Writes a block of data to the underlying state.

@@ -9,7 +9,6 @@ license-file.workspace = true
 [dependencies]
 paste = { workspace = true }
 osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1" }
-osom_lib_cfg_ext = { path = "../osom_lib_cfg_ext", version = "0.1" }
 osom_lib_arrays = { path = "../osom_lib_arrays", version = "0.1" }
 
 [dev-dependencies]

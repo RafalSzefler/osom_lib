@@ -8,17 +8,17 @@ macro_rules! reexport {
     };
 }
 
-osom_lib_cfg_ext::cfg_match!(
-    (target_os="macos") => {
+cfg_select! {
+    target_os="macos" => {
         reexport!(libc_getentropy);
     },
-    (target_os="linux") => {
+    target_os="linux" => {
         reexport!(libc_getrandom);
     },
-    (target_os="windows") => {
+    target_os="windows" => {
         reexport!(windows_sys_process_prng);
     },
     _ => {
         compile_error!("Current target is not supported.");
     }
-);
+}
