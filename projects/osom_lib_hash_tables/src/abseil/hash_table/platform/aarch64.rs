@@ -1,3 +1,5 @@
+#![allow(clippy::wildcard_imports)]
+
 use std::arch::aarch64::*;
 use std::marker::PhantomData;
 
@@ -52,8 +54,8 @@ unsafe fn extract_bitmask(mask: uint8x16_t) -> u32 {
         // Round 3: [p0..p7, p8..p15, ...]
         let sum = vpadd_u8(sum, sum);
 
-        let lo = vget_lane_u8::<0>(sum) as u32;
-        let hi = vget_lane_u8::<1>(sum) as u32;
+        let lo = u32::from(vget_lane_u8::<0>(sum));
+        let hi = u32::from(vget_lane_u8::<1>(sum));
         lo | (hi << 8)
     }
 }

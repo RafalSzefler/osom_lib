@@ -94,10 +94,10 @@ where
                 }
             }
 
-            if first_tombstone.is_none() {
-                if let Some(ts_idx) = PlatformImpl::iter_matching_indexes(control_bytes, CONTROL_BYTE_TOMBSTONE).next() {
-                    first_tombstone = Some((group_index, ts_idx));
-                }
+            if first_tombstone.is_none()
+                && let Some(ts_idx) = PlatformImpl::iter_matching_indexes(control_bytes, CONTROL_BYTE_TOMBSTONE).next()
+            {
+                first_tombstone = Some((group_index, ts_idx));
             }
 
             if let Some(empty_idx) = PlatformImpl::iter_matching_indexes(control_bytes, CONTROL_BYTE_EMPTY).next() {
