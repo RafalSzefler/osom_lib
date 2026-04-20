@@ -7,7 +7,6 @@ rust-version.workspace = true
 license-file.workspace = true
 
 [dependencies]
-osom_lib_cfg_ext = { path = "../osom_lib_cfg_ext", version = "0.1" }
 osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1" }
 
 [target.'cfg(any(target_os="macos", target_os="linux"))'.dependencies]

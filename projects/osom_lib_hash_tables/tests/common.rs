@@ -5,6 +5,7 @@ use std::sync::{Arc, atomic::AtomicU32};
 use osom_lib_hash_tables::traits::MutableHashTable;
 use osom_lib_primitives::{length::Length, macros::make_length};
 
+#[inline(never)]
 pub fn test_hash_table_biggg<T: MutableHashTable<i32, u64>>(builder: impl FnOnce() -> T) {
     let mut table = builder();
     assert_eq!(table.length(), Length::ZERO);
@@ -25,6 +26,7 @@ pub fn test_hash_table_biggg<T: MutableHashTable<i32, u64>>(builder: impl FnOnce
     assert_eq!(table_len, ITERATIONS);
 }
 
+#[inline(never)]
 pub fn test_hash_table_simple<T: MutableHashTable<i32, u8>>(builder: impl FnOnce() -> T) {
     let mut table = builder();
     assert_eq!(table.length(), Length::ZERO);
@@ -54,6 +56,7 @@ pub fn test_hash_table_simple<T: MutableHashTable<i32, u8>>(builder: impl FnOnce
     assert_eq!(table.length(), make_length!(3));
 }
 
+#[inline(never)]
 pub fn test_hash_table_iter<T: MutableHashTable<String, u32>>(builder: impl FnOnce() -> T) {
     let mut table = builder();
     table.insert("d".to_string(), 0b1000);
@@ -124,6 +127,7 @@ impl core::fmt::Debug for TestStruct {
     }
 }
 
+#[inline(never)]
 pub fn test_hash_table_ownership<T: MutableHashTable<i32, TestStruct>>(builder: impl FnOnce() -> T) {
     let counter = Arc::new(AtomicU32::new(0));
 
@@ -192,6 +196,7 @@ pub fn test_hash_table_ownership<T: MutableHashTable<i32, TestStruct>>(builder: 
     assert_eq!(load!(), 0);
 }
 
+#[inline(never)]
 pub fn test_hash_table_clone<T: MutableHashTable<i32, String> + Clone + PartialEq>(builder: impl FnOnce() -> T) {
     let mut table = builder();
     assert_eq!(table.length().as_u32(), 0);

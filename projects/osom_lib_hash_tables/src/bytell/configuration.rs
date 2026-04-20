@@ -9,7 +9,7 @@ use crate::helpers::MaxLoadFactor;
 use super::hash_to_index::HashToIndex;
 
 /// The actual bytell hash table configuration trait.
-pub trait BytellConfig: Default + Clone + Send + Sync + Sized {
+pub trait BytellConfig: Default + Clone + Sized {
     type ConcreteHashToIndex: HashToIndex;
     type ConcreteBuildHasher: BuildHasher;
     type ConcreteAllocator: Allocator;

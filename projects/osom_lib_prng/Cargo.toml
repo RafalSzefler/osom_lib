@@ -8,7 +8,6 @@ license-file.workspace = true
 
 [dependencies]
 osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1" }
-osom_lib_cfg_ext = { path = "../osom_lib_cfg_ext", version = "0.1" }
 paste = { workspace = true }
 
 [target.'cfg(any(target_arch = "x86", target_arch = "x86_64"))'.dependencies]

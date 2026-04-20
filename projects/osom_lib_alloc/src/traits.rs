@@ -16,7 +16,7 @@ pub struct AllocationError;
 /// This trait is inherently unsafe, since it depends on well managed
 /// raw pointers. For example it is possible to call [`Allocator::deallocate`]
 /// twice on the same pointer, which is an Undefined Behaviour.
-pub unsafe trait Allocator: Debug + Default + Clone + ReprC + Send + Sync {
+pub unsafe trait Allocator: Debug + Default + Clone + ReprC {
     /// A specific Allocator error. Implementor can add additional
     /// information to the error, not only generic "allocation failed".
     type SpecificAllocationError: Into<AllocationError> + Debug + ReprC;

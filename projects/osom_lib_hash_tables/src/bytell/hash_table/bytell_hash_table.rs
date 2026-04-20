@@ -28,7 +28,7 @@ use crate::{
     traits::{ImmutableHashTable, MutableHashTable},
 };
 
-#[doc = include_str!("../README.md")]
+/// The bytell hash table.
 #[repr(C)]
 #[must_use]
 pub struct BytellHashTable<TKey, TValue, TConfig>
@@ -62,7 +62,7 @@ unsafe impl<TKey, TValue, TConfig> Send for BytellHashTable<TKey, TValue, TConfi
 where
     TKey: Send + Eq + Hash,
     TValue: Send,
-    TConfig: BytellConfig,
+    TConfig: BytellConfig + Send,
 {
 }
 
@@ -70,7 +70,7 @@ unsafe impl<TKey, TValue, TConfig> Sync for BytellHashTable<TKey, TValue, TConfi
 where
     TKey: Sync + Eq + Hash,
     TValue: Sync,
-    TConfig: BytellConfig,
+    TConfig: BytellConfig + Sync,
 {
 }
 
@@ -87,7 +87,7 @@ where
 
     /// Creates a new [`BytellHashTable`] with the specified configuration.
     #[inline]
-    pub fn with_config(config: TConfig) -> Self {
+    pub const fn with_config(config: TConfig) -> Self {
         Self {
             data: ptr::null_mut(),
             elements_count: Length::ZERO,
@@ -214,9 +214,15 @@ where
         Ok(new_table)
     }
 
+    /// Returns the length of the [`BytellHashTable`].
+    #[inline(always)]
+    pub const fn length(&self) -> Length {
+        self.elements_count
+    }
+
     /// Returns the capacity of the [`BytellHashTable`].
     #[inline(always)]
-    pub fn capacity(&self) -> PowerOfTwo32 {
+    pub const fn capacity(&self) -> PowerOfTwo32 {
         let block_capacity = BlockLayoutHolder::<TKey, TValue>::LAYOUT.block_capacity().value();
         let result = self.blocks_count.value() * block_capacity;
         debug_check_or_release_hint!(result == 0 || result.is_power_of_two(), "result is not a power of two");

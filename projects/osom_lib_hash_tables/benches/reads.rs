@@ -2,10 +2,9 @@ use std::{collections::HashMap, hint::black_box};
 
 use criterion::{BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::WallTime};
 
-use osom_lib_hash_tables::{
-    bytell::defaults::StdBytellHashTable,
-    traits::{ImmutableHashTable, MutableHashTable},
-};
+use osom_lib_hash_tables::abseil::defaults::StdAbseilHashTable;
+use osom_lib_hash_tables::bytell::defaults::StdBytellHashTable;
+use osom_lib_hash_tables::traits::{ImmutableHashTable, MutableHashTable};
 
 #[inline(never)]
 fn bench_reads<T: ImmutableHashTable<String, usize>>(hash_table: &T, strings: &Vec<String>) {
@@ -70,11 +69,13 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut bencher = Bencher::new(c, "SmallReads", SMALL_DATA_SIZE);
     bencher.add_benchmark("HashMap", HashMap::new());
     bencher.add_benchmark("Bytell", StdBytellHashTable::new());
+    bencher.add_benchmark("Abseil", StdAbseilHashTable::new());
     bencher.finish();
 
     let mut bencher = Bencher::new(c, "BigReads", BIG_DATA_SIZE);
     bencher.add_benchmark("HashMap", HashMap::new());
     bencher.add_benchmark("Bytell", StdBytellHashTable::new());
+    bencher.add_benchmark("Abseil", StdAbseilHashTable::new());
     bencher.finish();
 }
 

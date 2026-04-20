@@ -28,6 +28,9 @@ pub struct InlineFixedArray<const TSIZE: usize, T: Sized> {
     _phantom: PhantomData<T>,
 }
 
+unsafe impl<const TSIZE: usize, T: Send + Sized> Send for InlineFixedArray<TSIZE, T> {}
+unsafe impl<const TSIZE: usize, T: Sync + Sized> Sync for InlineFixedArray<TSIZE, T> {}
+
 unsafe impl<const TSIZE: usize, T: ReprC + Sized> ReprC for InlineFixedArray<TSIZE, T> {
     const CHECK: () = const {
         let () = T::CHECK;

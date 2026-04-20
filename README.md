@@ -39,8 +39,6 @@ ABI stable hash tables.
 ABI stable hashing functions.
 * [`osom_lib_macros`](https://rafalszefler.github.io/osom_lib/osom_lib_macros) several general macros
 useful in various context.
-* [`osom_lib_cfg_ext`](https://rafalszefler.github.io/osom_lib/osom_lib_cfg_ext) proc-macros
-that make working with cfg easier.
 * [`osom_lib_primitives`](https://rafalszefler.github.io/osom_lib/osom_lib_primitives) holds
 several primitives (like Length and CResult) used by other osom libs.
 * [`osom_lib_alloc`](https://rafalszefler.github.io/osom_lib/osom_lib_alloc) defines Allocator

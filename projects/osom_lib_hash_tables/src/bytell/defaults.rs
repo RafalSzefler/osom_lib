@@ -20,7 +20,22 @@ pub struct DefaultBytellConfig<TAllocator: Allocator> {
     hash_to_index: FibonacciHashToIndex,
     build_hasher: SipHashBuilder,
     allocator: TAllocator,
-    load_factor: MaxLoadFactor,
+}
+
+unsafe impl<TAllocator: Allocator + Send> Send for DefaultBytellConfig<TAllocator>
+where
+    SipHashBuilder: Send,
+    FibonacciHashToIndex: Send,
+    MaxLoadFactor: Send,
+{
+}
+
+unsafe impl<TAllocator: Allocator + Sync> Sync for DefaultBytellConfig<TAllocator>
+where
+    SipHashBuilder: Sync,
+    FibonacciHashToIndex: Sync,
+    MaxLoadFactor: Sync,
+{
 }
 
 impl<TAllocator: Allocator> DefaultBytellConfig<TAllocator> {
@@ -39,7 +54,6 @@ impl<TAllocator: Allocator> DefaultBytellConfig<TAllocator> {
                 hash_to_index: FibonacciHashToIndex::default(),
                 build_hasher: SipHashBuilder::with_keys(1, 2),
                 allocator: allocator,
-                load_factor: MaxLoadFactor::new(0.9375),
             }
         }
     }
@@ -51,7 +65,6 @@ impl<TAllocator: Allocator> Clone for DefaultBytellConfig<TAllocator> {
             hash_to_index: self.hash_to_index,
             build_hasher: self.build_hasher.clone(),
             allocator: self.allocator.clone(),
-            load_factor: self.load_factor,
         }
     }
 }
@@ -84,7 +97,7 @@ impl<TAllocator: Allocator> BytellConfig for DefaultBytellConfig<TAllocator> {
     }
 
     fn load_factor(&self) -> MaxLoadFactor {
-        self.load_factor
+        MaxLoadFactor::new(0.9375)
     }
 }
 
