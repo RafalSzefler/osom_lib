@@ -79,6 +79,8 @@ where
         // the probe chain and proves the key is absent).
         let mut first_tombstone: Option<(usize, usize)> = None; // (group_index, slot_index)
 
+        // TODO: can the three iter_matching_indexes be combined into one? That's what Claude thinks,
+        // and apparantly std::HashMap does.
         for group_index in probe_block_indexes(h1, blocks_count) {
             let block = self.get_block_by_index(group_index);
             let control_bytes = ptr_to_mut!(block.control_block_ptr());
@@ -110,9 +112,10 @@ where
                 let target_ctrl = ptr_to_mut!(target_block.control_block_ptr());
                 let target_kvp_ptr = target_block.key_value_pair_at_index(target_slot);
 
-                unsafe { core::hint::assert_unchecked(target_slot < target_ctrl.len()) };
-                target_ctrl[target_slot] = h2;
-                unsafe { target_kvp_ptr.write(KVP { key, value: adder() }) };
+                unsafe {
+                    *target_ctrl.get_unchecked_mut(target_slot) = h2;
+                    target_kvp_ptr.write(KVP { key, value: adder() });
+                };
 
                 unsafe {
                     self.elements_count = Length::new_unchecked(self.elements_count.as_u32().unchecked_add(1));
