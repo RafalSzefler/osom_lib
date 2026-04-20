@@ -16,6 +16,7 @@ env:
   # Change to specific Rust release to pin
   rust_nightly: nightly
   rust_version: 1.95.0
+  rust_components: rustfmt, clippy, rust-docs
 jobs:
   clippy:
     name: Fmt & Clippy
@@ -69,6 +70,7 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
       with:
         toolchain: ${{ env.rust_version }}
+        components: ${{ env.rust_components }}
     - name: Configure cache
       uses: Swatinem/rust-cache@v2
     - name: Build
