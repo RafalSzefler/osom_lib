@@ -15,6 +15,7 @@ env:
   RUST_BACKTRACE: 1
   # Change to specific Rust release to pin
   rust_nightly: nightly
+  rust_version: 1.95.0
 jobs:
   clippy:
     name: Fmt & Clippy
@@ -64,6 +65,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v6
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ env.rust_version }}
     - name: Configure cache
       uses: Swatinem/rust-cache@v2
     - name: Build
