@@ -133,8 +133,16 @@ where
     }
 
     #[inline(always)]
-    pub(super) fn get_block_by_index(&self, index: usize) -> AbseilBlock<TKey, TValue> {
-        let layout = AbseilLayout::<TKey, TValue>::new(self.blocks_count());
+    pub(super) fn abseil_layout(&self) -> AbseilLayout<TKey, TValue> {
+        AbseilLayout::<TKey, TValue>::new(self.blocks_count())
+    }
+
+    #[inline(always)]
+    pub(super) fn get_block_by_index(
+        &self,
+        index: usize,
+        layout: &AbseilLayout<TKey, TValue>,
+    ) -> AbseilBlock<TKey, TValue> {
         unsafe {
             let control_block_ptr = self
                 .data

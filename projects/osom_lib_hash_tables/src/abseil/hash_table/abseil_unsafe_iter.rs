@@ -3,13 +3,11 @@ use core::hash::Hash;
 use osom_lib_primitives::power_of_two::PowerOfTwo32;
 
 use crate::{
-    abseil::{
-        configuration::AbseilConfig,
-        hash_table::platform::{PlatformImpl, PlatformOps as _},
-    },
-    helpers::{KVP, ptr_to_mut, ptr_to_ref},
+    abseil::{configuration::AbseilConfig, hash_table::abseil_layout::AbseilLayout},
+    helpers::{KVP, ptr_to_ref},
 };
 
+use super::platform::{PlatformImpl, PlatformOps};
 use super::{AbseilHashTable, set_bit_iterator::SetBitIterator};
 
 pub struct AbseilUnsafeIter<TKey, TValue, TConfig>
@@ -44,7 +42,8 @@ macro_rules! from_hash_table {
             };
         }
 
-        let first_block = table_ref.get_block_by_index(0);
+        let abseil_layout = table_ref.abseil_layout();
+        let first_block = table_ref.get_block_by_index(0, &abseil_layout);
         let control_bytes = ptr_to_ref!(first_block.control_block_ptr());
         Self {
             table,
@@ -55,7 +54,7 @@ macro_rules! from_hash_table {
 }
 
 macro_rules! next_data_index {
-    ( $self: expr ) => {{
+    ( $self: expr, $layout: expr ) => {{
         let s = { $self };
         let table_ref = ptr_to_ref!(s.table);
         let blocks_count = table_ref.blocks_count().value();
@@ -68,7 +67,7 @@ macro_rules! next_data_index {
             if s.current_group_idx >= blocks_count {
                 break;
             }
-            let block = table_ref.get_block_by_index(s.current_group_idx as usize);
+            let block = table_ref.get_block_by_index(s.current_group_idx as usize, $layout);
             let control_bytes = ptr_to_ref!(block.control_block_ptr());
             s.current_group_iter = PlatformImpl::iter_data_indexes(control_bytes);
         }
@@ -87,8 +86,8 @@ where
         from_hash_table!(table)
     }
 
-    fn next_data_index(&mut self) -> Option<usize> {
-        next_data_index!(self)
+    fn next_data_index(&mut self, layout: &AbseilLayout<TKey, TValue>) -> Option<usize> {
+        next_data_index!(self, &layout)
     }
 }
 
@@ -102,8 +101,8 @@ where
         from_hash_table!(table)
     }
 
-    fn next_data_index(&mut self) -> Option<usize> {
-        next_data_index!(self)
+    fn next_data_index(&mut self, layout: &AbseilLayout<TKey, TValue>) -> Option<usize> {
+        next_data_index!(self, &layout)
     }
 }
 
@@ -115,9 +114,10 @@ where
     type Item = *const KVP<TKey, TValue>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let idx = self.next_data_index()?;
         let table_ref = ptr_to_ref!(self.table);
-        let block = table_ref.get_block_by_index(self.current_group_idx as usize);
+        let layout = table_ref.abseil_layout();
+        let idx = self.next_data_index(&layout)?;
+        let block = table_ref.get_block_by_index(self.current_group_idx as usize, &layout);
         Some(block.key_value_pair_at_index(idx))
     }
 
@@ -135,9 +135,10 @@ where
     type Item = *mut KVP<TKey, TValue>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let idx = self.next_data_index()?;
-        let table_ref = ptr_to_mut!(self.table);
-        let block = table_ref.get_block_by_index(self.current_group_idx as usize);
+        let table_ref = ptr_to_ref!(self.table);
+        let layout = table_ref.abseil_layout();
+        let idx = self.next_data_index(&layout)?;
+        let block = table_ref.get_block_by_index(self.current_group_idx as usize, &layout);
         Some(block.key_value_pair_at_index(idx))
     }
 

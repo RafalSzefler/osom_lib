@@ -39,11 +39,13 @@ where
     {
         let blocks_count = self.blocks_count();
         let (h1, h2) = self.config.calculate_partial_hashes(key);
+        let abseil_layout = self.abseil_layout();
 
         for group_index in probe_block_indexes(h1, blocks_count) {
-            let block = self.get_block_by_index(group_index);
+            let block = self.get_block_by_index(group_index, &abseil_layout);
             let control_bytes = ptr_to_mut!(block.control_block_ptr());
-            for matching_index in PlatformImpl::iter_matching_indexes(control_bytes, h2) {
+            let mut scan_data = PlatformImpl::matching_block_scan(control_bytes, h2);
+            for matching_index in scan_data.matching_indexes {
                 let kvp_ptr = block.key_value_pair_at_index(matching_index);
                 let kvp = ptr_to_ref!(kvp_ptr);
                 if kvp.key.borrow() == key {
@@ -55,6 +57,10 @@ where
                     }
                     return Some((kvp.key, kvp.value));
                 }
+            }
+
+            if scan_data.empty_buckets.next().is_some() {
+                return None;
             }
         }
 
@@ -72,18 +78,17 @@ where
 
         let (h1, h2) = self.config.calculate_partial_hashes(&key);
         let blocks_count = self.blocks_count();
+        let abseil_layout = self.abseil_layout();
 
         // Single pass: search for an existing key while simultaneously tracking
         // the first tombstone and watching for an empty slot (which terminates
         // the probe chain and proves the key is absent).
         let mut first_tombstone: Option<(usize, usize)> = None; // (group_index, slot_index)
 
-        // TODO: can the three iter_matching_indexes be combined into one? That's what Claude thinks,
-        // and apparantly std::HashMap does.
         for group_index in probe_block_indexes(h1, blocks_count) {
-            let block = self.get_block_by_index(group_index);
+            let block = self.get_block_by_index(group_index, &abseil_layout);
             let control_bytes = ptr_to_mut!(block.control_block_ptr());
-            let mut scan_result = PlatformImpl::scan_block(control_bytes, h2);
+            let mut scan_result = PlatformImpl::full_block_scan(control_bytes, h2);
 
             for matching_index in scan_result.matching_indexes {
                 let kvp_ptr = block.key_value_pair_at_index(matching_index);
@@ -103,12 +108,16 @@ where
             if let Some(empty_idx) = scan_result.empty_buckets.next() {
                 // Empty slot proves the key is absent. Prefer tombstone (reuse deleted slot)
                 // over the empty slot when available.
-                let (target_group, target_slot, used_empty) = match first_tombstone {
-                    Some((tg, ts)) => (tg, ts, false),
-                    None => (group_index, empty_idx, true),
+                let (target_group, target_slot) = match first_tombstone {
+                    Some((tg, ts)) => (tg, ts),
+                    None => {
+                        self.remaining_capacity =
+                            unsafe { Length::new_unchecked(self.remaining_capacity.as_u32().unchecked_sub(1)) };
+                        (group_index, empty_idx)
+                    }
                 };
 
-                let target_block = self.get_block_by_index(target_group);
+                let target_block = self.get_block_by_index(target_group, &abseil_layout);
                 let target_ctrl = ptr_to_mut!(target_block.control_block_ptr());
                 let target_kvp_ptr = target_block.key_value_pair_at_index(target_slot);
 
@@ -119,10 +128,6 @@ where
 
                 unsafe {
                     self.elements_count = Length::new_unchecked(self.elements_count.as_u32().unchecked_add(1));
-                    if used_empty {
-                        self.remaining_capacity =
-                            Length::new_unchecked(self.remaining_capacity.as_u32().unchecked_sub(1));
-                    }
                 }
 
                 // Safety: the pointer is valid for the lifetime of self.

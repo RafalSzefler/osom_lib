@@ -12,16 +12,6 @@ pub struct PortablePlatformOps {
 }
 
 impl PlatformOps for PortablePlatformOps {
-    fn iter_matching_indexes(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8) -> SetBitIterator {
-        let mut indexes = 0u16;
-        for (idx, value) in control_bytes.iter().enumerate() {
-            if *value == partial_hash {
-                indexes |= 1 << idx;
-            }
-        }
-        SetBitIterator::new(indexes)
-    }
-
     fn iter_data_indexes(control_bytes: &[u8; ABSEIL_BLOCK_SIZE]) -> SetBitIterator {
         let mut indexes = 0u16;
         for (idx, value) in control_bytes.iter().enumerate() {
@@ -70,21 +60,6 @@ mod test {
     use rstest::rstest;
 
     use super::*;
-
-    #[rstest]
-    #[case(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 1, &[])]
-    #[case(&[0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 15, &[2])]
-    #[case(&[0, 0, 15, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 15], 15, &[2, 15])]
-    #[case(&[0, 0, 15, 0, 255, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 156], 156, &[15])]
-    #[case(&[0, 0, 15, 0, 255, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0], 0, &[0, 1, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15])]
-    fn test_portable_iter_matching_indexes(
-        #[case] control_bytes: &[u8; ABSEIL_BLOCK_SIZE],
-        #[case] partial_hash: u8,
-        #[case] expected_indexes: &[usize],
-    ) {
-        let result: Vec<usize> = PortablePlatformOps::iter_matching_indexes(control_bytes, partial_hash).collect();
-        assert_eq!(result, expected_indexes);
-    }
 
     #[rstest]
     #[case(&[255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255], &[])]

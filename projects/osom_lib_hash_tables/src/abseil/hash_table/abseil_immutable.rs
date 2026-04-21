@@ -48,15 +48,21 @@ where
     {
         let blocks_count = self.blocks_count();
         let (h1, h2) = self.config.calculate_partial_hashes(key);
+        let abseil_layout = self.abseil_layout();
 
         for group_index in probe_block_indexes(h1, blocks_count) {
-            let block = self.get_block_by_index(group_index);
+            let block = self.get_block_by_index(group_index, &abseil_layout);
             let control_bytes = ptr_to_ref!(block.control_block_ptr());
-            for matching_index in PlatformImpl::iter_matching_indexes(control_bytes, h2) {
+            let mut scan_result = PlatformImpl::matching_block_scan(control_bytes, h2);
+            for matching_index in scan_result.matching_indexes {
                 let kvp = ptr_to_ref!(block.key_value_pair_at_index(matching_index));
                 if kvp.key.borrow() == key {
                     return Some((&kvp.key, &kvp.value));
                 }
+            }
+
+            if scan_result.empty_buckets.next().is_some() {
+                return None;
             }
         }
 
