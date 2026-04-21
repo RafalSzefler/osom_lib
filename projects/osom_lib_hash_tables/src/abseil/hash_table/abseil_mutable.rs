@@ -108,13 +108,12 @@ where
             if let Some(empty_idx) = scan_result.empty_buckets.next() {
                 // Empty slot proves the key is absent. Prefer tombstone (reuse deleted slot)
                 // over the empty slot when available.
-                let (target_group, target_slot) = match first_tombstone {
-                    Some((tg, ts)) => (tg, ts),
-                    None => {
-                        self.remaining_capacity =
-                            unsafe { Length::new_unchecked(self.remaining_capacity.as_u32().unchecked_sub(1)) };
-                        (group_index, empty_idx)
-                    }
+                let (target_group, target_slot) = if let Some((tg, ts)) = first_tombstone {
+                    (tg, ts)
+                } else {
+                    self.remaining_capacity =
+                        unsafe { Length::new_unchecked(self.remaining_capacity.as_u32().unchecked_sub(1)) };
+                    (group_index, empty_idx)
                 };
 
                 let target_block = self.get_block_by_index(target_group, &abseil_layout);

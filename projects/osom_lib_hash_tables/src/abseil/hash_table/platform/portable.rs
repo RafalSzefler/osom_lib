@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use crate::abseil::hash_table::{
     abseil_block::{CONTROL_BYTE_EMPTY, CONTROL_BYTE_TOMBSTONE},
     abseil_layout::ABSEIL_BLOCK_SIZE,
-    platform::{PlatformOps, ScanBlockResult},
+    platform::{FullBlockScanResult, MatchingAndEmptyBlockScanResult, PlatformOps},
     set_bit_iterator::SetBitIterator,
 };
 
@@ -22,7 +22,7 @@ impl PlatformOps for PortablePlatformOps {
         SetBitIterator::new(indexes)
     }
 
-    fn scan_block(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8) -> ScanBlockResult {
+    fn full_block_scan(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8) -> FullBlockScanResult {
         let mut matching_indexes = 0u16;
         let mut empty_indexes = 0u16;
         let mut tombstone_indexes = 0u16;
@@ -47,10 +47,35 @@ impl PlatformOps for PortablePlatformOps {
             }
         }
 
-        ScanBlockResult {
+        FullBlockScanResult {
             matching_indexes: SetBitIterator::new(matching_indexes),
             empty_buckets: SetBitIterator::new(empty_indexes),
             tombstones: SetBitIterator::new(tombstone_indexes),
+        }
+    }
+
+    fn matching_block_scan(
+        control_bytes: &[u8; ABSEIL_BLOCK_SIZE],
+        partial_hash: u8,
+    ) -> MatchingAndEmptyBlockScanResult {
+        let mut matching_indexes = 0u16;
+        let mut empty_indexes = 0u16;
+
+        for (idx, value) in control_bytes.iter().enumerate() {
+            let value = *value;
+            let bit = 1 << idx;
+            if value < 0x80 {
+                if value == partial_hash {
+                    matching_indexes |= bit;
+                }
+            } else if value == CONTROL_BYTE_EMPTY {
+                empty_indexes |= bit;
+            }
+        }
+
+        MatchingAndEmptyBlockScanResult {
+            matching_indexes: SetBitIterator::new(matching_indexes),
+            empty_buckets: SetBitIterator::new(empty_indexes),
         }
     }
 }

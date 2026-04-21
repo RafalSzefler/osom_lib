@@ -74,7 +74,7 @@ impl<TAllocator: Allocator> Default for DefaultAbseilConfig<TAllocator> {
 impl<TAllocator: Allocator> Clone for DefaultAbseilConfig<TAllocator> {
     fn clone(&self) -> Self {
         Self {
-            build_hasher: self.build_hasher.clone(),
+            build_hasher: self.build_hasher,
             allocator: self.allocator.clone(),
         }
     }
