@@ -1,7 +1,10 @@
 use std::marker::PhantomData;
 
 use crate::abseil::hash_table::{
-    abseil_layout::ABSEIL_BLOCK_SIZE, platform::PlatformOps, set_bit_iterator::SetBitIterator,
+    abseil_block::{CONTROL_BYTE_EMPTY, CONTROL_BYTE_TOMBSTONE},
+    abseil_layout::ABSEIL_BLOCK_SIZE,
+    platform::{PlatformOps, ScanBlockResult},
+    set_bit_iterator::SetBitIterator,
 };
 
 pub struct PortablePlatformOps {
@@ -10,23 +13,55 @@ pub struct PortablePlatformOps {
 
 impl PlatformOps for PortablePlatformOps {
     fn iter_matching_indexes(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8) -> SetBitIterator {
-        let mut indexes: u32 = 0;
+        let mut indexes = 0u16;
         for (idx, value) in control_bytes.iter().enumerate() {
             if *value == partial_hash {
                 indexes |= 1 << idx;
             }
         }
-        SetBitIterator::new(indexes.reverse_bits())
+        SetBitIterator::new(indexes)
     }
 
     fn iter_data_indexes(control_bytes: &[u8; ABSEIL_BLOCK_SIZE]) -> SetBitIterator {
-        let mut indexes: u32 = 0;
+        let mut indexes = 0u16;
         for (idx, value) in control_bytes.iter().enumerate() {
             if *value & 0x80 == 0 {
                 indexes |= 1 << idx;
             }
         }
-        SetBitIterator::new(indexes.reverse_bits())
+        SetBitIterator::new(indexes)
+    }
+
+    fn scan_block(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8) -> ScanBlockResult {
+        let mut matching_indexes = 0u16;
+        let mut empty_indexes = 0u16;
+        let mut tombstone_indexes = 0u16;
+
+        for (idx, value) in control_bytes.iter().enumerate() {
+            let value = *value;
+            let bit = 1 << idx;
+            if value < 0x80 {
+                if value == partial_hash {
+                    matching_indexes |= bit;
+                }
+            } else {
+                match value {
+                    CONTROL_BYTE_EMPTY => {
+                        empty_indexes |= bit;
+                    }
+                    CONTROL_BYTE_TOMBSTONE => {
+                        tombstone_indexes |= bit;
+                    }
+                    _ => unreachable!("There are only two possible values for control byte above or equal to 0x80."),
+                }
+            }
+        }
+
+        ScanBlockResult {
+            matching_indexes: SetBitIterator::new(matching_indexes),
+            empty_buckets: SetBitIterator::new(empty_indexes),
+            tombstones: SetBitIterator::new(tombstone_indexes),
+        }
     }
 }
 

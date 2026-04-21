@@ -4,7 +4,9 @@ use std::arch::aarch64::*;
 use std::marker::PhantomData;
 
 use crate::abseil::hash_table::{
-    abseil_layout::ABSEIL_BLOCK_SIZE, platform::PlatformOps, set_bit_iterator::SetBitIterator,
+    abseil_layout::ABSEIL_BLOCK_SIZE,
+    platform::{PlatformOps, ScanBlockResult},
+    set_bit_iterator::SetBitIterator,
 };
 
 pub struct Aarch64PlatformOps {
@@ -20,6 +22,15 @@ impl PlatformOps for Aarch64PlatformOps {
     fn iter_data_indexes(control_bytes: &[u8; ABSEIL_BLOCK_SIZE]) -> SetBitIterator {
         let indexes = unsafe { neon_data(control_bytes) };
         SetBitIterator::new(indexes)
+    }
+
+    fn scan_block(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8) -> ScanBlockResult {
+        let (matching, empty, tombstones) = unsafe { neon_scan(control_bytes, partial_hash) };
+        ScanBlockResult {
+            matching_indexes: SetBitIterator::new(matching),
+            empty_buckets: SetBitIterator::new(empty),
+            tombstones: SetBitIterator::new(tombstones),
+        }
     }
 }
 
@@ -44,9 +55,9 @@ unsafe fn extract_bitmask(mask: uint8x16_t) -> u16 {
 #[inline]
 unsafe fn neon_matching(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8) -> u16 {
     unsafe {
-        let v = vld1q_u8(control_bytes.as_ptr());
-        let needle = vdupq_n_u8(partial_hash);
-        extract_bitmask(vceqq_u8(v, needle))
+        let ctrl = vld1q_u8(control_bytes.as_ptr());
+        let matching_hash = vceqq_u8(ctrl, vdupq_n_u8(partial_hash));
+        extract_bitmask(matching_hash)
     }
 }
 
@@ -54,9 +65,25 @@ unsafe fn neon_matching(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u
 #[inline]
 unsafe fn neon_data(control_bytes: &[u8; ABSEIL_BLOCK_SIZE]) -> u16 {
     unsafe {
-        let v = vld1q_u8(control_bytes.as_ptr());
-        let occupied = vcltq_u8(v, vdupq_n_u8(0x80));
+        let ctrl = vld1q_u8(control_bytes.as_ptr());
+        let occupied = vcltq_u8(ctrl, vdupq_n_u8(0x80));
         extract_bitmask(occupied)
+    }
+}
+
+#[target_feature(enable = "neon")]
+#[inline]
+unsafe fn neon_scan(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8) -> (u16, u16, u16) {
+    unsafe {
+        let ctrl = vld1q_u8(control_bytes.as_ptr());
+        let matching_hash = vceqq_u8(ctrl, vdupq_n_u8(partial_hash));
+        let is_empty = vceqq_u8(ctrl, vdupq_n_u8(0x80));
+        let is_tombstone = vceqq_u8(ctrl, vdupq_n_u8(0xff));
+        (
+            extract_bitmask(matching_hash),
+            extract_bitmask(is_empty),
+            extract_bitmask(is_tombstone),
+        )
     }
 }
 

@@ -2,7 +2,7 @@ use core::hash::Hash;
 
 use osom_lib_primitives::length::Length;
 
-use crate::abseil::hash_table::abseil_block::{CONTROL_BYTE_EMPTY, CONTROL_BYTE_TOMBSTONE};
+use crate::abseil::hash_table::abseil_block::CONTROL_BYTE_TOMBSTONE;
 use crate::abseil::hash_table::abseil_unsafe_iter::AbseilUnsafeMutIter;
 use crate::abseil::hash_table::platform::{PlatformImpl, PlatformOps as _};
 use crate::abseil::utils::probe_block_indexes;
@@ -83,8 +83,9 @@ where
         for group_index in probe_block_indexes(h1, blocks_count) {
             let block = self.get_block_by_index(group_index);
             let control_bytes = ptr_to_mut!(block.control_block_ptr());
+            let mut scan_result = PlatformImpl::scan_block(control_bytes, h2);
 
-            for matching_index in PlatformImpl::iter_matching_indexes(control_bytes, h2) {
+            for matching_index in scan_result.matching_indexes {
                 let kvp_ptr = block.key_value_pair_at_index(matching_index);
                 let kvp = ptr_to_mut!(kvp_ptr);
                 if kvp.key == key {
@@ -94,12 +95,12 @@ where
             }
 
             if first_tombstone.is_none()
-                && let Some(ts_idx) = PlatformImpl::iter_matching_indexes(control_bytes, CONTROL_BYTE_TOMBSTONE).next()
+                && let Some(tombstone_idx) = scan_result.tombstones.next()
             {
-                first_tombstone = Some((group_index, ts_idx));
+                first_tombstone = Some((group_index, tombstone_idx));
             }
 
-            if let Some(empty_idx) = PlatformImpl::iter_matching_indexes(control_bytes, CONTROL_BYTE_EMPTY).next() {
+            if let Some(empty_idx) = scan_result.empty_buckets.next() {
                 // Empty slot proves the key is absent. Prefer tombstone (reuse deleted slot)
                 // over the empty slot when available.
                 let (target_group, target_slot, used_empty) = match first_tombstone {
