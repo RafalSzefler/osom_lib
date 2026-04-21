@@ -97,7 +97,6 @@ where
         }
     }
 
-    #[inline(never)]
     fn get_key_value<Q>(&self, key: &Q) -> Option<(&TKey, &TValue)>
     where
         TKey: Borrow<Q>,

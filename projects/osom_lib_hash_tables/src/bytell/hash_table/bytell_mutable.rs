@@ -88,7 +88,6 @@ where
         result
     }
 
-    #[inline(never)]
     fn remove_entry<Q>(&mut self, key: &Q) -> Option<(TKey, TValue)>
     where
         TKey: Borrow<Q>,
@@ -155,7 +154,6 @@ where
         }
     }
 
-    #[inline(never)]
     fn insert_or_update_with<FAdd, FUpdate>(&mut self, key: TKey, adder: FAdd, updater: FUpdate) -> &mut TValue
     where
         FAdd: FnOnce() -> TValue,

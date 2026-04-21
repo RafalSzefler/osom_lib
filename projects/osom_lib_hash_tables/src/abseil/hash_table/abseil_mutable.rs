@@ -61,7 +61,6 @@ where
         None
     }
 
-    #[inline(never)]
     fn insert_or_update_with<FAdd, FUpdate>(&mut self, key: TKey, adder: FAdd, updater: FUpdate) -> &mut TValue
     where
         FAdd: FnOnce() -> TValue,

@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_variables)]
 use core::alloc::Layout;
 use core::marker::PhantomData;
 
@@ -6,7 +5,7 @@ use osom_lib_primitives::power_of_two::PowerOfTwo32;
 
 use crate::helpers::KVP;
 
-pub const ABSEIL_BLOCK_SIZE: usize = 32;
+pub const ABSEIL_BLOCK_SIZE: usize = 16;
 
 #[repr(C)]
 #[must_use]
@@ -73,14 +72,11 @@ impl<TKey, TValue> AbseilLayout<TKey, TValue> {
     pub const fn key_value_pairs_offset(&self) -> usize {
         self.key_value_pairs_offset
     }
-
-    #[inline(always)]
-    pub const fn key_value_pairs_size(&self) -> usize {
-        self.key_value_pairs_size
-    }
 }
 
 const _: () = const {
-    assert!(ABSEIL_BLOCK_SIZE.is_power_of_two());
-    assert!(ABSEIL_BLOCK_SIZE >= 4);
+    assert!(
+        ABSEIL_BLOCK_SIZE == 16,
+        "ABSEIL_BLOCK_SIZE constant should always be 16"
+    );
 };

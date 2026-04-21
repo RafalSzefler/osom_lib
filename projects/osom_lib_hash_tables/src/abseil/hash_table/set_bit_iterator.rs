@@ -8,12 +8,12 @@ use osom_lib_reprc::macros::reprc;
 #[reprc]
 #[must_use]
 pub struct SetBitIterator {
-    value: u32,
+    value: u16,
 }
 
 impl SetBitIterator {
     #[inline(always)]
-    pub const fn new(value: u32) -> Self {
+    pub const fn new(value: u16) -> Self {
         Self { value }
     }
 }
@@ -23,11 +23,12 @@ impl Iterator for SetBitIterator {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        let idx = self.value.leading_zeros();
-        if idx == 32 {
+        if self.value == 0 {
             return None;
         }
-        self.value = !((!self.value) | (1 << (31 - idx)));
+
+        let idx = self.value.trailing_zeros();
+        self.value &= unsafe { self.value.unchecked_sub(1) };
         Some(idx as usize)
     }
 }
@@ -40,13 +41,13 @@ mod tests {
 
     #[rstest]
     #[case(0, &[])]
-    #[case(0b101, &[29, 31])]
-    #[case(0b110, &[29, 30])]
-    #[case(0b11001001, &[24, 25, 28, 31])]
-    #[case(0b10000000_00000000_00000000_00000000, &[0])]
-    #[case(0b00010000_00000000_00000000_00000000, &[3])]
-    #[case(0b10000100_00010000_00000010_01000000, &[0, 5, 11, 22, 25])]
-    fn test_iterator(#[case] initial_value: u32, #[case] expected_result: &[usize]) {
+    #[case(0b101, &[0, 2])]
+    #[case(0b110, &[1, 2])]
+    #[case(0b11001001, &[0, 3, 6, 7])]
+    #[case(0b10000000_00000000, &[15])]
+    #[case(0b00010000_00000000, &[12])]
+    #[case(0b10000100_00010000, &[4, 10, 15])]
+    fn test_iterator(#[case] initial_value: u16, #[case] expected_result: &[usize]) {
         let result: Vec<usize> = SetBitIterator::new(initial_value).collect();
         assert_eq!(result, expected_result);
     }

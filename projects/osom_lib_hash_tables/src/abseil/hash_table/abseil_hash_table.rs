@@ -218,9 +218,45 @@ where
             let _ = new_self.insert(kvp.key, kvp.value);
         }
 
+        // Drop old memory. We don't need to loop through items though, they have been moved.
+        // So just deallocate memory, and drop the config.
+        self.deconstruct_buffer();
+
         // Swap self with new_self, and forget the previous value
         core::mem::swap(self, &mut new_self);
         core::mem::forget(new_self);
+    }
+
+    #[inline(always)]
+    fn deconstruct_buffer(&mut self) {
+        if self.data.is_null() {
+            return;
+        }
+        let data = unsafe { NonNull::new_unchecked(self.data) };
+        let old_layout = AbseilLayout::<TKey, TValue>::new(self.blocks_count());
+        unsafe {
+            self.config.allocator().deallocate(data, old_layout.total_layout());
+            ManuallyDrop::drop(&mut self.config);
+        }
+    }
+
+    #[inline]
+    fn deconstruct_buffer_and_drop_data(&mut self) {
+        if self.data.is_null() {
+            return;
+        }
+
+        if core::mem::needs_drop::<TKey>() || core::mem::needs_drop::<TValue>() {
+            for kvp in AbseilUnsafeMutIter::from_hash_table(self) {
+                let kvp = ptr_to_mut!(kvp);
+                unsafe {
+                    core::ptr::drop_in_place(&raw mut kvp.key);
+                    core::ptr::drop_in_place(&raw mut kvp.value);
+                }
+            }
+        }
+
+        self.deconstruct_buffer();
     }
 }
 
@@ -316,25 +352,6 @@ where
     TConfig: AbseilConfig,
 {
     fn drop(&mut self) {
-        if self.data.is_null() {
-            return;
-        }
-
-        if core::mem::needs_drop::<TKey>() || core::mem::needs_drop::<TValue>() {
-            for kvp in AbseilUnsafeMutIter::from_hash_table(self) {
-                let kvp = ptr_to_mut!(kvp);
-                unsafe {
-                    core::ptr::drop_in_place(&raw mut kvp.key);
-                    core::ptr::drop_in_place(&raw mut kvp.value);
-                }
-            }
-        }
-
-        let data = unsafe { NonNull::new_unchecked(self.data) };
-
-        let layout = AbseilLayout::<TKey, TValue>::new(self.blocks_count());
-        unsafe { self.config.allocator().deallocate(data, layout.total_layout()) };
-
-        unsafe { ManuallyDrop::drop(&mut self.config) };
+        self.deconstruct_buffer_and_drop_data();
     }
 }
