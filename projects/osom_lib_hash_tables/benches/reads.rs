@@ -9,7 +9,7 @@ use osom_lib_hash_tables::traits::{ImmutableHashTable, MutableHashTable};
 #[inline(never)]
 fn bench_reads<T: ImmutableHashTable<String, usize>>(hash_table: &T, strings: &Vec<String>) {
     for txt in strings {
-        let _ = hash_table.get(txt);
+        let _ = hash_table.get_key_value(txt);
     }
 }
 

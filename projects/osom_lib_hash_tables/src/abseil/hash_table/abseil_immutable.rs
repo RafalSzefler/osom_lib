@@ -41,6 +41,7 @@ where
         }
     }
 
+    #[inline(always)]
     fn get_key_value<Q>(&self, key: &Q) -> Option<(&TKey, &TValue)>
     where
         TKey: std::borrow::Borrow<Q>,
@@ -48,10 +49,9 @@ where
     {
         let blocks_count = self.blocks_count();
         let (h1, h2) = self.config.calculate_partial_hashes(key);
-        let abseil_layout = self.abseil_layout();
 
         for group_index in probe_block_indexes(h1, blocks_count) {
-            let block = self.get_block_by_index(group_index, &abseil_layout);
+            let block = self.get_block_by_index(group_index);
             let control_bytes = ptr_to_ref!(block.control_block_ptr());
             let mut scan_result = PlatformImpl::matching_block_scan(control_bytes, h2);
             for matching_index in scan_result.matching_indexes {

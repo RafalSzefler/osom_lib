@@ -28,7 +28,12 @@ where
     TConfig: AbseilConfig,
 {
     /// Pointer to the actual data.
-    pub(super) data: *mut u8,
+    pub(super) control_data: *mut u8,
+
+    /// Pointer to the (key, value) pairs. This is not an independent pointer.
+    /// The memory it points to is owned by control_data. This is just a
+    /// cached offset. For allocation and deallocation we use control_data only.
+    pub(super) kvp_data: *mut u8,
 
     /// The number of elements in the table.
     pub(super) elements_count: Length,
@@ -91,7 +96,8 @@ where
     #[inline]
     pub const fn with_config(config: TConfig) -> Self {
         Self {
-            data: null_mut(),
+            control_data: null_mut(),
+            kvp_data: null_mut(),
             elements_count: Length::ZERO,
             remaining_capacity: Length::ZERO,
             total_capacity: PowerOfTwo32::ZERO,
@@ -133,25 +139,11 @@ where
     }
 
     #[inline(always)]
-    pub(super) fn abseil_layout(&self) -> AbseilLayout<TKey, TValue> {
-        AbseilLayout::<TKey, TValue>::new(self.blocks_count())
-    }
-
-    #[inline(always)]
-    pub(super) fn get_block_by_index(
-        &self,
-        index: usize,
-        layout: &AbseilLayout<TKey, TValue>,
-    ) -> AbseilBlock<TKey, TValue> {
+    pub(super) fn get_block_by_index(&self, index: usize) -> AbseilBlock<TKey, TValue> {
         unsafe {
-            let control_block_ptr = self
-                .data
-                .add(layout.control_blocks_offset())
-                .cast::<[u8; ABSEIL_BLOCK_SIZE]>()
-                .add(index);
+            let control_block_ptr = self.control_data.cast::<[u8; ABSEIL_BLOCK_SIZE]>().add(index);
             let key_values_ptr = self
-                .data
-                .add(layout.key_value_pairs_offset())
+                .kvp_data
                 .cast::<[KVP<TKey, TValue>; ABSEIL_BLOCK_SIZE]>()
                 .add(index);
             AbseilBlock::new(control_block_ptr, key_values_ptr)
@@ -212,7 +204,8 @@ where
 
         // Set new data
         let mut new_self = Self {
-            data: new_ptr,
+            control_data: new_ptr,
+            kvp_data: unsafe { new_ptr.add(new_layout.key_value_pairs_offset()) },
             elements_count: Length::ZERO,
             remaining_capacity: unsafe { Length::new_unchecked(new_max_elements) },
             total_capacity: unsafe { PowerOfTwo32::new_unchecked(elements_capacity as u32) },
@@ -237,20 +230,20 @@ where
 
     #[inline(always)]
     fn deconstruct_buffer(&mut self) {
-        if self.data.is_null() {
+        if self.control_data.is_null() {
             return;
         }
-        let data = unsafe { NonNull::new_unchecked(self.data) };
-        let old_layout = AbseilLayout::<TKey, TValue>::new(self.blocks_count());
+        let data = unsafe { NonNull::new_unchecked(self.control_data) };
+        let layout = AbseilLayout::<TKey, TValue>::new(self.blocks_count());
         unsafe {
-            self.config.allocator().deallocate(data, old_layout.total_layout());
+            self.config.allocator().deallocate(data, layout.total_layout());
             ManuallyDrop::drop(&mut self.config);
         }
     }
 
     #[inline]
     fn deconstruct_buffer_and_drop_data(&mut self) {
-        if self.data.is_null() {
+        if self.control_data.is_null() {
             return;
         }
 

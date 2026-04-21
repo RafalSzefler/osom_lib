@@ -59,11 +59,6 @@ impl<TKey, TValue> AbseilLayout<TKey, TValue> {
     }
 
     #[inline(always)]
-    pub const fn control_blocks_offset(&self) -> usize {
-        self.control_blocks_offset
-    }
-
-    #[inline(always)]
     pub const fn control_blocks_size(&self) -> usize {
         self.control_blocks_size
     }

@@ -39,10 +39,9 @@ where
     {
         let blocks_count = self.blocks_count();
         let (h1, h2) = self.config.calculate_partial_hashes(key);
-        let abseil_layout = self.abseil_layout();
 
         for group_index in probe_block_indexes(h1, blocks_count) {
-            let block = self.get_block_by_index(group_index, &abseil_layout);
+            let block = self.get_block_by_index(group_index);
             let control_bytes = ptr_to_mut!(block.control_block_ptr());
             let mut scan_data = PlatformImpl::matching_block_scan(control_bytes, h2);
             for matching_index in scan_data.matching_indexes {
@@ -78,7 +77,6 @@ where
 
         let (h1, h2) = self.config.calculate_partial_hashes(&key);
         let blocks_count = self.blocks_count();
-        let abseil_layout = self.abseil_layout();
 
         // Single pass: search for an existing key while simultaneously tracking
         // the first tombstone and watching for an empty slot (which terminates
@@ -86,7 +84,7 @@ where
         let mut first_tombstone: Option<(usize, usize)> = None; // (group_index, slot_index)
 
         for group_index in probe_block_indexes(h1, blocks_count) {
-            let block = self.get_block_by_index(group_index, &abseil_layout);
+            let block = self.get_block_by_index(group_index);
             let control_bytes = ptr_to_mut!(block.control_block_ptr());
             let mut scan_result = PlatformImpl::full_block_scan(control_bytes, h2);
 
@@ -116,7 +114,7 @@ where
                     (group_index, empty_idx)
                 };
 
-                let target_block = self.get_block_by_index(target_group, &abseil_layout);
+                let target_block = self.get_block_by_index(target_group);
                 let target_ctrl = ptr_to_mut!(target_block.control_block_ptr());
                 let target_kvp_ptr = target_block.key_value_pair_at_index(target_slot);
 
@@ -139,6 +137,7 @@ where
         unreachable!("no empty slot found despite remaining_capacity > 0")
     }
 
+    #[inline(always)]
     fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = (&'a TKey, &'a mut TValue)> + 'a
     where
         TKey: 'a,
