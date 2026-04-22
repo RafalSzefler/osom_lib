@@ -187,20 +187,20 @@ const fn sip_rounds<const ROUNDS: u32>(state: &mut [u64; 4]) {
     // State layout: [v0, v2, v1, v3] at indices [0, 1, 2, 3].
     let mut index = 0;
     while index < ROUNDS {
-        state[0] = state[0].wrapping_add(state[2]); // v0 += v1
-        state[2] = state[2].rotate_left(13);         // v1 <<< 13
-        state[2] ^= state[0];                        // v1 ^= v0
-        state[0] = state[0].rotate_left(32);         // v0 <<< 32
-        state[1] = state[1].wrapping_add(state[3]); // v2 += v3
-        state[3] = state[3].rotate_left(16);         // v3 <<< 16
-        state[3] ^= state[1];                        // v3 ^= v2
-        state[0] = state[0].wrapping_add(state[3]); // v0 += v3
-        state[3] = state[3].rotate_left(21);         // v3 <<< 21
-        state[3] ^= state[0];                        // v3 ^= v0
-        state[1] = state[1].wrapping_add(state[2]); // v2 += v1
-        state[2] = state[2].rotate_left(17);         // v1 <<< 17
-        state[2] ^= state[1];                        // v1 ^= v2
-        state[1] = state[1].rotate_left(32);         // v2 <<< 32
+        state[0] = state[0].wrapping_add(state[2]);
+        state[2] = state[2].rotate_left(13);
+        state[2] ^= state[0];
+        state[0] = state[0].rotate_left(32);
+        state[1] = state[1].wrapping_add(state[3]);
+        state[3] = state[3].rotate_left(16);
+        state[3] ^= state[1];
+        state[0] = state[0].wrapping_add(state[3]);
+        state[3] = state[3].rotate_left(21);
+        state[3] ^= state[0];
+        state[1] = state[1].wrapping_add(state[2]);
+        state[2] = state[2].rotate_left(17);
+        state[2] ^= state[1];
+        state[1] = state[1].rotate_left(32);
         index += 1;
     }
 }
