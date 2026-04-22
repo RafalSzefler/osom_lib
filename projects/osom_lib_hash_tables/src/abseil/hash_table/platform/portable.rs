@@ -78,6 +78,16 @@ impl PlatformOps for PortablePlatformOps {
             empty_buckets: SetBitIterator::new(empty_indexes),
         }
     }
+
+    fn empty_scan(control_bytes: &[u8; ABSEIL_BLOCK_SIZE]) -> SetBitIterator {
+        let mut indexes = 0u16;
+        for (idx, value) in control_bytes.iter().enumerate() {
+            if *value == CONTROL_BYTE_EMPTY {
+                indexes |= 1 << idx;
+            }
+        }
+        SetBitIterator::new(indexes)
+    }
 }
 
 #[cfg(test)]
