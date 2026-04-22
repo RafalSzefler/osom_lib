@@ -6,19 +6,19 @@ use osom_lib_reprc::macros::reprc;
 
 use crate::{
     bytell::{configuration::BytellConfig, hash_table::BytellHashTable, hash_to_index::FibonacciHashToIndex},
-    helpers::MaxLoadFactor,
+    helpers::{DefaultHashBuilder, MaxLoadFactor},
 };
 
 /// The default configuration for [`BytellHashTable`].
 ///
-/// It uses [`SipHashBuilder`] as the default hasher and [`FibonacciHashToIndex`] as the default hash-to-index policy.
+/// It uses [`FibonacciHashToIndex`] as the default hash-to-index policy.
 ///
 /// Additionally it uses `0.9375` as the default max load factor.
 #[reprc]
 #[must_use]
 pub struct DefaultBytellConfig<TAllocator: Allocator> {
     hash_to_index: FibonacciHashToIndex,
-    build_hasher: SipHashBuilder,
+    build_hasher: DefaultHashBuilder,
     allocator: TAllocator,
 }
 
@@ -52,7 +52,7 @@ impl<TAllocator: Allocator> DefaultBytellConfig<TAllocator> {
         {
             Self {
                 hash_to_index: FibonacciHashToIndex::default(),
-                build_hasher: SipHashBuilder::with_keys(1, 2),
+                build_hasher: DefaultHashBuilder::new(),
                 allocator: allocator,
             }
         }
@@ -63,7 +63,7 @@ impl<TAllocator: Allocator> Clone for DefaultBytellConfig<TAllocator> {
     fn clone(&self) -> Self {
         Self {
             hash_to_index: self.hash_to_index,
-            build_hasher: self.build_hasher.clone(),
+            build_hasher: self.build_hasher,
             allocator: self.allocator.clone(),
         }
     }
@@ -77,7 +77,7 @@ impl<TAllocator: Allocator> Default for DefaultBytellConfig<TAllocator> {
 
 impl<TAllocator: Allocator> BytellConfig for DefaultBytellConfig<TAllocator> {
     type ConcreteHashToIndex = FibonacciHashToIndex;
-    type ConcreteBuildHasher = SipHashBuilder;
+    type ConcreteBuildHasher = DefaultHashBuilder;
     type ConcreteAllocator = TAllocator;
 
     fn build_hasher(&self) -> &Self::ConcreteBuildHasher {

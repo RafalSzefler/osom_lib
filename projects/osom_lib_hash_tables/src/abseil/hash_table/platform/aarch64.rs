@@ -1,7 +1,7 @@
 #![allow(clippy::wildcard_imports)]
 
-use std::arch::aarch64::*;
-use std::marker::PhantomData;
+use core::arch::aarch64::*;
+use core::marker::PhantomData;
 
 use crate::abseil::hash_table::{
     abseil_layout::ABSEIL_BLOCK_SIZE,
@@ -14,11 +14,13 @@ pub struct Aarch64PlatformOps {
 }
 
 impl PlatformOps for Aarch64PlatformOps {
+    #[inline]
     fn iter_data_indexes(control_bytes: &[u8; ABSEIL_BLOCK_SIZE]) -> SetBitIterator {
         let indexes = unsafe { neon_data(control_bytes) };
         SetBitIterator::new(indexes)
     }
 
+    #[inline]
     fn full_block_scan(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8) -> FullBlockScanResult {
         let (matching, empty, tombstones) = unsafe { neon_full_scan(control_bytes, partial_hash) };
         FullBlockScanResult {
@@ -28,6 +30,7 @@ impl PlatformOps for Aarch64PlatformOps {
         }
     }
 
+    #[inline]
     fn matching_block_scan(
         control_bytes: &[u8; ABSEIL_BLOCK_SIZE],
         partial_hash: u8,
@@ -37,6 +40,12 @@ impl PlatformOps for Aarch64PlatformOps {
             matching_indexes: SetBitIterator::new(matching),
             empty_buckets: SetBitIterator::new(empty),
         }
+    }
+
+    #[inline]
+    fn empty_scan(control_bytes: &[u8; ABSEIL_BLOCK_SIZE]) -> SetBitIterator {
+        let indexes = unsafe { neon_empty(control_bytes) };
+        SetBitIterator::new(indexes)
     }
 }
 
@@ -77,6 +86,17 @@ unsafe fn neon_data(control_bytes: &[u8; ABSEIL_BLOCK_SIZE]) -> u16 {
 
 #[target_feature(enable = "neon")]
 #[inline]
+unsafe fn neon_empty(control_bytes: &[u8; ABSEIL_BLOCK_SIZE]) -> u16 {
+    unsafe {
+        let ctrl = vld1q_u8(control_bytes.as_ptr());
+        let is_empty = vceqq_u8(ctrl, vdupq_n_u8(0x80));
+        let bit_mask = build_bitmask!();
+        extract_bitmask!(is_empty, bit_mask)
+    }
+}
+
+#[target_feature(enable = "neon")]
+#[inline]
 unsafe fn neon_full_scan(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8) -> (u16, u16, u16) {
     unsafe {
         let ctrl = vld1q_u8(control_bytes.as_ptr());
@@ -107,7 +127,7 @@ unsafe fn neon_partial_scan(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_has
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod test {
     use rstest::rstest;
 

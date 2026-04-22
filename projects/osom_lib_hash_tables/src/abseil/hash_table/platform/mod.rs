@@ -25,6 +25,9 @@ pub trait PlatformOps {
     /// Scans the block for matching partial_hash or empty buckets.
     fn matching_block_scan(control_bytes: &[u8; ABSEIL_BLOCK_SIZE], partial_hash: u8)
     -> MatchingAndEmptyBlockScanResult;
+
+    /// Scans the block for empty buckets only.
+    fn empty_scan(control_bytes: &[u8; ABSEIL_BLOCK_SIZE]) -> SetBitIterator;
 }
 
 cfg_select! {

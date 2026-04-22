@@ -13,6 +13,7 @@ osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1" }
 osom_lib_alloc = { path = "../osom_lib_alloc", version = "0.1" }
 osom_lib_hashes = { path = "../osom_lib_hashes", version = "0.1" }
 osom_lib_numbers = { path = "../osom_lib_numbers", version = "0.1" }
+osom_lib_entropy_cprng = { path = "../osom_lib_entropy_cprng", version="0.1", optional=true }
 
 [dev-dependencies]
 paste = { workspace = true }
@@ -21,7 +22,7 @@ criterion = { workspace = true }
 
 [features]
 default = ["std"]
-std = ["osom_lib_alloc/std"]
+std = ["osom_lib_alloc/std", "osom_lib_entropy_cprng"]
 
 [[bench]]
 name = "inserts"

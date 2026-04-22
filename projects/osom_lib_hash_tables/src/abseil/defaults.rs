@@ -1,37 +1,13 @@
 //! Contains the default, recommended configuration for the abseil hash table.
 
-use std::{hash::BuildHasher, marker::PhantomData};
-
 use osom_lib_alloc::traits::Allocator;
-use osom_lib_hashes::siphash::GeneralSipHash;
 use osom_lib_reprc::macros::reprc;
 
 use super::hash_table::AbseilHashTable;
-use crate::{abseil::configuration::AbseilConfig, helpers::MaxLoadFactor};
-
-/// A default hash builder for Abseil hash table. Utilizes sip hash 1-3
-/// under the hood.
-#[reprc]
-#[derive(Default, Clone, Copy)]
-#[must_use]
-pub struct DefaultAbseilHashBuilder {
-    _priv: PhantomData<()>,
-}
-
-impl DefaultAbseilHashBuilder {
-    #[inline(always)]
-    pub const fn new() -> Self {
-        Self { _priv: PhantomData }
-    }
-}
-
-impl BuildHasher for DefaultAbseilHashBuilder {
-    type Hasher = GeneralSipHash<1, 3>;
-
-    fn build_hasher(&self) -> Self::Hasher {
-        GeneralSipHash::<1, 3>::for_keys(3, 4)
-    }
-}
+use crate::{
+    abseil::configuration::AbseilConfig,
+    helpers::{DefaultHashBuilder, MaxLoadFactor},
+};
 
 /// The default configuration for [`AbseilHashTable`].
 ///
@@ -41,7 +17,7 @@ impl BuildHasher for DefaultAbseilHashBuilder {
 #[reprc]
 #[must_use]
 pub struct DefaultAbseilConfig<TAllocator: Allocator> {
-    build_hasher: DefaultAbseilHashBuilder,
+    build_hasher: DefaultHashBuilder,
     allocator: TAllocator,
 }
 
@@ -59,7 +35,7 @@ impl<TAllocator: Allocator> DefaultAbseilConfig<TAllocator> {
     #[inline]
     pub fn with_allocator(allocator: TAllocator) -> Self {
         Self {
-            build_hasher: DefaultAbseilHashBuilder::new(),
+            build_hasher: DefaultHashBuilder::new(),
             allocator,
         }
     }
@@ -81,7 +57,7 @@ impl<TAllocator: Allocator> Clone for DefaultAbseilConfig<TAllocator> {
 }
 
 impl<TAllocator: Allocator> AbseilConfig for DefaultAbseilConfig<TAllocator> {
-    type ConcreteBuildHasher = DefaultAbseilHashBuilder;
+    type ConcreteBuildHasher = DefaultHashBuilder;
 
     type ConcreteAllocator = TAllocator;
 

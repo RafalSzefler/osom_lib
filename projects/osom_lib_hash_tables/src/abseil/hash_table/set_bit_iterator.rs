@@ -33,7 +33,7 @@ impl Iterator for SetBitIterator {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use rstest::rstest;
 

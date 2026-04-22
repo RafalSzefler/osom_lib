@@ -10,3 +10,6 @@ pub(crate) use ptr_helpers::*;
 
 mod max_load_factor;
 pub use max_load_factor::*;
+
+mod default_hash_builder;
+pub(crate) use default_hash_builder::*;

@@ -1,5 +1,5 @@
 use core::{hash::Hash, marker::PhantomData, mem::ManuallyDrop, ptr::null_mut};
-use std::{ops::Deref, ptr::NonNull};
+use core::{ops::Deref, ptr::NonNull};
 
 use osom_lib_alloc::traits::Allocator as _;
 use osom_lib_macros::debug_check_or_release_hint;
@@ -13,7 +13,9 @@ use crate::{
             abseil_block::{AbseilBlock, CONTROL_BYTE_EMPTY},
             abseil_layout::{ABSEIL_BLOCK_SIZE, AbseilLayout},
             abseil_unsafe_iter::{AbseilUnsafeIter, AbseilUnsafeMutIter},
+            platform::{PlatformImpl, PlatformOps},
         },
+        utils::probe_block_indexes,
     },
     helpers::{KVP, ptr_to_mut, ptr_to_ref},
     traits::MutableHashTable,
@@ -216,7 +218,7 @@ where
         // Rehash data if needed
         for kvp in AbseilUnsafeMutIter::from_hash_table(self) {
             let kvp = unsafe { kvp.read() };
-            let _ = new_self.insert(kvp.key, kvp.value);
+            unsafe { new_self.insert_without_conflict_and_resize(kvp.key, kvp.value) };
         }
 
         // Drop old memory. We don't need to loop through items though, they have been moved.
@@ -258,6 +260,47 @@ where
         }
 
         self.deconstruct_buffer();
+    }
+
+    /// This function inserts (key, value) pair. It is an optimized variant of insert,
+    /// where we know for sure that `key` is not present, that resize won't happen,
+    /// and that table does not contain tombstones. This should be used on rehashing only.
+    unsafe fn insert_without_conflict_and_resize(&mut self, key: TKey, value: TValue) {
+        let (h1, h2) = self.config.calculate_partial_hashes(&key);
+        let blocks_count = self.blocks_count();
+
+        for group_index in probe_block_indexes(h1, blocks_count) {
+            let block = self.get_block_by_index(group_index);
+            let control_bytes = ptr_to_mut!(block.control_block_ptr());
+            let mut scan_result = PlatformImpl::empty_scan(control_bytes);
+
+            if let Some(empty_idx) = scan_result.next() {
+                // Empty slot proves the key is absent. Prefer tombstone (reuse deleted slot)
+                // over the empty slot when available.
+                self.remaining_capacity =
+                    unsafe { Length::new_unchecked(self.remaining_capacity.as_u32().unchecked_sub(1)) };
+                let (target_group, target_slot) = (group_index, empty_idx);
+
+                let target_block = self.get_block_by_index(target_group);
+                let target_ctrl = ptr_to_mut!(target_block.control_block_ptr());
+                let target_kvp_ptr = target_block.key_value_pair_at_index(target_slot);
+
+                unsafe {
+                    *target_ctrl.get_unchecked_mut(target_slot) = h2;
+                    target_kvp_ptr.write(KVP { key, value });
+                };
+
+                unsafe {
+                    self.elements_count = Length::new_unchecked(self.elements_count.as_u32().unchecked_add(1));
+                }
+
+                return;
+            }
+        }
+
+        // With correct remaining_capacity management there is always at least one
+        // empty slot in the table, so this path is unreachable.
+        unreachable!("no empty slot found despite remaining_capacity > 0")
     }
 }
 

@@ -1,3 +1,4 @@
+use core::borrow::Borrow;
 use core::hash::Hash;
 
 use osom_lib_primitives::length::Length;
@@ -34,7 +35,7 @@ where
 
     fn remove_entry<Q>(&mut self, key: &Q) -> Option<(TKey, TValue)>
     where
-        TKey: std::borrow::Borrow<Q>,
+        TKey: Borrow<Q>,
         Q: Eq + Hash + ?Sized,
     {
         let blocks_count = self.blocks_count();

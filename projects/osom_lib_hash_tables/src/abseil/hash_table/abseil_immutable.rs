@@ -1,3 +1,4 @@
+use core::borrow::Borrow;
 use core::hash::Hash;
 
 use osom_lib_primitives::length::Length;
@@ -23,7 +24,7 @@ where
     #[inline(always)]
     fn contains<Q>(&self, key: &Q) -> bool
     where
-        TKey: std::borrow::Borrow<Q>,
+        TKey: Borrow<Q>,
         Q: Eq + Hash + ?Sized,
     {
         self.get_key_value(key).is_some()
@@ -32,7 +33,7 @@ where
     #[inline(always)]
     fn get<Q>(&self, key: &Q) -> Option<&TValue>
     where
-        TKey: std::borrow::Borrow<Q>,
+        TKey: Borrow<Q>,
         Q: Eq + Hash + ?Sized,
     {
         match self.get_key_value(key) {
@@ -43,7 +44,7 @@ where
 
     fn get_key_value<Q>(&self, key: &Q) -> Option<(&TKey, &TValue)>
     where
-        TKey: std::borrow::Borrow<Q>,
+        TKey: Borrow<Q>,
         Q: Eq + Hash + ?Sized,
     {
         let blocks_count = self.blocks_count();
