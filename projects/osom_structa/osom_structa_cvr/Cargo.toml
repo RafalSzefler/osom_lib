@@ -1,0 +1,43 @@
+[package]
+name = "osom_structa_cvr"
+version = "0.1.25"
+edition.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "ABI-stable Canonical Value Representation lib."
+documentation = "https://docs.rs/osom_structa_cvr"
+
+[dependencies]
+osom_lib_alloc = { path = "../../osom_lib/osom_lib_alloc", version = "0.1" }
+osom_lib_arrays = { path = "../../osom_lib/osom_lib_arrays", version = "0.1" }
+osom_lib_btree = { path = "../../osom_lib/osom_lib_btree", version = "0.1" }
+osom_lib_hash_tables = { path = "../../osom_lib/osom_lib_hash_tables", version = "0.1" }
+osom_lib_macros = { path = "../../osom_lib/osom_lib_macros", version = "0.1" }
+osom_lib_numbers = { path = "../../osom_lib/osom_lib_numbers", version = "0.1" }
+osom_lib_primitives = { path = "../../osom_lib/osom_lib_primitives", version = "0.1" }
+osom_lib_reprc = { path = "../../osom_lib/osom_lib_reprc", version = "0.1" }
+osom_lib_strings = { path = "../../osom_lib/osom_lib_strings", version = "0.1" }
+osom_lib_try_clone = { path = "../../osom_lib/osom_lib_try_clone", version = "0.1" }
+
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+rstest = { workspace = true }
+
+osom_lib_hashes = { path = "../../osom_lib/osom_lib_hashes", version = "0.1" }
+priv_osom_lib_tests = { path = "../../osom_lib/priv_osom_lib_tests", version = "0.1" }
+
+[features]
+default = []
+std = ["osom_lib_alloc/std", "serde/std"]
+serde = [
+    "dep:serde",
+    # Note: we don't enable osom_lib_strings/serde, because we are going
+    # to implement a cached variant of its deserialization.
+    "osom_lib_arrays/serde",
+    "osom_lib_btree/serde",
+]

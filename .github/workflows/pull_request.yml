@@ -1,0 +1,87 @@
+name: Pull Request Workflow
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  # Change to specific Rust release to pin
+  rust_nightly: nightly
+  rust_version: 1.95.0
+  rust_components: rustfmt, clippy, rust-docs
+jobs:
+  clippy:
+    name: Fmt & Clippy
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - runs-on: ubuntu-24.04
+          - runs-on: windows-2025
+          - runs-on: macos-26
+    runs-on: ${{ matrix.platform.runs-on }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Configure cache
+        uses: Swatinem/rust-cache@v2
+      - name: Fmt
+        run: cargo fmt --check
+      - name: Clippy debug
+        run: cargo clippy
+      - name: Clippy release
+        run: cargo clippy -r --all-features
+
+  build_and_test:
+    name: Build & Test
+    needs: clippy
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os-name: Linux-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+          - os-name: Linux-x86
+            runs-on: ubuntu-24.04
+            target: i686-unknown-linux-musl
+          - os-name: Linux-aarch64
+            runs-on: ubuntu-24.04
+            target: aarch64-unknown-linux-musl
+          - os-name: Windows-x86_64
+            runs-on: windows-2025
+            target: x86_64-pc-windows-msvc
+          - os-name: macOS-aarch64
+            runs-on: macos-26
+            target: aarch64-apple-darwin
+    runs-on: ${{ matrix.platform.runs-on }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+    - name: Configure cache
+      uses: Swatinem/rust-cache@v2
+    - name: Build
+      uses: houseabsolute/actions-rust-cross@v1
+      with:
+        command: build
+        target: ${{ matrix.platform.target }}
+        args: "--release --all-features"
+        strip: false
+        toolchain: ${{ env.rust_version }}
+    - name: Test
+      uses: houseabsolute/actions-rust-cross@v1
+      env:
+        RUSTFLAGS: -C target-cpu=native
+      with:
+        command: test
+        target: ${{ matrix.platform.target }}
+        args: "--release --all-features"
+        strip: false
+        toolchain: ${{ env.rust_version }}
