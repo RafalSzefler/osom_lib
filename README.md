@@ -65,6 +65,7 @@ Libraries are platform-agnostic unless noted; entropy crates require the `std` f
 | [`osom_lib_numbers`](https://rafalszefler.github.io/osom_lib/osom_lib_numbers) | Numeric helpers and algorithms. |
 | [`osom_lib_strings`](https://rafalszefler.github.io/osom_lib/osom_lib_strings) | String types and string-oriented algorithms. |
 | [`osom_lib_try_clone`](https://rafalszefler.github.io/osom_lib/osom_lib_try_clone) | `TryClone` trait and its implementation for some primitives. |
+| [`osom_lib_test_helpers`](https://rafalszefler.github.io/osom_lib/osom_lib_test_helpers) | Helpers intended to be used inside tests. |
 
 All crates starting with `priv_osom_lib_` prefix are intended for internal usage only, and as such
 should not be used.

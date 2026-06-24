@@ -1,0 +1,20 @@
+[package]
+name = "osom_lib_alloc"
+version = "0.1.30"
+edition.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "ABI-stable allocation primitives and allocator traits for osom_lib."
+documentation = "https://docs.rs/osom_lib_alloc"
+
+[dependencies]
+osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1" }
+osom_lib_try_clone = { path = "../osom_lib_try_clone", version = "0.1", optional = true }
+
+[features]
+default = []
+std = ["osom_lib_try_clone"]

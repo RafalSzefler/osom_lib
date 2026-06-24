@@ -1,0 +1,14 @@
+[package]
+name = "osom_lib_macros"
+version = "0.1.30"
+edition.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "General-purpose macros shared across osom_lib crates."
+documentation = "https://docs.rs/osom_lib_macros"
+
+[dependencies]

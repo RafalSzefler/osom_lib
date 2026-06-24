@@ -1,0 +1,23 @@
+[package]
+name = "priv_osom_lib_try_clone_proc_macros"
+version = "0.1.30"
+edition.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+description = "Internal proc-macro support crate for osom_lib_try_clone."
+documentation = "https://docs.rs/priv_osom_lib_try_clone_proc_macros"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+syn = { workspace = true }
+
+[features]
+default = []
