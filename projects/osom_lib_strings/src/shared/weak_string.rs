@@ -3,7 +3,7 @@ use osom_lib_arc::carc_array::CWeakArray;
 use osom_lib_reprc::macros::reprc;
 use osom_lib_try_clone::TryClone;
 
-use super::{SharedString, MaxReferencesExceededError};
+use super::{MaxReferencesExceededError, SharedString};
 
 /// Represents possible errors when upgrading a [`WeakSharedString`] to a [`SharedString`].
 #[reprc]

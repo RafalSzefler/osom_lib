@@ -8,7 +8,7 @@ use osom_lib_primitives::length::Length;
 use osom_lib_reprc::macros::reprc;
 use osom_lib_try_clone::TryClone;
 
-use super::{SharedStringError, MaxReferencesExceededError, WeakSharedString};
+use super::{MaxReferencesExceededError, SharedStringError, WeakSharedString};
 
 /// This struct is a smart pointer around a string. Internally keeps reference counters
 /// for both strong and weak references. Cloning the struct is therefore cheap.

@@ -26,7 +26,7 @@ rstest = { workspace = true }
 osom_lib_test_helpers = { path = "../osom_lib_test_helpers", version = "0.1" }
 
 [features]
-default = ["serde", "std"]
+default = []
 serde = ["dep:serde"]
 std = [
     "osom_lib_alloc/std",
