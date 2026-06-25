@@ -120,6 +120,26 @@ impl<T, TAllocator: Allocator> CArcArrayBuilder<T, TAllocator> {
         self.internal.shrink_to_fit()
     }
 
+    /// Returns a reference to the underlying slice.
+    #[inline]
+    #[must_use]
+    pub const fn data(&self) -> &[T] {
+        self.internal.data_slice()
+    }
+
+    /// Returns a mutable reference to the underlying slice.
+    #[inline]
+    #[must_use]
+    pub const fn data_mut(&mut self) -> &mut [T] {
+        self.internal.data_slice_mut()
+    }
+
+    /// Returns the length of the underlying slice.
+    #[inline]
+    pub const fn length(&self) -> Length {
+        self.internal.size()
+    }
+
     /// Builds a new [`CArcArray`] out of the [`CArcArrayBuilder`].
     #[inline]
     pub fn build(self) -> CArcArray<T, TAllocator> {
