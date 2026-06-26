@@ -1,27 +1,31 @@
+use core::sync::atomic::Ordering;
+
 use osom_lib_alloc::traits::Allocator;
-use osom_lib_primitives::{align::Align, length::Length};
+use osom_lib_primitives::length::Length;
 use osom_lib_reprc::traits::ReprC;
 use osom_lib_try_clone::TryClone;
 
-use crate::{caligned_arc_array::CAlignedArcArrayBuilder, carc_array::CArcArray, errors::CArcArrayError};
+use crate::errors::CArcArrayError;
 
-/// This is a builder for [`CArcArray`]. It is used to iteratively construct
-/// a [`CArcArray`], without the need of intermediate allocations.
+use super::{CAlignedArcArray, internal::InternalAlignedArcArray};
+
+/// This is a builder for [`CAlignedArcArray`]. It is used to iteratively construct
+/// a [`CAlignedArcArray`], without the need of intermediate allocations.
 #[repr(transparent)]
 #[must_use]
 #[derive(Debug)]
-pub struct CArcArrayBuilder<T, TAllocator: Allocator> {
-    internal: CAlignedArcArrayBuilder<Align<1>, T, TAllocator>,
+pub struct CAlignedArcArrayBuilder<TAlign, TItem, TAllocator: Allocator> {
+    internal: InternalAlignedArcArray<TAlign, TItem, TAllocator>,
 }
 
-unsafe impl<T: ReprC, TAllocator: Allocator> ReprC for CArcArrayBuilder<T, TAllocator> {
+unsafe impl<TAlign, TItem: ReprC, TAllocator: Allocator> ReprC for CAlignedArcArrayBuilder<TAlign, TItem, TAllocator> {
     const CHECK: () = const {
-        osom_lib_reprc::hidden::is_reprc::<CAlignedArcArrayBuilder<Align<1>, T, TAllocator>>();
+        osom_lib_reprc::hidden::is_reprc::<InternalAlignedArcArray<TAlign, TItem, TAllocator>>();
     };
 }
 
-impl<T, TAllocator: Allocator> CArcArrayBuilder<T, TAllocator> {
-    /// Creates a new [`CArcArrayBuilder`] with the default allocator.
+impl<TAlign, TItem, TAllocator: Allocator> CAlignedArcArrayBuilder<TAlign, TItem, TAllocator> {
+    /// Creates a new [`CAlignedArcArrayBuilder`] with the default allocator.
     ///
     /// # Notes
     ///
@@ -38,7 +42,7 @@ impl<T, TAllocator: Allocator> CArcArrayBuilder<T, TAllocator> {
         Self::with_capacity_and_allocator(Length::ZERO, TAllocator::default())
     }
 
-    /// Creates a new [`CArcArrayBuilder`] with the given capacity and the default allocator.
+    /// Creates a new [`CAlignedArcArrayBuilder`] with the given capacity and the default allocator.
     ///
     /// # Notes
     ///
@@ -55,7 +59,7 @@ impl<T, TAllocator: Allocator> CArcArrayBuilder<T, TAllocator> {
         Self::with_capacity_and_allocator(capacity, TAllocator::default())
     }
 
-    /// Creates a new [`CArcArrayBuilder`] with the given capacity and allocator.
+    /// Creates a new [`CAlignedArcArrayBuilder`] with the given capacity and allocator.
     ///
     /// # Notes
     ///
@@ -66,11 +70,11 @@ impl<T, TAllocator: Allocator> CArcArrayBuilder<T, TAllocator> {
     /// For details see [`CArcArrayError`].
     #[inline]
     pub fn with_capacity_and_allocator(capacity: Length, allocator: TAllocator) -> Result<Self, CArcArrayError> {
-        let internal = CAlignedArcArrayBuilder::with_capacity_and_allocator(capacity, allocator)?;
+        let internal = InternalAlignedArcArray::new(capacity, allocator)?;
         Ok(Self { internal })
     }
 
-    /// Pushes a new slice to the [`CArcArrayBuilder`].
+    /// Pushes a new slice to the [`CAlignedArcArrayBuilder`].
     ///
     /// # Notes
     ///
@@ -80,14 +84,14 @@ impl<T, TAllocator: Allocator> CArcArrayBuilder<T, TAllocator> {
     ///
     /// For details see [`CArcArrayError`].
     #[inline]
-    pub fn try_push_slice(&mut self, slice: &[T]) -> Result<(), CArcArrayError>
+    pub fn try_push_slice(&mut self, slice: &[TItem]) -> Result<(), CArcArrayError>
     where
-        T: TryClone,
+        TItem: TryClone,
     {
         self.internal.try_push_slice(slice)
     }
 
-    /// Pushes a new array to the [`CArcArrayBuilder`].
+    /// Pushes a new array to the [`CAlignedArcArrayBuilder`].
     ///
     /// # Notes
     ///
@@ -97,7 +101,7 @@ impl<T, TAllocator: Allocator> CArcArrayBuilder<T, TAllocator> {
     ///
     /// For details see [`CArcArrayError`].
     #[inline]
-    pub fn try_push_array<const N: usize>(&mut self, array: [T; N]) -> Result<(), CArcArrayError> {
+    pub fn try_push_array<const N: usize>(&mut self, array: [TItem; N]) -> Result<(), CArcArrayError> {
         self.internal.try_push_array(array)
     }
 
@@ -119,29 +123,41 @@ impl<T, TAllocator: Allocator> CArcArrayBuilder<T, TAllocator> {
     /// Returns a reference to the underlying slice.
     #[inline]
     #[must_use]
-    pub const fn data(&self) -> &[T] {
-        self.internal.data()
+    pub const fn data(&self) -> &[TItem] {
+        self.internal.data_slice()
     }
 
     /// Returns a mutable reference to the underlying slice.
     #[inline]
     #[must_use]
-    pub const fn data_mut(&mut self) -> &mut [T] {
-        self.internal.data_mut()
+    pub const fn data_mut(&mut self) -> &mut [TItem] {
+        self.internal.data_slice_mut()
     }
 
     /// Returns the length of the underlying slice.
     #[inline]
     pub const fn length(&self) -> Length {
-        self.internal.length()
+        self.internal.size()
     }
 
-    /// Builds a new [`CArcArray`] out of the [`CArcArrayBuilder`].
+    /// Builds a new [`CAlignedArcArray`] out of the [`CAlignedArcArrayBuilder`].
     #[inline]
-    pub fn build(self) -> CArcArray<T, TAllocator> {
+    pub fn build(self) -> CAlignedArcArray<TAlign, TItem, TAllocator> {
         let internal = unsafe { core::ptr::read(&raw const self.internal) };
         core::mem::forget(self);
-        let internal_arc = internal.build();
-        CArcArray::from_internal(internal_arc)
+        internal.strong().store(1, Ordering::Relaxed);
+        internal.weak().store(1, Ordering::Relaxed);
+        CAlignedArcArray::from_internal(internal)
+    }
+}
+
+impl<TAlign, TItem, TAllocator: Allocator> Drop for CAlignedArcArrayBuilder<TAlign, TItem, TAllocator> {
+    fn drop(&mut self) {
+        if core::mem::needs_drop::<TItem>() {
+            for item in self.internal.data_slice_mut() {
+                unsafe { core::ptr::drop_in_place(item) };
+            }
+        }
+        unsafe { self.internal.deallocate_memory() };
     }
 }

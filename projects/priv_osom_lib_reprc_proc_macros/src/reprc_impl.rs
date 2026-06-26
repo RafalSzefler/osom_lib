@@ -43,7 +43,7 @@ fn is_reprc_ref(crate_ref: &syn::Path) -> syn::Path {
 
 trait ItemInfo {
     fn attrs(&mut self) -> &mut Vec<Attribute>;
-    fn generic(&self) -> &syn::Generics;
+    fn generics(&self) -> &syn::Generics;
     fn dependent_types(&self) -> impl Iterator<Item = &syn::Type>;
     fn ident(&self) -> &syn::Ident;
 }
@@ -53,7 +53,7 @@ impl ItemInfo for ItemEnum {
         &mut self.attrs
     }
 
-    fn generic(&self) -> &syn::Generics {
+    fn generics(&self) -> &syn::Generics {
         &self.generics
     }
 
@@ -71,7 +71,7 @@ impl ItemInfo for ItemStruct {
         &mut self.attrs
     }
 
-    fn generic(&self) -> &syn::Generics {
+    fn generics(&self) -> &syn::Generics {
         &self.generics
     }
 
@@ -119,7 +119,16 @@ fn process_item<T: ItemInfo + ToTokens + Clone>(item: &T, crate_ref: &syn::Path)
         .to_tokens(&mut to_check);
     }
 
-    let (impl_g, ty_g, where_) = item.generic().split_for_impl();
+    let mut generics = item.generics().clone();
+    let type_params: Vec<syn::TypeParam> = generics.type_params().cloned().collect();
+    if !type_params.is_empty() {
+        let where_clause = generics.make_where_clause();
+        for type_param in type_params {
+            let ident = type_param.ident;
+            where_clause.predicates.push(syn::parse_quote! { #ident: #reprc_ref });
+        }
+    }
+    let (impl_g, ty_g, where_) = generics.split_for_impl();
 
     let ident = item.ident();
     if to_check.is_empty() {

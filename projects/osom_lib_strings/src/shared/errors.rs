@@ -19,6 +19,7 @@ impl From<CArcArrayError> for SharedStringError {
         match err {
             CArcArrayError::AllocationError => Self::AllocationError,
             CArcArrayError::ArraySizeOutOfRange => Self::MaxLengthExceeded,
+            CArcArrayError::ItemCloningError => panic!("CArcArrayError::ItemCloningError should not be possible here"),
         }
     }
 }

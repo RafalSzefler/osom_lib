@@ -7,17 +7,25 @@ use rstest::rstest;
 use serde::{Deserialize, Serialize};
 
 use osom_lib_arrays::fixed_array::InlineFixedArray;
-use osom_lib_arrays::std::{StdDynamicArray, StdFixedArray, StdInlineDynamicArray};
+use osom_lib_arrays::std::{StdAlignedDynamicArray, StdDynamicArray, StdFixedArray, StdInlineDynamicArray};
 use osom_lib_arrays::traits::MutableArray;
 
 const TEST_ARRAY: &[i32] = &[0, -15, 3, 47, 12612];
 const TEST_JSON: &str = "[0,-15,3,47,12612]";
+
+#[repr(align(32))]
+struct HighAlign;
+
+const _: () = const {
+    assert!(align_of::<HighAlign>() >= 32);
+};
 
 #[rstest]
 #[case::dynamic_array(|| StdDynamicArray::new())]
 #[case::inline_dynamic_array(|| StdInlineDynamicArray::<3, _>::new())]
 #[case::fixed_array(|| StdFixedArray::with_capacity(Length::try_from_usize(10).unwrap()).unwrap())]
 #[case::inline_fixed_array(|| InlineFixedArray::<10, _>::new())]
+#[case::aligned_dynamic_array(|| StdAlignedDynamicArray::<HighAlign, _>::new())]
 fn test_serialization<TArray: MutableArray<i32> + Serialize>(#[case] builder: impl FnOnce() -> TArray) {
     let mut arr = builder();
     arr.push_slice(TEST_ARRAY);
@@ -31,6 +39,7 @@ fn infer<T>() -> T {
 
 #[rstest]
 #[case::dynamic_array(infer::<StdDynamicArray<i32>>)]
+#[case::aligned_dynamic_array(infer::<StdAlignedDynamicArray<HighAlign, i32>>)]
 #[case::inline_dynamic_array(infer::<StdInlineDynamicArray<3, i32>>)]
 #[case::inline_fixed_array(infer::<InlineFixedArray<10, i32>>)]
 fn test_deserialization<'de, TArray: MutableArray<i32> + Deserialize<'de>>(#[case] _infer: impl FnOnce() -> TArray) {

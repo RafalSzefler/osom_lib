@@ -1,20 +1,14 @@
 use core::cmp::Ordering as CmpOrdering;
-use core::{
-    borrow::Borrow,
-    ops::Deref,
-    sync::atomic::{Ordering, fence},
-};
+use core::{borrow::Borrow, ops::Deref};
 
 use osom_lib_alloc::traits::Allocator;
+use osom_lib_primitives::align::Align;
 use osom_lib_primitives::length::Length;
 use osom_lib_reprc::traits::ReprC;
 use osom_lib_try_clone::TryClone;
 
-use crate::{
-    carc_array::{CWeakArray, internal::InternalArcArray},
-    consts::MAX_REFERENCES,
-    errors::MaxReferencesExceededError,
-};
+use crate::caligned_arc_array::CAlignedArcArray;
+use crate::{carc_array::CWeakArray, errors::MaxReferencesExceededError};
 
 /// A smart pointer that can be used to share ownership of a value.
 ///
@@ -24,20 +18,20 @@ use crate::{
 #[must_use]
 #[derive(Debug)]
 pub struct CArcArray<T, TAllocator: Allocator> {
-    internal: InternalArcArray<T, TAllocator>,
+    internal: CAlignedArcArray<Align<1>, T, TAllocator>,
 }
 
 unsafe impl<T: ReprC, TAllocator: Allocator> ReprC for CArcArray<T, TAllocator> {
     const CHECK: () = const {
         osom_lib_reprc::hidden::is_reprc::<T>();
         osom_lib_reprc::hidden::is_reprc::<CWeakArray<T, TAllocator>>();
-        osom_lib_reprc::hidden::is_reprc::<InternalArcArray<T, TAllocator>>();
+        osom_lib_reprc::hidden::is_reprc::<CAlignedArcArray<Align<1>, T, TAllocator>>();
     };
 }
 
 impl<T, TAllocator: Allocator> CArcArray<T, TAllocator> {
     #[inline]
-    pub(super) const fn from_internal(internal: InternalArcArray<T, TAllocator>) -> Self {
+    pub(super) const fn from_internal(internal: CAlignedArcArray<Align<1>, T, TAllocator>) -> Self {
         Self { internal }
     }
 
@@ -45,42 +39,37 @@ impl<T, TAllocator: Allocator> CArcArray<T, TAllocator> {
     #[inline(always)]
     #[must_use]
     pub fn strong_count(carc: &Self) -> u32 {
-        carc.internal.strong().load(Ordering::Relaxed)
+        CAlignedArcArray::strong_count(&carc.internal)
     }
 
     /// Returns the number of weak references to the [`CArcArray`].
     #[inline(always)]
     #[must_use]
     pub fn weak_count(carc: &Self) -> u32 {
-        carc.internal.weak().load(Ordering::Relaxed)
+        CAlignedArcArray::weak_count(&carc.internal)
     }
 
     /// Returns a reference to the underlying slice.
     #[inline]
     #[must_use]
     pub const fn data(carc: &Self) -> &[T] {
-        carc.internal.data_slice()
+        CAlignedArcArray::data(&carc.internal)
     }
 
     /// Returns the length of the underlying slice.
     #[inline]
     pub const fn length(carc: &Self) -> Length {
-        carc.internal.size()
+        CAlignedArcArray::length(&carc.internal)
     }
 
     /// Creates a new [`CWeakArray`] reference to the [`CArcArray`].
     ///
     /// # Errors
     ///
-    /// If the weak reference count is too high. Cannot exceed [`MAX_REFERENCES`].
+    /// If the weak reference count is too high. Cannot exceed [`MAX_REFERENCES`][crate::consts::MAX_REFERENCES].
     pub fn downgrade(carc: &Self) -> Result<CWeakArray<T, TAllocator>, MaxReferencesExceededError> {
-        let internal_clone = carc.internal.raw_clone();
-        let prev_value = internal_clone.weak().fetch_add(1, Ordering::Relaxed);
-        if prev_value >= MAX_REFERENCES {
-            internal_clone.weak().fetch_sub(1, Ordering::Relaxed);
-            return Err(MaxReferencesExceededError);
-        }
-        Ok(CWeakArray::from_internal(internal_clone))
+        let weak = CAlignedArcArray::downgrade(&carc.internal)?;
+        Ok(CWeakArray::from_internal(weak))
     }
 
     /// Abandons current [`CArcArray`].
@@ -90,10 +79,8 @@ impl<T, TAllocator: Allocator> CArcArray<T, TAllocator> {
     /// this call drops the underlying data, but does not deallocate the memory.
     #[inline]
     #[must_use]
-    pub fn abandon(mut carc: Self) -> Option<CWeakArray<T, TAllocator>> {
-        let result = unsafe { CArcArray::internal_abandon(&mut carc) };
-        core::mem::forget(carc);
-        result
+    pub fn abandon(carc: Self) -> Option<CWeakArray<T, TAllocator>> {
+        CAlignedArcArray::abandon(carc.internal).map(CWeakArray::from_internal)
     }
 
     /// Converts the [`CArcArray`] into a raw pointer.
@@ -105,9 +92,9 @@ impl<T, TAllocator: Allocator> CArcArray<T, TAllocator> {
     #[inline(always)]
     #[must_use]
     pub const fn into_raw_ptr(carc: Self) -> *mut u8 {
-        let ptr = carc.internal.raw_ptr();
+        let internal = unsafe { core::ptr::read(&raw const carc.internal) };
         core::mem::forget(carc);
-        ptr
+        CAlignedArcArray::into_raw_ptr(internal)
     }
 
     /// Converts a raw pointer back to a [`CArcArray`].
@@ -122,39 +109,14 @@ impl<T, TAllocator: Allocator> CArcArray<T, TAllocator> {
     /// Otherwise the behavior is undefined.
     #[inline(always)]
     pub const unsafe fn from_raw_ptr(ptr: *mut u8) -> Self {
-        let internal = InternalArcArray::from_raw_ptr(ptr);
+        let internal = unsafe { CAlignedArcArray::from_raw_ptr(ptr) };
         Self { internal }
-    }
-
-    unsafe fn internal_abandon(carc: &mut Self) -> Option<CWeakArray<T, TAllocator>> {
-        let mut internal = unsafe { core::ptr::read(&raw const carc.internal) };
-        let prev = internal.strong().fetch_sub(1, Ordering::Release);
-        if prev > 1 {
-            return None;
-        }
-
-        if core::mem::needs_drop::<T>() {
-            for item in internal.data_slice_mut() {
-                unsafe { core::ptr::drop_in_place(item) };
-            }
-        }
-
-        // Synchronize with all prior Release decrements before deallocating.
-        fence(Ordering::Acquire);
-
-        Some(CWeakArray::from_internal(internal))
-    }
-}
-
-impl<T, TAllocator: Allocator> Drop for CArcArray<T, TAllocator> {
-    fn drop(&mut self) {
-        let _ = unsafe { CArcArray::internal_abandon(self) };
     }
 }
 
 impl<T, TAllocator: Allocator> AsRef<[T]> for CArcArray<T, TAllocator> {
     fn as_ref(&self) -> &[T] {
-        self.internal.data_slice()
+        self.internal.as_ref()
     }
 }
 
@@ -162,20 +124,21 @@ impl<T, TAllocator: Allocator> Deref for CArcArray<T, TAllocator> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
-        self.internal.data_slice()
+        self.internal.deref()
     }
 }
 
 impl<T, TAllocator: Allocator> Borrow<[T]> for CArcArray<T, TAllocator> {
     fn borrow(&self) -> &[T] {
-        self.internal.data_slice()
+        self.internal.borrow()
     }
 }
 
 impl<T, TAllocator: Allocator> Clone for CArcArray<T, TAllocator> {
     fn clone(&self) -> Self {
-        self.try_clone()
-            .expect("CArcArray strong reference count is too high. Cannot exceed {MAX_REFERENCES}")
+        Self {
+            internal: self.internal.clone(),
+        }
     }
 }
 
@@ -183,24 +146,15 @@ impl<T, TAllocator: Allocator> TryClone for CArcArray<T, TAllocator> {
     type Error = MaxReferencesExceededError;
 
     fn try_clone(&self) -> Result<Self, Self::Error> {
-        let internal_clone = self.internal.raw_clone();
-        let prev_value = internal_clone.strong().fetch_add(1, Ordering::Relaxed);
-        if prev_value >= MAX_REFERENCES {
-            internal_clone.strong().fetch_sub(1, Ordering::Relaxed);
-            return Err(MaxReferencesExceededError);
-        }
         Ok(Self {
-            internal: internal_clone,
+            internal: self.internal.try_clone()?,
         })
     }
 }
 
 impl<T: PartialEq, TAllocator: Allocator> PartialEq for CArcArray<T, TAllocator> {
     fn eq(&self, other: &Self) -> bool {
-        if self.internal.raw_equals(&other.internal) {
-            return true;
-        }
-        self.as_ref() == other.as_ref()
+        self.internal == other.internal
     }
 }
 
@@ -208,7 +162,7 @@ impl<T: Eq, TAllocator: Allocator> Eq for CArcArray<T, TAllocator> {}
 
 impl<T: core::hash::Hash, TAllocator: Allocator> core::hash::Hash for CArcArray<T, TAllocator> {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        self.as_ref().hash(state);
+        self.internal.hash(state);
     }
 }
 

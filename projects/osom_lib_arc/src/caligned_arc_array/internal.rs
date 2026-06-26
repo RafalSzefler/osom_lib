@@ -9,6 +9,7 @@ use core::{
 use osom_lib_alloc::traits::Allocator;
 use osom_lib_primitives::length::Length;
 use osom_lib_reprc::traits::ReprC;
+use osom_lib_try_clone::TryClone;
 
 use crate::errors::CArcArrayError;
 
@@ -17,23 +18,29 @@ use super::layout::CArcLayout;
 #[repr(transparent)]
 #[must_use]
 #[derive(Debug)]
-pub struct InternalArcArray<T, TAllocator: Allocator> {
+pub struct InternalAlignedArcArray<TAlign, TItem, TAllocator: Allocator> {
     ptr: *mut u8,
-    _phantom: PhantomData<(T, TAllocator)>,
+    _phantom: PhantomData<(TAlign, TItem, TAllocator)>,
 }
 
-unsafe impl<T: ReprC, TAllocator: Allocator> ReprC for InternalArcArray<T, TAllocator> {
+unsafe impl<TAlign, TItem: ReprC, TAllocator: Allocator> ReprC for InternalAlignedArcArray<TAlign, TItem, TAllocator> {
     const CHECK: () = const {
-        osom_lib_reprc::hidden::is_reprc::<T>();
+        osom_lib_reprc::hidden::is_reprc::<TItem>();
         osom_lib_reprc::hidden::is_reprc::<TAllocator>();
     };
 }
 
-unsafe impl<T: Send, TAllocator: Allocator + Send> Send for InternalArcArray<T, TAllocator> {}
-unsafe impl<T: Sync, TAllocator: Allocator + Sync> Sync for InternalArcArray<T, TAllocator> {}
+unsafe impl<TAlign, TItem: Send, TAllocator: Allocator + Send> Send
+    for InternalAlignedArcArray<TAlign, TItem, TAllocator>
+{
+}
+unsafe impl<TAlign, TItem: Sync, TAllocator: Allocator + Sync> Sync
+    for InternalAlignedArcArray<TAlign, TItem, TAllocator>
+{
+}
 
-impl<T, TAllocator: Allocator> InternalArcArray<T, TAllocator> {
-    const LAYOUT: CArcLayout<T, TAllocator> = CArcLayout::new();
+impl<TAlign, TItem, TAllocator: Allocator> InternalAlignedArcArray<TAlign, TItem, TAllocator> {
+    const LAYOUT: CArcLayout<TAlign, TItem, TAllocator> = CArcLayout::new();
 
     pub fn new(capacity: Length, mut allocator: TAllocator) -> Result<Self, CArcArrayError> {
         let layout = Self::LAYOUT.calculate_for_capacity(capacity.as_u32())?;
@@ -106,9 +113,9 @@ impl<T, TAllocator: Allocator> InternalArcArray<T, TAllocator> {
         unsafe { Length::new_unchecked(self.capacity_ptr().read()) }
     }
 
-    pub fn try_push_slice(&mut self, slice: &[T]) -> Result<(), CArcArrayError>
+    pub fn try_push_slice(&mut self, slice: &[TItem]) -> Result<(), CArcArrayError>
     where
-        T: Clone,
+        TItem: TryClone,
     {
         let slice_len = slice.len();
         if slice_len > Length::MAX_LENGTH.as_usize() {
@@ -132,7 +139,12 @@ impl<T, TAllocator: Allocator> InternalArcArray<T, TAllocator> {
             let mut data_ptr = self.data_ptr().add(current_size as usize);
             let mut slice_ptr = slice.as_ptr();
             for _ in 0..slice_len {
-                data_ptr.write(slice_ptr.as_ref_unchecked().clone());
+                data_ptr.write(
+                    slice_ptr
+                        .as_ref_unchecked()
+                        .try_clone()
+                        .map_err(|_| CArcArrayError::ItemCloningError)?,
+                );
                 data_ptr = data_ptr.add(1);
                 slice_ptr = slice_ptr.add(1);
             }
@@ -142,7 +154,7 @@ impl<T, TAllocator: Allocator> InternalArcArray<T, TAllocator> {
         Ok(())
     }
 
-    pub fn try_push_array<const N: usize>(&mut self, array: [T; N]) -> Result<(), CArcArrayError> {
+    pub fn try_push_array<const N: usize>(&mut self, array: [TItem; N]) -> Result<(), CArcArrayError> {
         if N > Length::MAX_LENGTH.as_usize() {
             return Err(CArcArrayError::ArraySizeOutOfRange);
         }
@@ -203,12 +215,12 @@ impl<T, TAllocator: Allocator> InternalArcArray<T, TAllocator> {
     }
 
     #[inline]
-    pub const fn data_slice(&self) -> &[T] {
+    pub const fn data_slice(&self) -> &[TItem] {
         unsafe { core::slice::from_raw_parts(self.data_ptr(), self.size().as_usize()) }
     }
 
     #[inline]
-    pub const fn data_slice_mut(&mut self) -> &mut [T] {
+    pub const fn data_slice_mut(&mut self) -> &mut [TItem] {
         unsafe { core::slice::from_raw_parts_mut(self.data_ptr(), self.size().as_usize()) }
     }
 
@@ -245,8 +257,8 @@ impl<T, TAllocator: Allocator> InternalArcArray<T, TAllocator> {
     }
 
     #[inline]
-    const fn data_ptr(&self) -> *mut T {
-        unsafe { self.ptr.add(Self::LAYOUT.data_offset).cast::<T>() }
+    const fn data_ptr(&self) -> *mut TItem {
+        unsafe { self.ptr.add(Self::LAYOUT.data_offset).cast::<TItem>() }
     }
 
     #[inline]

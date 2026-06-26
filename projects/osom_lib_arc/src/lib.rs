@@ -7,6 +7,7 @@
 #![allow(clippy::inline_always, clippy::module_inception)]
 #![no_std]
 
+pub mod caligned_arc_array;
 pub mod carc;
 pub mod carc_array;
 pub mod consts;

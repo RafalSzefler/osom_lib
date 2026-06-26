@@ -2,8 +2,11 @@
 
 use osom_lib_alloc::std_allocator::StdAllocator;
 
-use crate::dynamic_array::{DynamicArray, InlineDynamicArray};
+use crate::dynamic_array::{AlignedDynamicArray, DynamicArray, InlineDynamicArray};
 use crate::fixed_array::FixedArray;
+
+/// The alias for [`AlignedDynamicArray`] with [`StdAllocator`].
+pub type StdAlignedDynamicArray<TAlign, TItem> = AlignedDynamicArray<TAlign, TItem, StdAllocator>;
 
 /// The alias for [`DynamicArray`] with [`StdAllocator`].
 pub type StdDynamicArray<T> = DynamicArray<T, StdAllocator>;

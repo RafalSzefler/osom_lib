@@ -34,6 +34,9 @@ pub enum CArcArrayError {
 
     /// The array size is out of range.
     ArraySizeOutOfRange = 1,
+
+    /// Tried to clone internal item in the array, but cloning failed.
+    ItemCloningError = 2,
 }
 
 osom_lib_macros::unreachable_from_infallible!(CArcArrayError);
@@ -43,6 +46,7 @@ impl Display for CArcArrayError {
         match self {
             CArcArrayError::AllocationError => write!(f, "CArcArrayError::AllocationError"),
             CArcArrayError::ArraySizeOutOfRange => write!(f, "CArcArrayError::ArraySizeOutOfRange"),
+            CArcArrayError::ItemCloningError => write!(f, "CArcArrayError::ItemCloningError"),
         }
     }
 }

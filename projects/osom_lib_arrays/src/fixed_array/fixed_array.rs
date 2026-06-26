@@ -6,7 +6,7 @@ use core::{
 };
 
 use osom_lib_alloc::traits::Allocator;
-use osom_lib_primitives::length::Length;
+use osom_lib_primitives::{align::Align, length::Length};
 use osom_lib_reprc::traits::ReprC;
 use osom_lib_try_clone::TryClone;
 
@@ -28,7 +28,7 @@ pub struct FixedArray<T, TAllocator>
 where
     TAllocator: Allocator,
 {
-    inner: InternalArray<T, TAllocator>,
+    inner: InternalArray<Align<1>, T, TAllocator>,
 }
 
 unsafe impl<T, TAllocator> Send for FixedArray<T, TAllocator>
@@ -51,7 +51,7 @@ where
     TAllocator: Allocator,
 {
     const CHECK: () = const {
-        osom_lib_reprc::hidden::is_reprc::<InternalArray<T, TAllocator>>();
+        osom_lib_reprc::hidden::is_reprc::<InternalArray<Align<1>, T, TAllocator>>();
     };
 }
 
@@ -67,7 +67,7 @@ where
     /// For details see [`ArrayError`].
     #[inline(always)]
     pub fn with_capacity_and_allocator(capacity: Length, allocator: TAllocator) -> Result<Self, ArrayError> {
-        let inner = InternalArray::<T, TAllocator>::with_capacity(capacity, allocator)?;
+        let inner = InternalArray::with_capacity(capacity, allocator)?;
         Ok(Self { inner })
     }
 

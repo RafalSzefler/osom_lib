@@ -5,7 +5,7 @@ use osom_lib_alloc::traits::Allocator;
 use crate::errors::CArcArrayError;
 
 #[must_use]
-pub struct CArcLayout<T, TAllocator: Allocator> {
+pub struct CArcLayout<TAlign, TItem, TAllocator: Allocator> {
     pub allocator_offset: usize,
     pub size_offset: usize,
     pub capacity_offset: usize,
@@ -13,14 +13,14 @@ pub struct CArcLayout<T, TAllocator: Allocator> {
     pub weak_offset: usize,
     pub data_offset: usize,
     pub alignment: usize,
-    _phantom: PhantomData<(T, TAllocator)>,
+    _phantom: PhantomData<(TAlign, TItem, TAllocator)>,
 }
 
 const fn layout_for<T>() -> Layout {
     unsafe { Layout::from_size_align_unchecked(size_of::<T>(), align_of::<T>()) }
 }
 
-impl<T, TAllocator: Allocator> CArcLayout<T, TAllocator> {
+impl<TAlign, TItem, TAllocator: Allocator> CArcLayout<TAlign, TItem, TAllocator> {
     pub const fn new() -> Self {
         let layout = unsafe { Layout::from_size_align_unchecked(0, 1) };
         let Ok((layout, allocator_offset)) = layout.extend(layout_for::<TAllocator>()) else {
@@ -43,7 +43,11 @@ impl<T, TAllocator: Allocator> CArcLayout<T, TAllocator> {
             panic!("Couldn't calculate CArcLayout for AtomicU32.");
         };
 
-        let Ok((layout, data_offset)) = layout.extend(layout_for::<T>()) else {
+        let Ok(titem_layout) = layout_for::<TItem>().align_to(align_of::<TAlign>()) else {
+            panic!("Couldn't align TItem to TAlign.");
+        };
+
+        let Ok((layout, data_offset)) = layout.extend(titem_layout) else {
             panic!("Couldn't calculate CArcLayout for AtomicU32.");
         };
 
@@ -67,7 +71,7 @@ impl<T, TAllocator: Allocator> CArcLayout<T, TAllocator> {
                 "size_of::<usize>() must be greater than size_of::<u32>()"
             );
         };
-        let Some(total_size) = size_of::<T>().checked_mul(capacity as usize) else {
+        let Some(total_size) = size_of::<TItem>().checked_mul(capacity as usize) else {
             return Err(CArcArrayError::ArraySizeOutOfRange);
         };
         let Some(total_size) = total_size.checked_add(self.data_offset) else {

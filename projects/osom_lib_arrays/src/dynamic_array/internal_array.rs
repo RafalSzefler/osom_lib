@@ -11,55 +11,65 @@ use crate::errors::{ArrayError, ArrayIsEmptyError, ArrayTryCloneError};
 #[repr(C)]
 #[derive(Debug)]
 #[must_use]
-pub struct InternalArray<T, TAllocator>
+pub struct InternalArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator,
 {
-    raw_ptr: NonNull<T>,
+    raw_ptr: NonNull<TItem>,
     length: Length,
     capacity: Length,
     allocator: TAllocator,
-    _phantom: PhantomData<T>,
+    _phantom: PhantomData<(TAlign, TItem)>,
 }
 
-unsafe impl<T, TAllocator> ReprC for InternalArray<T, TAllocator>
+unsafe impl<TAlign, TItem, TAllocator> ReprC for InternalArray<TAlign, TItem, TAllocator>
 where
-    T: ReprC,
+    TItem: ReprC,
     TAllocator: Allocator,
 {
     const CHECK: () = const {
-        osom_lib_reprc::hidden::is_reprc::<T>();
+        osom_lib_reprc::hidden::is_reprc::<TItem>();
         osom_lib_reprc::hidden::is_reprc::<Length>();
         osom_lib_reprc::hidden::is_reprc::<TAllocator>();
-        osom_lib_reprc::hidden::is_reprc::<PhantomData<T>>();
-        osom_lib_reprc::hidden::is_reprc::<NonNull<T>>();
+        osom_lib_reprc::hidden::is_reprc::<PhantomData<(TAlign, TItem)>>();
+        osom_lib_reprc::hidden::is_reprc::<NonNull<TItem>>();
     };
 }
 
-unsafe impl<T, TAllocator> Send for InternalArray<T, TAllocator>
+unsafe impl<TAlign, TItem, TAllocator> Send for InternalArray<TAlign, TItem, TAllocator>
 where
-    T: Send,
+    TItem: Send,
     TAllocator: Allocator + Send,
 {
 }
 
-unsafe impl<T, TAllocator> Sync for InternalArray<T, TAllocator>
+unsafe impl<TAlign, TItem, TAllocator> Sync for InternalArray<TAlign, TItem, TAllocator>
 where
-    T: Sync,
+    TItem: Sync,
     TAllocator: Allocator + Sync,
 {
 }
 
-impl<T, TAllocator> InternalArray<T, TAllocator>
+impl<TAlign, TItem, TAllocator> InternalArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator,
 {
+    const ALIGNMENT: usize = const {
+        let item_alignment = align_of::<TItem>();
+        let align_alignment = align_of::<TAlign>();
+        if item_alignment > align_alignment {
+            item_alignment
+        } else {
+            align_alignment
+        }
+    };
+
     const fn layout_for_size(size: Length) -> Layout {
-        let tsize = size_of::<T>();
+        let tsize = size_of::<TItem>();
         let Some(real_size) = tsize.checked_mul(size.as_usize()) else {
             panic!("Tried to allocate array of size outside of usize range");
         };
-        unsafe { Layout::from_size_align_unchecked(real_size, align_of::<T>()) }
+        unsafe { Layout::from_size_align_unchecked(real_size, Self::ALIGNMENT) }
     }
 
     #[inline(always)]
@@ -97,7 +107,7 @@ where
         let new_ptr = allocator
             .allocate(Self::layout_for_size(capacity))
             .map_err(|_| ArrayError::AllocationError)?
-            .cast::<T>();
+            .cast::<TItem>();
 
         Ok(Self {
             raw_ptr: new_ptr,
@@ -108,7 +118,7 @@ where
         })
     }
 
-    pub fn try_push_array<const TSIZE: usize>(&mut self, arr: [T; TSIZE]) -> Result<(), ArrayError> {
+    pub fn try_push_array<const TSIZE: usize>(&mut self, arr: [TItem; TSIZE]) -> Result<(), ArrayError> {
         let length = self.length.as_usize();
         let Some(new_length) = length.checked_add(TSIZE) else {
             return Err(ArrayError::LengthLimitExceeded);
@@ -134,9 +144,9 @@ where
         Ok(())
     }
 
-    pub fn try_push_slice(&mut self, slice: &[T]) -> Result<(), ArrayTryCloneError>
+    pub fn try_push_slice(&mut self, slice: &[TItem]) -> Result<(), ArrayTryCloneError>
     where
-        T: TryClone,
+        TItem: TryClone,
     {
         let length = self.length.as_usize();
         let Some(new_length) = length.checked_add(slice.len()) else {
@@ -179,12 +189,12 @@ where
     }
 
     #[inline(always)]
-    pub const fn as_slice(&self) -> &[T] {
+    pub const fn as_slice(&self) -> &[TItem] {
         unsafe { core::slice::from_raw_parts(self.raw_ptr.as_ptr(), self.length.as_usize()) }
     }
 
     #[inline(always)]
-    pub const fn as_slice_mut(&mut self) -> &mut [T] {
+    pub const fn as_slice_mut(&mut self) -> &mut [TItem] {
         unsafe { core::slice::from_raw_parts_mut(self.raw_ptr.as_ptr(), self.length.as_usize()) }
     }
 
@@ -228,7 +238,7 @@ where
         }
 
         unsafe {
-            if core::mem::needs_drop::<T>() {
+            if core::mem::needs_drop::<TItem>() {
                 let mut start = self.raw_ptr;
                 let end = start.add(self.length.as_usize());
                 while start < end {
@@ -241,7 +251,7 @@ where
         }
     }
 
-    pub const fn try_pop(&mut self) -> Result<T, ArrayIsEmptyError> {
+    pub const fn try_pop(&mut self) -> Result<TItem, ArrayIsEmptyError> {
         let len = self.length.as_usize();
         if len == 0 {
             return Err(ArrayIsEmptyError);
@@ -259,7 +269,7 @@ where
     /// This isn't a perfect clone, the cloned array will have a different capacity.
     pub fn try_clone_with_capacity(&self) -> Result<Self, ArrayTryCloneError>
     where
-        T: TryClone,
+        TItem: TryClone,
         TAllocator: TryClone,
     {
         let allocator = self.allocator.try_clone().map_err(|_| ArrayError::AllocationError)?;
@@ -272,7 +282,7 @@ where
     /// This is a perfect clone.
     pub fn try_clone_perfect(&self) -> Result<Self, ArrayTryCloneError>
     where
-        T: TryClone,
+        TItem: TryClone,
         TAllocator: TryClone,
     {
         let allocator = self.allocator.try_clone().map_err(|_| ArrayError::AllocationError)?;

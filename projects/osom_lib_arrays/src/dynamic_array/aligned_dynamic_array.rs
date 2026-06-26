@@ -6,7 +6,7 @@ use core::{
 };
 
 use osom_lib_alloc::traits::Allocator;
-use osom_lib_primitives::{align::Align, length::Length};
+use osom_lib_primitives::length::Length;
 use osom_lib_reprc::macros::reprc;
 use osom_lib_try_clone::TryClone;
 
@@ -15,30 +15,31 @@ use crate::{
     traits::{ImmutableArray, MutableArray},
 };
 
-use super::AlignedDynamicArray;
+use super::internal_array::InternalArray;
 
 /// A `#[repr(C)]` variant of the standard `vec` struct.
 ///
 /// Functionally similar, and implements [`ReprC`][osom_lib_reprc::traits::ReprC] for `T: ReprC`.
 /// However, unlike `vec` this struct multiplies capacity by `3/2` when resizing is needed.
 ///
-/// It is equivalent to [`AlignedDynamicArray<Align<1>, TItem, TAllocator>`].
+/// Additionally it accepts `TAlign` generic parameter, which is used to enforce a specific alignment of the
+/// internal buffer. The struct does not keep `TAlign` instances inside.
 #[derive(Debug)]
 #[reprc]
 #[repr(transparent)]
 #[must_use]
-pub struct DynamicArray<TItem, TAllocator>
+pub struct AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator,
 {
-    inner: AlignedDynamicArray<Align<1>, TItem, TAllocator>,
+    inner: InternalArray<TAlign, TItem, TAllocator>,
 }
 
-impl<TItem, TAllocator> DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator,
 {
-    /// Creates a new, empty [`DynamicArray`].
+    /// Creates a new, empty [`AlignedDynamicArray`].
     #[inline(always)]
     pub fn new() -> Self
     where
@@ -47,15 +48,15 @@ where
         Self::with_allocator(TAllocator::default())
     }
 
-    /// Creates a new, empty [`DynamicArray`] with an allocator.
+    /// Creates a new, empty [`AlignedDynamicArray`] with an allocator.
     #[inline(always)]
     pub const fn with_allocator(allocator: TAllocator) -> Self {
         Self {
-            inner: AlignedDynamicArray::with_allocator(allocator),
+            inner: InternalArray::new(allocator),
         }
     }
 
-    /// Creates a new [`DynamicArray`] with capacity and allocator.
+    /// Creates a new [`AlignedDynamicArray`] with capacity and allocator.
     /// This allocates memory only when `capacity > 0`.
     ///
     /// # Errors
@@ -63,11 +64,11 @@ where
     /// For details see [`ArrayError`].
     #[inline(always)]
     pub fn with_capacity_and_allocator(capacity: Length, allocator: TAllocator) -> Result<Self, ArrayError> {
-        let inner = AlignedDynamicArray::with_capacity_and_allocator(capacity, allocator)?;
+        let inner = InternalArray::<TAlign, TItem, TAllocator>::with_capacity(capacity, allocator)?;
         Ok(Self { inner })
     }
 
-    /// Creates a new [`DynamicArray`] with capacity and the default allocator.
+    /// Creates a new [`AlignedDynamicArray`] with capacity and the default allocator.
     /// This allocates memory only when `capacity > 0`.
     ///
     /// # Errors
@@ -81,7 +82,7 @@ where
         Self::with_capacity_and_allocator(capacity, TAllocator::default())
     }
 
-    /// Creates a new [`DynamicArray`] with a given size, generated through a given factory.
+    /// Creates a new [`AlignedDynamicArray`] with a given size, generated through a given factory.
     /// This allocates memory only when `size > 0`.
     ///
     /// # Notes
@@ -104,7 +105,7 @@ where
         Self::with_factory_and_allocator(size, factory, TAllocator::default())
     }
 
-    /// Creates a new [`DynamicArray`] with a given size, generated through a given factory,
+    /// Creates a new [`AlignedDynamicArray`] with a given size, generated through a given factory,
     /// with a custom allocator. This allocates memory only when `size > 0`.
     ///
     /// # Notes
@@ -118,18 +119,23 @@ where
     ///
     /// # Errors
     ///
-    /// For details see [`ArrayError`]
-    #[inline(always)]
+    /// For details see [`ArrayError`].
     pub fn with_factory_and_allocator<Factory: FnMut(usize) -> TItem>(
         size: Length,
-        factory: Factory,
+        mut factory: Factory,
         allocator: TAllocator,
     ) -> Result<Self, ArrayError> {
-        let inner = AlignedDynamicArray::with_factory_and_allocator(size, factory, allocator)?;
-        Ok(Self { inner })
+        unsafe {
+            let mut array = Self::with_size_and_allocator_uninitialized(size, allocator)?;
+            let slice_mut_ptr = array.as_mut().as_mut_ptr();
+            for idx in 0..size.as_usize() {
+                slice_mut_ptr.add(idx).write(factory(idx));
+            }
+            Ok(array)
+        }
     }
 
-    /// Creates a new [`DynamicArray`] with a given size, but uninitialized.
+    /// Creates a new [`AlignedDynamicArray`] with a given size, but uninitialized.
     ///
     /// # Safety
     ///
@@ -144,11 +150,10 @@ where
     where
         TAllocator: Default,
     {
-        let inner = unsafe { AlignedDynamicArray::with_size_uninitialized(size) }?;
-        Ok(Self { inner })
+        unsafe { Self::with_size_and_allocator_uninitialized(size, TAllocator::default()) }
     }
 
-    /// Creates a new [`DynamicArray`] with a given size and allocator, but uninitialized.
+    /// Creates a new [`AlignedDynamicArray`] with a given size and allocator, but uninitialized.
     ///
     /// # Safety
     ///
@@ -158,17 +163,16 @@ where
     /// # Errors
     ///
     /// For details see [`ArrayError`].
-    #[inline(always)]
     pub unsafe fn with_size_and_allocator_uninitialized(
         size: Length,
         allocator: TAllocator,
     ) -> Result<Self, ArrayError> {
-        let inner = unsafe { AlignedDynamicArray::with_size_and_allocator_uninitialized(size, allocator) }?;
+        let inner = unsafe { InternalArray::with_size_uninitialized(size, allocator) }?;
         Ok(Self { inner })
     }
 }
 
-impl<T, TAllocator> ImmutableArray<T> for DynamicArray<T, TAllocator>
+impl<TAlign, TItem, TAllocator> ImmutableArray<TItem> for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator,
 {
@@ -184,11 +188,11 @@ where
 
     #[inline(always)]
     fn is_empty(&self) -> bool {
-        self.inner.is_empty()
+        self.length().as_u32() == 0
     }
 }
 
-impl<TItem, TAllocator> MutableArray<TItem> for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> MutableArray<TItem> for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator,
 {
@@ -211,7 +215,16 @@ where
     }
 }
 
-impl<TItem, TAllocator> Default for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> Drop for AlignedDynamicArray<TAlign, TItem, TAllocator>
+where
+    TAllocator: Allocator,
+{
+    fn drop(&mut self) {
+        unsafe { self.inner.deallocate() };
+    }
+}
+
+impl<TAlign, TItem, TAllocator> Default for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator + Default,
 {
@@ -220,7 +233,7 @@ where
     }
 }
 
-impl<TItem, TAllocator> Clone for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> Clone for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TItem: TryClone + Clone,
     TAllocator: Allocator + TryClone + Clone,
@@ -230,7 +243,7 @@ where
     }
 }
 
-impl<TItem, TAllocator> TryClone for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> TryClone for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TItem: TryClone,
     TAllocator: Allocator + TryClone,
@@ -238,12 +251,12 @@ where
     type Error = ArrayTryCloneError;
 
     fn try_clone(&self) -> Result<Self, Self::Error> {
-        let inner = self.inner.try_clone()?;
+        let inner = self.inner.try_clone_with_capacity()?;
         Ok(Self { inner })
     }
 }
 
-impl<TItem, TAllocator, Rhs> PartialEq<Rhs> for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator, Rhs> PartialEq<Rhs> for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TItem: PartialEq,
     TAllocator: Allocator,
@@ -254,14 +267,14 @@ where
     }
 }
 
-impl<TItem, TAllocator> Eq for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> Eq for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TItem: Eq,
     TAllocator: Allocator,
 {
 }
 
-impl<TItem, TAllocator> Hash for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> Hash for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TItem: Hash,
     TAllocator: Allocator,
@@ -271,40 +284,40 @@ where
     }
 }
 
-impl<TItem, TAllocator> AsRef<[TItem]> for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> AsRef<[TItem]> for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator,
 {
     fn as_ref(&self) -> &[TItem] {
-        self.inner.as_ref()
+        self.inner.as_slice()
     }
 }
 
-impl<TItem, TAllocator> AsMut<[TItem]> for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> AsMut<[TItem]> for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator,
 {
     fn as_mut(&mut self) -> &mut [TItem] {
-        self.inner.as_mut()
+        self.inner.as_slice_mut()
     }
 }
 
-impl<TItem, TAllocator> Borrow<[TItem]> for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> Borrow<[TItem]> for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator,
 {
     #[inline(always)]
     fn borrow(&self) -> &[TItem] {
-        self.inner.borrow()
+        self.as_ref()
     }
 }
 
-impl<TItem, TAllocator> BorrowMut<[TItem]> for DynamicArray<TItem, TAllocator>
+impl<TAlign, TItem, TAllocator> BorrowMut<[TItem]> for AlignedDynamicArray<TAlign, TItem, TAllocator>
 where
     TAllocator: Allocator,
 {
     #[inline(always)]
     fn borrow_mut(&mut self) -> &mut [TItem] {
-        self.inner.borrow_mut()
+        self.as_mut()
     }
 }

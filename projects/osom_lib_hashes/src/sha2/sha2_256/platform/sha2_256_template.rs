@@ -4,7 +4,6 @@ use core::marker::PhantomData;
 
 use osom_lib_arrays::fixed_array::ConstBuffer;
 use osom_lib_arrays::{const_helpers::subslice_mut_const, fixed_array::ConstBufferer};
-use osom_lib_reprc::macros::reprc;
 
 use crate::sha2::sha2_256::{
     portable::SHA2_256_Portable,
@@ -17,7 +16,7 @@ pub trait SHA2_256_Updater {
 }
 
 /// A template for various `SHA2_256` implementation variants.
-#[reprc]
+#[repr(C)]
 #[must_use]
 pub struct SHA2_256_Template<TUpdater: SHA2_256_Updater> {
     // This field is used in the final block calculation.
@@ -31,6 +30,14 @@ pub struct SHA2_256_Template<TUpdater: SHA2_256_Updater> {
     bufferer: ConstBuffer<64, u8>,
 
     _phantom: PhantomData<TUpdater>,
+}
+
+unsafe impl<TUpdater: SHA2_256_Updater> ::osom_lib_reprc::traits::ReprC for SHA2_256_Template<TUpdater> {
+    const CHECK: () = const {
+        ::osom_lib_reprc::hidden::is_reprc::<[u32; 8]>();
+        ::osom_lib_reprc::hidden::is_reprc::<ConstBuffer<64, u8>>();
+        ::osom_lib_reprc::hidden::is_reprc::<PhantomData<TUpdater>>();
+    };
 }
 
 impl<TUpdater: SHA2_256_Updater> SHA2_256_Template<TUpdater> {
