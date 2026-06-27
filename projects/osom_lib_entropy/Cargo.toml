@@ -1,6 +1,6 @@
 [package]
 name = "osom_lib_entropy"
-version = "0.1.30"
+version = "0.1.33"
 edition.workspace = true
 authors.workspace = true
 rust-version.workspace = true
