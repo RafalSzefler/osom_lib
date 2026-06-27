@@ -44,7 +44,7 @@ impl<TAllocator: Allocator> SharedStringBuilder<TAllocator> {
     /// # Errors
     ///
     /// For details see [`SharedStringError`].
-    #[inline(always)]
+    #[inline]
     pub fn new() -> Result<Self, SharedStringError>
     where
         TAllocator: Default,
@@ -58,7 +58,7 @@ impl<TAllocator: Allocator> SharedStringBuilder<TAllocator> {
     /// # Errors
     ///
     /// For details see [`SharedStringError`].
-    #[inline(always)]
+    #[inline]
     pub fn with_capacity(capacity: Length) -> Result<Self, SharedStringError>
     where
         TAllocator: Default,
@@ -72,7 +72,7 @@ impl<TAllocator: Allocator> SharedStringBuilder<TAllocator> {
     /// # Errors
     ///
     /// For details see [`SharedStringError`].
-    #[inline(always)]
+    #[inline]
     pub fn with_allocator(allocator: TAllocator) -> Result<Self, SharedStringError> {
         Self::with_capacity_and_allocator(Length::ZERO, allocator)
     }

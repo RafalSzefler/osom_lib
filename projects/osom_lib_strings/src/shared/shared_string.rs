@@ -37,7 +37,7 @@ impl<TAllocator: Allocator> SharedString<TAllocator> {
     /// # Errors
     ///
     /// For details see [`SharedStringError`].
-    #[inline(always)]
+    #[inline]
     pub fn empty() -> Result<Self, SharedStringError>
     where
         TAllocator: Default,
@@ -53,7 +53,7 @@ impl<TAllocator: Allocator> SharedString<TAllocator> {
     /// # Errors
     ///
     /// For details see [`SharedStringError`].
-    #[inline(always)]
+    #[inline]
     pub fn from_str_slice(text: &str) -> Result<Self, SharedStringError>
     where
         TAllocator: Default,
@@ -151,6 +151,7 @@ impl<TAllocator: Allocator> SharedString<TAllocator> {
     ///
     /// Returns [`MaxReferencesExceededError`] if the weak reference count is too high.
     /// Cannot exceed [`osom_lib_arc::consts::MAX_REFERENCES`].
+    #[inline]
     pub fn downgrade(&self) -> Result<WeakSharedString<TAllocator>, MaxReferencesExceededError> {
         let weak = CArcArray::downgrade(&self.internal)?;
         Ok(WeakSharedString::from_internal(weak))
@@ -172,6 +173,7 @@ impl<TAllocator: Allocator> SharedString<TAllocator> {
 impl<TAllocator: Allocator> TryClone for SharedString<TAllocator> {
     type Error = MaxReferencesExceededError;
 
+    #[inline]
     fn try_clone(&self) -> Result<Self, Self::Error> {
         let internal = self.internal.try_clone()?;
         Ok(Self { internal })
@@ -179,6 +181,7 @@ impl<TAllocator: Allocator> TryClone for SharedString<TAllocator> {
 }
 
 impl<TAllocator: Allocator> Clone for SharedString<TAllocator> {
+    #[inline]
     fn clone(&self) -> Self {
         self.try_clone()
             .expect("ImmutableString strong reference count is too high.")
@@ -186,24 +189,28 @@ impl<TAllocator: Allocator> Clone for SharedString<TAllocator> {
 }
 
 impl<TAllocator: Allocator> AsRef<str> for SharedString<TAllocator> {
+    #[inline]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
 impl<TAllocator: Allocator> Borrow<str> for SharedString<TAllocator> {
+    #[inline]
     fn borrow(&self) -> &str {
         self.as_str()
     }
 }
 
 impl<TAllocator: Allocator> Hash for SharedString<TAllocator> {
+    #[inline]
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         self.as_str().hash(state);
     }
 }
 
 impl<TAllocator: Allocator> PartialEq for SharedString<TAllocator> {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.internal == other.internal
     }
@@ -212,7 +219,18 @@ impl<TAllocator: Allocator> PartialEq for SharedString<TAllocator> {
 impl<TAllocator: Allocator> Eq for SharedString<TAllocator> {}
 
 impl<TAllocator: Allocator> Display for SharedString<TAllocator> {
+    #[inline]
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.as_str())
+    }
+}
+
+impl<TAllocator: Allocator> From<&str> for SharedString<TAllocator>
+where
+    TAllocator: Default,
+{
+    #[inline]
+    fn from(value: &str) -> Self {
+        Self::from_str_slice(value).expect("Failed to create SharedString from &str")
     }
 }
