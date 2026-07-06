@@ -39,7 +39,7 @@ impl From<osom_lib_arc::errors::WeakUpgradeError> for WeakUpgradeError {
 /// # cfg_select! {
 /// #    feature="std" => {
 /// use osom_lib_strings::shared::{SharedStringError, WeakUpgradeError};
-/// use osom_lib_strings::shared::std::StdSharedString;
+/// use osom_lib_strings::std::StdSharedString;
 ///
 /// fn main() -> Result<(), SharedStringError> {
 ///     // The first instance counts as both strong and weak reference.

@@ -16,7 +16,7 @@ use super::{SharedString, SharedStringError};
 /// # cfg_select! {
 /// #    feature="std" => {
 /// use osom_lib_strings::shared::SharedStringError;
-/// use osom_lib_strings::shared::std::StdSharedStringBuilder;
+/// use osom_lib_strings::std::StdSharedStringBuilder;
 ///
 /// fn main() -> Result<(), SharedStringError> {
 ///     let mut builder = StdSharedStringBuilder::new()?;

@@ -2,7 +2,7 @@
 use rstest::rstest;
 
 use osom_lib_strings::shared::WeakUpgradeError;
-use osom_lib_strings::shared::std::StdSharedStringBuilder;
+use osom_lib_strings::std::StdSharedStringBuilder;
 
 #[rstest]
 #[case("")]

@@ -1,6 +1,6 @@
 [package]
 name = "osom_lib_strings"
-version = "0.1.34"
+version = "0.1.35"
 edition.workspace = true
 authors.workspace = true
 rust-version.workspace = true
@@ -14,12 +14,14 @@ documentation = "https://docs.rs/osom_lib_strings"
 [dependencies]
 serde = { workspace = true, optional = true }
 
+osom_lib_arrays = { path = "../osom_lib_arrays", version = "0.1" }
 osom_lib_arc = { path = "../osom_lib_arc", version = "0.1" }
 osom_lib_macros = { path = "../osom_lib_macros", version = "0.1" }
 osom_lib_reprc = { path = "../osom_lib_reprc", version = "0.1" }
 osom_lib_primitives = { path = "../osom_lib_primitives", version = "0.1" }
 osom_lib_alloc = { path = "../osom_lib_alloc", version = "0.1" }
 osom_lib_try_clone = { path = "../osom_lib_try_clone", version = "0.1" }
+osom_lib_hash_tables = { path = "../osom_lib_hash_tables", version = "0.1", optional = true }
 
 [dev-dependencies]
 rstest = { workspace = true }
@@ -30,5 +32,6 @@ default = []
 serde = ["dep:serde"]
 std = [
     "osom_lib_alloc/std",
-    "serde/std"
+    "serde/std",
+    "osom_lib_hash_tables"
 ]

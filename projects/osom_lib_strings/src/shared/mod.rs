@@ -11,11 +11,3 @@ pub use weak_string::*;
 
 #[cfg(feature = "serde")]
 pub mod serde;
-
-cfg_select! {
-    feature="std" => {
-        #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-        pub mod std;
-    },
-    _ => {}
-}

@@ -12,4 +12,13 @@
 #![allow(clippy::redundant_field_names, clippy::inline_always)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod owned;
 pub mod shared;
+
+cfg_select! {
+    feature="std" => {
+        #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+        pub mod std;
+    },
+    _ => {}
+}
